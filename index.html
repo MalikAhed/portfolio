@@ -1,975 +1,147 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Malik Abualatta — Developer</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Manrope:wght@600&display=swap"
-    rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    :root {
-      --bg-1: #0b1020;
-      --bg-2: #0a0f1a;
-      --glass: rgba(15, 20, 38, 0.55);
-      --text: #e6e8ef;
-      --muted: #9aa3b2;
-      --accent: #8b5cf6;
-      --accent-2: #22d3ee;
-      --accent-3: #ec4899;
-      --radius: 16px;
-      --radius-lg: 22px;
-      --shadow: 0 20px 60px rgba(0, 0, 0, .3);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: Sora, Manrope, system-ui, sans-serif;
-      color: var(--text);
-      background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
-      overflow-x: hidden;
-      position: relative;
-
-    }
-
-    /* BLOBS */
-    #bg-blobs {
-      position: fixed;
-      inset: 0;
-      z-index: -3;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .blob {
-      position: absolute;
-      border-radius: 50%;
-      opacity: 0.5;
-      filter: blur(50px);
-      animation: blob-drift 30s ease-in-out infinite alternate;
-    }
-
-    .blob-1 {
-      width: 500px;
-      height: 500px;
-      top: -15%;
-      left: -15%;
-      background: #8b5cf6;
-    }
-
-    .blob-2 {
-      width: 600px;
-      height: 600px;
-      top: 40%;
-      left: 55%;
-      background: #22d3ee;
-    }
-
-    .blob-3 {
-      width: 500px;
-      height: 500px;
-      bottom: -20%;
-      right: -10%;
-      background: #ec4899;
-    }
-
-    @keyframes blob-drift {
-      0% {
-        transform: translate(0, 0) scale(1);
-      }
-
-      25% {
-        transform: translate(80px, -50px) scale(1.1);
-      }
-
-      50% {
-        transform: translate(-70px, 60px) scale(0.95);
-      }
-
-      75% {
-        transform: translate(50px, -30px) scale(1.05);
-      }
-
-      100% {
-        transform: translate(-30px, 70px) scale(1);
-      }
-    }
-
-    /* SMALL MOVING OBJECTS */
-    .moving-dot {
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.15);
-      animation: move-dot linear infinite;
-    }
-
-    @keyframes move-dot {
-      0% {
-        transform: translate(0, 0);
-      }
-
-      50% {
-        transform: translate(50px, 40px);
-      }
-
-      100% {
-        transform: translate(0, 0);
-      }
-    }
-
-    /* NAVBAR */
-    .nav-container {
-      display: flex;
-      justify-content: center;
-      
-    }
-
-.nav {
-  position: fixed;
-  top: 20px;               /* not touching the top edge */
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 90%;              /* responsive */
-  max-width: 1100px;
-  padding: 0 16px;
-  height: 64px;
-
-  background: var(--glass);
-  backdrop-filter: saturate(200%) blur(28px);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: var(--shadow);
-
-  z-index: 999;            /* stays on top of everything */
-}
-
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      color: inherit;
-    }
-
-    .logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      color: #08101d;
-    }
-
-    .brand-name {
-      font-weight: 700;
-      font-size: 1.2rem;
-      letter-spacing: .5px;
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .nav-right .links {
-      display: flex;
-      gap: 12px;
-    }
-
-    .nav-right .socials {
-      display: flex;
-      gap: 10px;
-    }
-
-    .nav-right a {
-      color: inherit;
-      text-decoration: none;
-      opacity: .9;
-      transition: .2s;
-    }
-
-    .nav-right a:hover {
-      opacity: 1;
-    }
-
-    /* BUTTONS */
-    .btn {
-      padding: .6rem 1.3rem;
-      border-radius: var(--radius-lg);
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      transition: .25s;
-    }
-
-    .btn.neon {
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      color: #fff;
-      box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
-    }
-
-    .btn.neon:hover {
-      box-shadow: 0 0 20px var(--accent), 0 0 35px var(--accent-2);
-      transform: translateY(-2px);
-    }
-
-    .btn.ghost {
-      background: transparent;
-      border: 2px solid var(--accent-2);
-      color: var(--accent-2);
-    }
-
-    .btn.ghost:hover {
-      background: var(--accent-2);
-      color: #000;
-      box-shadow: 0 0 14px rgba(139, 92, 246, 0.5);
-    }
-
-    .btn.sm {
-      padding: .5rem 1rem;
-      font-size: .9rem;
-      border-radius: var(--radius);
-    }
-
-    /* HERO */
-    .hero {
-      padding: 160px 20px 60px;
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero-inner {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .avatar {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
-      border: 1px solid rgba(255, 255, 255, .06);
-    }
-
-    .title {
-      font-size: 56px;
-      font-weight: 800;
-      line-height: 1.1;
-      text-align: center;
-      background: linear-gradient(90deg, #8b5cf6, #22d3ee, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .subtitle {
-      color: var(--muted);
-      max-width: 720px;
-      font-size: 1.2rem;
-    }
-
-    .cta {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    /* SECTIONS */
-    section {
-      padding: 70px 20px;
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .section-head h2 {
-      font-size: 32px;
-      margin-bottom: 6px;
-    }
-
-    .section-head .muted {
-      color: var(--muted);
-    }
-
-    /* GLASS CARDS */
-    .glass {
-      background: var(--glass);
-      backdrop-filter: saturate(200%) blur(28px);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      position: relative;
-    }
-
-    .bubble {
-      box-shadow: 0 20px 60px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .05);
-    }
-
-    .glass::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.08);
-      pointer-events: none;
-    }
-
-    /* ABOUT */
-    .about-card {
-      padding: 22px;
-      max-width: 700px;
-      margin: 20px auto 0;
-      font-size: 1rem;
-      line-height: 1.6;
-      color: var(--text);
-    }
-
-    /* PROJECTS */
-    .project-grid {
-      display: grid;
-      gap: 20px;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      margin-top: 20px;
-    }
-
-    .project {
-      padding: 0px;
-      overflow: hidden;
-      transition: transform .2s ease, box-shadow .2s ease;
-    }
-
-    .project:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 28px 70px rgba(0, 0, 0, .45);
-    }
-
-    .project img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .project-body {
-      padding: 16px;
-    }
-
-    .project h3 {
-      margin: 0 0 8px;
-      font-size: 20px;
-    }
-
-    .project p {
-      margin: 0 0 12px;
-      color: var(--muted);
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .project-grid {
-      padding: 0px 50px;
-    }
-
-    /* LANGUAGES */
-    .languages {
-      padding: 50px 20px;
-    }
-
-    .language-grid {
-      display: flex;
-      gap: 24px;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
-      padding: 24px 32px;
-      background: var(--glass);
-      border-radius: var(--radius-lg);
-      position: relative;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    .language-logo {
-      width: 60px;
-      height: 60px;
-      filter: grayscale(20%) brightness(.9);
-      transition: 0.3s;
-      animation: float 6s ease-in-out infinite;
-    }
-
-    .language-logo:hover {
-      filter: none;
-    }
-
-    @keyframes float {
-      0% {
-        transform: translateY(0px);
-      }
-
-      50% {
-        transform: translateY(-8px);
-      }
-
-      100% {
-        transform: translateY(0px);
-      }
-    }
-
-    /* CONTACT */
-    .contact-card {
-      padding: 22px;
-      max-width: 520px;
-      margin: 20px auto;
-      display: grid;
-      gap: 14px;
-    }
-
-    .contact-card label {
-      display: grid;
-      gap: 6px;
-      font-size: 14px;
-      color: var(--text);
-    }
-
-    .contact-card input,
-    .contact-card textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid rgba(255, 255, 255, .08);
-      border-radius: 14px;
-      background: rgba(10, 14, 28, .6);
-      color: var(--text);
-    }
-
-    .contact-card input:focus,
-    .contact-card textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(34, 211, 238, .18);
-    }
-
-    /* FOOTER */
-    .site-footer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding: 32px 24px;
-      background: var(--glass);
-      backdrop-filter: saturate(220%) blur(25px);
-      border-radius: var(--radius-lg);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .site-footer nav {
-      display: flex;
-      gap: 14px;
-    }
-
-    .site-footer .footer-socials {
-      display: flex;
-      gap: 12px;
-    }
-
-    .site-footer nav a,
-    .site-footer .footer-socials a {
-      opacity: .9;
-      transition: .2s;
-    }
-
-    .site-footer nav a:hover,
-    .site-footer .footer-socials a:hover i {
-      opacity: 1;
-      color: #fff;
-    }
-
-    /* RESPONSIVE */
-    @media(max-width:720px) {
-      .nav {
-        height: 58px;
-        border-radius: 18px
-      }
-
-      .nav-right {
-        gap: 10px
-      }
-
-      .title {
-        font-size: 44px
-      }
-
-      .project img {
-        height: 180px
-      }
-    }
-
-    @media(max-width:500px) {
-      .socials {
-        display: none
-      }
-
-      .btn {
-        padding: 9px 12px
-      }
-    }
-
-    /* Remove text underlines globally for buttons/links */
-    a,
-    a:visited {
-      text-decoration: none;
-    }
-
-    /* Increase hero title size */
-    .title {
-      font-size: 80px;
-      /* bigger than before */
-      background: linear-gradient(90deg, #8b5cf6, #22d3ee, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    /* Small moving objects */
-    .moving-dot {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.15);
-      animation: move-dot linear infinite;
-    }
-
-    /* Vary sizes for dots */
-    .moving-dot[data-size="2"] {
-      width: 12px;
-      height: 11px;
-    }
-
-    .moving-dot[data-size="3"] {
-      width: 6px;
-      height: 7px;
-    }
-
-    .moving-dot[data-size="4"] {
-      width: 10px;
-      height: 11px;
-    }
-
-    .moving-dot[data-size="5"] {
-      width: 5px;
-      height: 5px;
-    }
-
-    /* Remove the previous move-dot animation */
-    .moving-dot {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.15);
-      width: var(--size, 13px);
-      height: var(--size, 12px);
-    }
-
-    .margin-top {
-      margin-top: 50px;
-    }
-
-    .margin-top2 {
-      margin-top: 150px;
-    }
-
-    .margin-top3 {
-      margin-top: 60px;
-    }
-
-    .title {
-      font-size: 80px;
-      font-weight: 800;
-      line-height: 1.1;
-      text-align: center;
-      background: linear-gradient(90deg, #8b5cf6, #22d3ee, #ec4899);
-      background-size: 200% 200%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-
-      animation: fadeSlideUp 1s ease forwards, gradientMove 6s ease infinite;
-    }
-
-    @keyframes fadeSlideUp {
-      0% {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes gradientMove {
-      0% {
-        background-position: 0% 50%;
-      }
-
-      50% {
-        background-position: 100% 50%;
-      }
-
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    .scale {
-      transform: scale(1.1);
-      transform-origin: top center;
-      /* keeps it aligned */
-    }
-    .nav {
-  display: flex;
-  align-items: center;
-  position: fixed;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 1100px;
-  padding: 0 16px;
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.nav-right .links {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex: 1;
-}
-.site-footer {
-  color: var(--text);
-  text-align: center;
-}
-
-.site-footer nav a, .site-footer .footer-socials a {
-  color: var(--muted);
-  opacity: 0.9;
-  transition: all 0.3s ease;
-}
-
-.site-footer nav a:hover, .site-footer .footer-socials a:hover i {
-  color: #fff;
-  opacity: 1;
-  transform: translateY(-3px);
-}
-.ending-message {
-  padding: 60px 20px;
-  text-align: center;
-  color: var(--accent-2);
-}
-
-.float-text {
-  font-size: 28px;
-  font-weight: 700;
-  animation: floatUpDown 3s ease-in-out infinite;
-}
-
-@keyframes floatUpDown {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-  100% { transform: translateY(0); }
-}
-
-.margin-top4{
-  margin-top: 100px;
-}
-
-  </style>
-</head>
-
-<body>
-
-  <!-- More small moving dots with varying sizes -->
-  <div class="moving-dot" data-size="2" style="top:5%; left:10%; animation-duration:8s;"></div>
-  <div class="moving-dot" data-size="3" style="top:15%; left:80%; animation-duration:12s;"></div>
-  <div class="moving-dot" data-size="4" style="top:25%; left:40%; animation-duration:10s;"></div>
-  <div class="moving-dot" data-size="5" style="top:35%; left:60%; animation-duration:14s;"></div>
-  <div class="moving-dot" data-size="3" style="top:45%; left:20%; animation-duration:9s;"></div>
-  <div class="moving-dot" data-size="2" style="top:55%; left:70%; animation-duration:11s;"></div>
-  <div class="moving-dot" data-size="4" style="top:65%; left:50%; animation-duration:13s;"></div>
-  <div class="moving-dot" data-size="5" style="top:75%; left:30%; animation-duration:15s;"></div>
-  <div class="moving-dot" data-size="3" style="top:85%; left:80%; animation-duration:12s;"></div>
-
-
-  <div id="bg-blobs">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-  </div>
-
-      <header class="site-header">
-      <div class="nav-container">
-        <div class="nav">
-          <a class="brand" href="#">
-            <div class="logo">M</div><span class="brand-name">Malik</span>
-          </a>
-<div class="nav-right">
-  <div class="links">
-    <a href="#home">Home</a>
-    <a href="#projects">Projects</a>
-    <a href="#about">About</a>
-    <a href="#contact">Contact</a>
-  </div>
-  <div class="socials" >
-    <a href="https://github.com/MalikAhed" target="_blank" aria-label="GitHub"><i data-lucide="github"></i></a>
-    <a href="https://www.linkedin.com/in/malik-abualatta-a6849a37b/" target="_blank" aria-label="LinkedIn"><i data-lucide="linkedin"></i></a>
-    <a href="https://x.com/malikabuallatta" target="_blank" aria-label="Twitter"><i data-lucide="twitter"></i></a>
-    <a href="malikabuallatta@gmail.com" aria-label="Mail"><i data-lucide="mail"></i></a>
-  </div>
-  <a class="btn neon" href="#projects">View work</a>
-</div>
-
-        </div>
-      </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07120f" />
+    <meta name="description" content="Malik Abuallatta is a full-stack developer building polished web products, accessible interfaces, and browser-first tools." />
+    <meta property="og:title" content="Malik Abuallatta — Full-stack developer" />
+    <meta property="og:description" content="Selected product, frontend, and full-stack work by Malik Abuallatta." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://malikahed.github.io/portfolio/" />
+    <title>Malik Abuallatta — Full-stack developer</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <a class="brand" href="#top" aria-label="Malik Abuallatta, home">
+        <span class="brand__mark" aria-hidden="true">MA</span>
+        <span class="brand__name">Malik Abuallatta</span>
+      </a>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="primary-navigation" data-menu-button>
+        <span class="menu-button__label">Menu</span><span class="menu-button__icon" aria-hidden="true"></span>
+      </button>
+      <nav class="site-nav" id="primary-navigation" aria-label="Primary navigation" data-menu>
+        <a href="#work">Work</a><a href="#about">About</a><a href="#contact">Contact</a>
+        <a class="nav-github" href="https://github.com/MalikAhed" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
     </header>
 
-  <div class="scale">
-
-    <!-- Small floating dots -->
-    <div class="moving-dot" style="top:10%;left:20%;animation-duration:8s;"></div>
-    <div class="moving-dot" style="top:30%;left:70%;animation-duration:12s;"></div>
-    <div class="moving-dot" style="top:80%;left:40%;animation-duration:15s;"></div>
-    <!-- small floating circles -->
-    <div class="circle" style="--size:6px; --x:10%; --y:20%; --anim:8s;"></div>
-    <div class="circle" style="--size:4px; --x:50%; --y:15%; --anim:10s;"></div>
-    <div class="circle" style="--size:5px; --x:80%; --y:50%; --anim:12s;"></div>
-    <div class="circle" style="--size:3px; --x:30%; --y:80%; --anim:9s;"></div>
-    <div class="circle" style="--size:7px; --x:70%; --y:30%; --anim:11s;"></div>
-    <div class="circle" style="--size:4px; --x:20%; --y:60%; --anim:7s;"></div>
-    <div class="circle" style="--size:5px; --x:60%; --y:75%; --anim:13s;"></div>
-    <div class="circle" style="--size:3px; --x:40%; --y:40%; --anim:10s;"></div>
-
-
-
-
-
     <main id="main">
-      <section class="hero margin-top3"  id="home">
-        <div class="hero-inner">
-          <img class="avatar" src="./481844501_1828351824621470_1816024061362105617_n.jpg" alt="Avatar of Malik">
-          <h1 class="title">Hi, I’m Malik</h1>
-          <p class="subtitle">Full-stack learner crafting sleek, fast, glassy UIs.</p>
-          <div class="cta">
+      <section class="hero" id="top" data-hero>
+        <div class="hero__copy">
+          <p class="eyebrow"><span></span> Full-stack developer · Available for work</p>
+          <h1 data-hero-title>I build useful products with sharp, human interfaces.</h1>
+          <p class="hero__intro">I turn ambitious ideas into responsive, accessible software—from browser-powered tools to polished business websites.</p>
+          <div class="hero__actions">
+            <a class="button button--primary" href="#work">Explore my work <span aria-hidden="true">↓</span></a>
+            <a class="button button--quiet" href="mailto:malikabuallatta@gmail.com">Start a conversation</a>
+          </div>
+        </div>
 
-            <div class="cta">
-              <a class="btn neon" href="#projects">Projects</a>
-              <a class="btn ghost" href="#contact">Contact</a>
+        <div class="hero__stage" aria-label="A snapshot of Malik's development approach">
+          <div class="stage__glow" aria-hidden="true"></div>
+          <article class="build-card">
+            <div class="build-card__bar"><span class="build-card__lights" aria-hidden="true"><i></i><i></i><i></i></span><span>currently-building.js</span><span class="build-card__status">● live</span></div>
+            <div class="build-card__body">
+              <p><span class="code-key">const</span> developer = {</p>
+              <p><span class="code-prop">focus</span>: <span class="code-value">"useful products"</span>,</p>
+              <p><span class="code-prop">craft</span>: [<span class="code-value">"UX"</span>, <span class="code-value">"code"</span>, <span class="code-value">"accessibility"</span>],</p>
+              <p><span class="code-prop">mindset</span>: <span class="code-value">"ship, learn, refine"</span></p><p>};</p>
             </div>
-          </div>
-      </section>
-
-      <!-- About Section -->
-      <section id="about">
-        <div class="section-head margin-top2">
-          <h2>About Me</h2>
-          <p class="muted">Gaza • 17 • self-taught during the war</p>
+            <div class="build-card__footer"><span>JavaScript</span><span>Node.js</span><span>Responsive UI</span></div>
+          </article>
+          <div class="signal signal--top"><strong>Browser-first</strong><span>Fast by design</span></div>
+          <div class="signal signal--bottom"><strong>Arabic + English</strong><span>Built for real audiences</span></div>
         </div>
-        <div class="about-card glass bubble">
-          I’m Malik Abualatta, a high-school student and aspiring full-stack developer from Gaza. I learned web
-          development during the war and keep pushing forward—building clean, modern interfaces and learning every day.
+
+        <div class="hero__facts" aria-label="Quick facts">
+          <div><strong>05</strong><span>featured builds</span></div><div><strong>2D</strong><span>lean, resilient UI</span></div><div><strong>∞</strong><span>curiosity</span></div>
         </div>
       </section>
 
-      <!-- Languages Section -->
-      <section id="languages" class="languages margin-top2">
-        <div class="section-head">
-          <h2>Languages & Libraries</h2>
-          <p class="muted">The tools I use to build web apps.</p>
+      <section class="work section" id="work">
+        <div class="section-heading">
+          <div><p class="eyebrow"><span></span> Selected work</p><h2>Products with a point of view.</h2></div>
+          <p>Each project solves a different problem, but they share the same standard: clear purpose, thoughtful interaction, and details that hold up on every screen.</p>
         </div>
-        <div class="language-grid glass bubble margin-top">
-          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" class="language-logo"
-            alt="HTML5">
-          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" class="language-logo"
-            alt="CSS3">
-          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg"
-            class="language-logo" alt="JavaScript">
-          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" class="language-logo"
-            alt="React">
-          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" class="language-logo"
-            alt="Node.js">
-          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg"
-            class="language-logo" alt="Express">
-          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg"
-            class="language-logo" alt="MongoDB">
-          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" class="language-logo"
-            alt="Python">
-          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg"
-            class="language-logo" alt="TypeScript">
+
+        <div class="project-grid">
+          <article class="project project--featured">
+            <div class="project__preview preview--chess" aria-hidden="true">
+              <div class="chess-board"><span>♜</span><span>♞</span><span>♝</span><span>♛</span><span>♙</span><span>♟</span><span>♙</span><span>♚</span><span>♔</span><span>♙</span><span>♘</span><span>♟</span><span>♖</span><span>♗</span><span>♘</span><span>♜</span></div>
+              <div class="eval-card"><span>Best move</span><strong>Nf6+</strong><i>+2.4</i></div>
+            </div>
+            <div class="project__content">
+              <div class="project__meta"><span>01 · Product engineering</span><span>JavaScript · Stockfish WASM</span></div>
+              <h3>StockThink</h3><p>Free chess game review that runs locally in the browser—deep engine analysis without a server, subscription, or upload.</p>
+              <ul class="project__tags" aria-label="StockThink features"><li>Privacy-first</li><li>Browser AI</li><li>Game analysis</li></ul>
+              <div class="project__links"><a href="https://github.com/MalikAhed/stockthink" target="_blank" rel="noreferrer">View source <span aria-hidden="true">↗</span></a></div>
+            </div>
+          </article>
+
+          <article class="project">
+            <div class="project__preview preview--burger" aria-hidden="true"><span class="burger-word">CUBE</span><div class="burger"><i></i><b></b><em></em><strong></strong></div><span class="burger-stamp">Smashed<br />fresh</span></div>
+            <div class="project__content">
+              <div class="project__meta"><span>02 · Art-directed frontend</span><span>Vite · Modern CSS</span></div>
+              <h3>Cube Burger</h3><p>A bold restaurant experience with layered responsive composition, accessible interactions, and a ten-viewport visual test matrix.</p>
+              <div class="project__links"><a href="https://malikahed.github.io/cube-burger-site/" target="_blank" rel="noreferrer">Live site <span aria-hidden="true">↗</span></a><a href="https://github.com/MalikAhed/cube-burger-site" target="_blank" rel="noreferrer">Source</a></div>
+            </div>
+          </article>
+
+          <article class="project">
+            <div class="project__preview preview--study" aria-hidden="true"><div class="study-card study-card--back">١٠٧ سؤالاً</div><div class="study-card"><span>مراجعة</span><strong>تعلّم بثقة</strong><i>اسحب البطاقة للإجابة</i></div></div>
+            <div class="project__content">
+              <div class="project__meta"><span>03 · Arabic-first PWA</span><span>Vanilla JS · Offline</span></div>
+              <h3>Murajaa</h3><p>An Arabic study companion with focused flashcards, progress tracking, and offline access for learning anywhere.</p>
+              <div class="project__links"><a href="https://malikahed.github.io/Murajaa/" target="_blank" rel="noreferrer">Live app <span aria-hidden="true">↗</span></a><a href="https://github.com/MalikAhed/Murajaa" target="_blank" rel="noreferrer">Source</a></div>
+            </div>
+          </article>
+
+          <article class="project">
+            <div class="project__preview preview--zen" aria-hidden="true"><span class="zen-sun"></span><span class="zen-leaf zen-leaf--one"></span><span class="zen-leaf zen-leaf--two"></span><div class="zen-copy"><small>Feel good at home</small><strong>ZEN</strong><i>cleaning</i></div></div>
+            <div class="project__content">
+              <div class="project__meta"><span>04 · Service website</span><span>HTML · CSS · JavaScript</span></div>
+              <h3>Zen Cleaning</h3><p>A warm, booking-focused service site that turns trust, clarity, and responsive visual storytelling into a stronger customer journey.</p>
+              <div class="project__links"><a href="https://malikahed.github.io/zen/" target="_blank" rel="noreferrer">Live site <span aria-hidden="true">↗</span></a><a href="https://github.com/MalikAhed/zen" target="_blank" rel="noreferrer">Source</a></div>
+            </div>
+          </article>
+
+          <article class="project project--wide">
+            <div class="project__preview preview--learn" aria-hidden="true"><div class="learn-orbit"><span>Learn</span><i></i><i></i><i></i></div><div class="learn-progress"><span>Weekly progress</span><strong>78%</strong><i></i></div></div>
+            <div class="project__content">
+              <div class="project__meta"><span>05 · Full-stack application</span><span>Node.js · Express · MongoDB</span></div>
+              <h3>Learnify</h3><p>A server-rendered learning platform with account flows, a focused dashboard, and a maintainable full-stack foundation.</p>
+              <div class="project__links"><a href="https://github.com/MalikAhed/learnify" target="_blank" rel="noreferrer">View source <span aria-hidden="true">↗</span></a></div>
+            </div>
+          </article>
         </div>
       </section>
-  </div>
 
-  <!-- Projects Section -->
-   <div class="margin-top2">
-
-   </div>
-  <section id="projects">
-    <div class="section-head margin-top2">
-      <h2 class="margin-top4">Projects</h2>
-      <p class="muted">Light, focused, fast.</p>
-    </div>
-    <div class="project-grid ">
-      <!-- Project 1 -->
-      <div class="project glass bubble">
-        <img src="https://htmlburger.com/blog/wp-content/uploads/2023/04/modern-website-design-examples.jpg"
-          alt="ReliefMaps project">
-        <div class="project-body">
-          <h3>ReliefMaps</h3>
-          <p>Live crisis map. Minimal UI.</p>
-          <div class="actions">
-            <a class="btn ghost sm" href="#">Live</a>
-            <a class="btn ghost sm" href="#">Code</a>
-          </div>
+      <section class="about section" id="about">
+        <div class="about__portrait"><img src="./481844501_1828351824621470_1816024061362105617_n.jpg" alt="Malik Abuallatta" width="640" height="640" /><span>Based in Palestine · Working worldwide</span></div>
+        <div class="about__copy">
+          <p class="eyebrow"><span></span> About</p><h2>Resourceful by circumstance. Thoughtful by choice.</h2>
+          <p>I’m Malik, a self-taught full-stack developer who learned to build under difficult conditions. That experience shaped how I work: stay curious, use constraints creatively, and keep going until the product feels genuinely useful.</p>
+          <p>I care about the layer where engineering meets people—clear flows, responsive details, accessible choices, and code that another developer can understand.</p>
+          <div class="capabilities" aria-label="Capabilities"><span>Frontend engineering</span><span>Node.js applications</span><span>Product UI/UX</span><span>Responsive systems</span><span>Accessibility</span><span>Progressive web apps</span></div>
         </div>
-      </div>
+      </section>
 
-      <!-- Project 2 -->
-      <div class="project glass bubble">
-        <img src="https://htmlburger.com/blog/wp-content/uploads/2024/07/most-awesome-websites-of-2024.jpg"
-          alt="QuietReader project">
-        <div class="project-body">
-          <h3>QuietReader</h3>
-          <p>Focus reading. Fast, accessible.</p>
-          <div class="actions">
-            <a class="btn ghost sm" href="#">Live</a>
-            <a class="btn ghost sm" href="#">Code</a>
-          </div>
-        </div>
-      </div>
+      <section class="contact section" id="contact">
+        <p class="eyebrow"><span></span> Let’s build something useful</p><h2>Have a project, role, or idea in mind?</h2>
+        <p>Tell me what you’re trying to make and where it feels stuck. A short hello is enough to start.</p>
+        <a class="contact__email" href="mailto:malikabuallatta@gmail.com">malikabuallatta@gmail.com <span aria-hidden="true">↗</span></a>
+        <div class="contact__links"><a href="https://github.com/MalikAhed" target="_blank" rel="noreferrer">GitHub</a><a href="https://www.linkedin.com/in/malik-abualatta-a6849a37b/" target="_blank" rel="noreferrer">LinkedIn</a><a href="https://x.com/malikabuallatta" target="_blank" rel="noreferrer">X / Twitter</a></div>
+      </section>
+    </main>
 
-      <!-- Project 3 - New -->
-      <div class="project glass bubble">
-        <img src="https://colorlib.com/wp/wp-content/uploads/sites/2/15_awesome-websites.jpg"
-          alt="DevPortfolio project">
-        <div class="project-body">
-          <h3>DevPortfolio</h3>
-          <p>Personal portfolio showcasing web projects and UI experiments.</p>
-          <div class="actions">
-            <a class="btn ghost sm" href="#">Live</a>
-            <a class="btn ghost sm" href="#">Code</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- Contact Section -->
-  <section id="contact">
-    <div class="section-head margin-top2">
-      <h2>Contact</h2>
-      <p class="muted">Quick hello is enough.</p>
-    </div>
-    <form class="contact-card glass bubble">
-      <label>Name<input type="text" required></label>
-      <label>Email<input type="email" required></label>
-      <label>Message<textarea rows="4" required></textarea></label>
-      <button class="btn neon" type="submit">Send</button>
-    </form>
-  </section>
-
-  <section class="ending-message">
-  <h2 class="float-text title">Thanks for visiting!</h2>
-</section>
-
-
-  <!-- Footer -->
-  <footer class="site-footer glass bubble">
-    <p>© <span id="year"></span> Malik Abualatta.</p>
-    <nav>
-      <a href="#projects">Projects</a>
-      <a href="#about">About</a>
-      <a href="#contact">Contact</a>
-    </nav>
-    <div class="footer-socials">
-      <a aria-label="GitHub"><i data-lucide="github"></i></a>
-      <a aria-label="LinkedIn"><i data-lucide="linkedin"></i></a>
-      <a aria-label="Twitter"><i data-lucide="twitter"></i></a>
-    </div>
-  </footer>
-  </main>
-  </div>
-  <script>
-    if (window.lucide) lucide.createIcons();
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    /* subtle parallax for blobs */
-    const bg = document.querySelector('#bg-blobs');
-    if (bg) {
-      document.addEventListener('mousemove', e => {
-        const x = (e.clientX / window.innerWidth - 0.5) * 20;
-        const y = (e.clientY / window.innerHeight - 0.5) * 20;
-        bg.style.transform = `translate(${x}px, ${y}px)`;
-      });
-    }
-  </script>
-
-  <script>
-    // Random floating dots
-    const dotsCount = 30; // total number of dots
-    for (let i = 0; i < dotsCount; i++) {
-      const dot = document.createElement('div');
-      dot.classList.add('moving-dot');
-      const size = Math.random() * 4 + 2; // 2px to 6px
-      dot.style.setProperty('--size', size + 'px');
-      dot.style.top = Math.random() * 100 + '%';
-      dot.style.left = Math.random() * 100 + '%';
-      document.body.appendChild(dot);
-
-      const speedX = (Math.random() * 0.5 + 0.2) * (Math.random() > 0.5 ? 1 : -1); // px per frame
-      const speedY = (Math.random() * 0.5 + 0.2) * (Math.random() > 0.5 ? 1 : -1);
-
-      let x = parseFloat(dot.style.left);
-      let y = parseFloat(dot.style.top);
-
-      function animateDot() {
-        x += speedX;
-        y += speedY;
-
-        // bounce off edges
-        if (x < 0) { x = 0; dot.style.left = x + '%'; speedX *= -1; }
-        if (x > 100) { x = 100; dot.style.left = x + '%'; speedX *= -1; }
-        if (y < 0) { y = 0; dot.style.top = y + '%'; speedY *= -1; }
-        if (y > 100) { y = 100; dot.style.top = y + '%'; speedY *= -1; }
-
-        dot.style.left = x + '%';
-        dot.style.top = y + '%';
-        requestAnimationFrame(animateDot);
-      }
-      animateDot();
-    }
-  </script>
-
-</body>
-
+    <footer class="site-footer">
+      <a class="brand" href="#top"><span class="brand__mark" aria-hidden="true">MA</span><span class="brand__name">Malik Abuallatta</span></a>
+      <p>Designed and built with care. <span>© <span data-year></span></span></p><a href="#top">Back to top ↑</a>
+    </footer>
+  </body>
 </html>
