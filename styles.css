@@ -156,6 +156,7 @@ h2 { max-inline-size: 13ch; font-size: clamp(2.9rem, 6vw, 6rem); }
 .project__links { display: flex; gap: 1.25rem; margin-block-start: auto; padding-block-start: 2rem; }
 .project__links a { padding-block-end: 0.15rem; border-block-end: 1px solid currentColor; font-size: 0.8rem; font-weight: 760; }
 .project__links a:hover { color: var(--lime); }
+.project__status { color: var(--mint); font-size: 0.72rem; font-weight: 760; letter-spacing: 0.08em; text-transform: uppercase; }
 
 .preview--chess { background: #d2e6bd; background-image: linear-gradient(145deg, transparent 45%, rgba(255,255,255,.45)); }
 .chess-board { display: grid; grid-template-columns: repeat(4, 1fr); inline-size: min(70%, 24rem); aspect-ratio: 1; overflow: hidden; color: #10291d; background: #e9f2dd; border: 0.8rem solid #173c2a; border-radius: 0.7rem; box-shadow: 0 2rem 4rem rgba(4, 28, 16, 0.25); transform: rotate(-5deg); }
