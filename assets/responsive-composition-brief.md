@@ -1,43 +1,59 @@
-# Portfolio intro composition brief
+# Current responsive composition brief
 
-## Archetype and hierarchy
+## Shared world
 
-- Center-stage portrait hero with a full-viewport splash layer.
-- Live DOM navigation and title remain above the visual scene.
-- Layer order: warm base, glow, portfolio word, transparent window shadow, Three.js portrait, live title/header, splash.
+- Every viewport uses one fixed warm base world. Hero, About, Skills, and
+  Contact remain transparent semantic regions inside the same scene.
+- The window shadow, portrait, black hole, and environmental words may cross
+  semantic boundaries. Structural wrappers do not clip them.
+- The header is an interface layer above the depth world. At 960px and below it
+  switches to the contained mobile navigation; without JavaScript it presents
+  the same destinations as compact normal links.
 
-## Intro sequence
+## Hero and intro
 
-1. A critical inline splash shell prevents any unstyled logo flash, then reveals the MA monogram and a nearby rounded progress bar driven by critical-asset readiness.
-2. Splash fades and releases only after the portrait texture, lighting images, monogram images, and web fonts resolve, with a long emergency fallback to avoid trapping the page.
-3. Three.js camera moves from a close preset to its final `z` position with a fast-start, slow-finish ramp while the portrait follows its own stronger ease-out rise from below.
-4. Header controls and title enter with short staggered reveals; the role resolves rapidly letter by letter from blurred, faded positions.
-5. Glow and window shadow reveal through one continuous feathered mask from the top-start corner toward the bottom-end corner.
+- Three.js owns the camera-space portrait. A matching DOM cutout is the static
+  baseline and WebGL fallback.
+- The first-visit splash is bounded: it never waits for below-fold art, hash
+  destinations bypass it, reduced motion skips it, and the application has an
+  independent release failsafe.
+- The renderer caps DPR/pixel count and sleeps when pointer and intro motion have
+  settled. The large Three dependency is loaded as a separate enhancement
+  chunk after the small application shell.
+- Phone portrait uses the narrow camera preset; short landscape compacts the
+  identity type; desktop and ultrawide retain centered framing without raising
+  the framebuffer beyond useful portrait detail.
 
-## Responsive states
+## About transition
 
-- Narrow/standard portrait: smaller splash mark, gentler camera travel, mobile menu remains closed during intro.
-- Short landscape: compact existing hero type, wide camera preset, splash mark constrained by `svh`.
-- Tablet: medium camera travel with the existing balanced portrait composition.
-- Desktop/ultrawide: strongest camera travel while retaining the centered portrait and capped typography.
-- Reduced motion: splash is skipped, camera uses its final position, all content and lighting are immediately visible.
+- The black hole is a transition-layer world object, not an About child. Its
+  sticky anchor begins 150svh into the world and remains free of section clips.
+- About uses a compact reveal/hold/absorption runway. The biography remains live
+  DOM text and selectable.
+- On reduced motion, Hero identity fades without shrinking into dots, gravity
+  travel is removed, the black hole fades before Skills, and all copy remains
+  available in a coherent reading state.
 
-## Technology decision
+## Skills and Contact
 
-- Hybrid 3D/2.5D. Three.js is retained only for the existing portrait plane and the requested real camera travel. Splash, live text, and diagonal lighting use CSS animation for lower cost and accessible fallbacks.
-- The WebGL scene is event-driven: it renders at full refresh rate while the intro or pointer easing is active, then sleeps completely at rest. Ambient lighting drift runs on compositor-friendly CSS transforms, and the framebuffer is capped to the source portrait's useful detail so high-DPI laptops do not shade invisible extra pixels.
+- Skills begins in the lower camera field as About releases. Its content is
+  visible by default and receives a one-shot staggered reveal only when motion
+  enhancement is available.
+- Phone layouts use one skill column and content-driven height; desktop uses
+  three columns. Neither path keeps a scroll-scrub loop alive.
+- Contact is the final semantic invitation in the same warm world. Header links
+  navigate to it; the email action remains a direct, keyboard-usable link.
 
-## About composition
+## Required viewport checks
 
-- Center-stage continuous-world composition: the oversized low-contrast `ABOUT` remains environmental type, with a centered live biography returning to the original minimal typographic style.
-- The biography is a crisp DOM subject above the shared warm canvas. Its X position, Y position, width, responsive size adjustment, and font weight are centralized in `about-copy-position.json`; the on-page development editor updates those values live and writes accepted positions back to that config through the Vite development server.
-- The section remains hybrid 3D/2.5D: Three.js continues to own the persistent camera world, while the semantic About copy uses the DOM because it does not require geometry. Its existing blur/opacity reveal remains tied to the About hold, with a complete static reduced-motion state.
-- Hero and About continue to share the fixed warm canvas without a section-local fill or clipping boundary.
-- The black hole owns two lightweight SVG orbital systems in the same 2048×1152 local coordinate system as its source image. The Rim tab generates full concentric paths; the Smart Top tab derives continuous upper semicircles with cubic outward flares at both ends, then applies relative X/Y, scale, and height adjustments. Both use smooth, filter-free strokes with independent density, width, opacity, and tint. The top contours remain static for a clean silhouette, while rim animation pauses outside the black hole's focus area, in hidden browser tabs, and under reduced motion. The Object tab controls source-image opacity. The interface panel remains draggable, keyboard-movable, resizable, and persistent without trapping the world object inside a semantic section.
+- 360×640 and 390×844 phone portrait
+- 667×375 short phone landscape
+- 960px and 961px header boundary
+- 768×1024 tablet portrait
+- 1440×900 desktop
+- 1440×900 desktop at 2× DPR
+- 2560×1080 ultrawide
 
-## Contact transition
-
-- The header contact control is a semantic dialog trigger; the email action remains a normal link inside the revealed card.
-- The interaction is a DOM-based 2.5D sequence: the paper plane exits the trigger, re-enters from the left at half the viewport width, compresses into a light point, and expands into a centered dark-glass card. Closing reverses the morph, sends the large plane beyond the right edge, then lands a final small plane precisely in the trigger.
-- The card width is capped on desktop, nearly full-width on phones, and vertically scrollable on severe short-height viewports. The mobile header retains a compact icon-only contact trigger alongside the menu.
-- The modal uses native dialog focus containment, Escape and outside-click dismissal, explicit focus restoration, a large touch target, and a reduced-motion fade that skips all spatial travel.
+At each size verify no horizontal document overflow, no cut world object, a
+usable 44px minimum control target, and visible final content under reduced
+motion, no WebGL, and no JavaScript.

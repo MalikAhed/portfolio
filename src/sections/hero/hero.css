@@ -6,7 +6,6 @@
 .hero-about-flow {
   --overlay-x: 0px;
   --overlay-y: 0px;
-  --overlay-hold-y: 0px;
   --overlay-rotation: 0deg;
   --overlay-scale: 1;
   --portrait-tail-size: 5rem;
@@ -14,16 +13,14 @@
   --scene-scroll-y: 0px;
   --hero-outro: 0;
   --hero-backdrop-outro: 0;
-  --world-gravity-scale: 1;
-  --world-gravity-opacity: 1;
   position: relative;
   overflow: visible;
   background: var(--color-canvas);
 }
 
-.hero-about-flow::before {
+.base-world {
   position: fixed;
-  z-index: 0;
+  z-index: var(--depth-background);
   inset: 0;
   background:
     radial-gradient(circle at 54% 48%, rgb(255 255 255 / 72%), transparent 34%),
@@ -34,7 +31,6 @@
       rgb(223 216 206 / 30%)
     ),
     var(--color-canvas);
-  content: "";
   pointer-events: none;
 }
 
@@ -61,7 +57,7 @@
 
 .two-section-overlay {
   position: absolute;
-  z-index: 20;
+  z-index: var(--depth-world);
   inset: 0;
   block-size: 200vh;
   block-size: 200svh;
@@ -86,28 +82,6 @@
     rgb(0 0 0 / 28%) 91%,
     transparent 100%
   );
-  transform: translate3d(0, var(--overlay-hold-y), 0);
-  will-change: transform;
-}
-
-@supports (animation-timeline: scroll()) {
-  .two-section-overlay {
-    animation: overlay-about-hold linear both;
-    animation-timeline: scroll(root block);
-    animation-range: 0 250svh;
-  }
-}
-
-@keyframes overlay-about-hold {
-  0%,
-  40% {
-    transform: translate3d(0, 0, 0);
-  }
-
-  60%,
-  100% {
-    transform: translate3d(0, 50svh, 0);
-  }
 }
 
 .two-section-overlay__media,
@@ -118,13 +92,8 @@
 }
 
 .two-section-overlay__media {
-  opacity: var(--world-gravity-opacity);
-  transform: scale(var(--world-gravity-scale));
-  /* At the start of About, this document-space point lands at the black
-     hole's sticky viewport center. The window shadow therefore contracts into
-     the same world focal point while the semantic section remains pinned. */
-  transform-origin: 50% 75%;
-  will-change: opacity, transform;
+  /* The shadow is authored in document space and scrolls past at its original
+     size and position; About's gravity beat never transforms this layer. */
 }
 
 .two-section-overlay__image {
@@ -163,22 +132,14 @@
   min-block-size: 100svh;
 }
 
-.about {
-  position: relative;
-  z-index: 2;
-  min-block-size: 100vh;
-  min-block-size: 100svh;
-}
-
 .scene {
   position: absolute;
-  z-index: 30;
+  z-index: var(--depth-subject);
   inset: 0 0 auto;
   block-size: calc(100vh + var(--cutout-offset) + var(--portrait-tail-size));
   block-size: calc(100svh + var(--cutout-offset) + var(--portrait-tail-size));
   pointer-events: none;
   transform: translate3d(0, var(--scene-scroll-y), 0);
-  will-change: transform;
   -webkit-clip-path: polygon(
     0 0,
     100% 0,
@@ -195,6 +156,32 @@
   );
 }
 
+.hero-about-flow.is-hero-scroll-active .scene {
+  will-change: transform;
+}
+
+.hero__portrait-fallback {
+  position: absolute;
+  z-index: var(--depth-subject);
+  inset: clamp(5.5rem, 13svh, 8rem) 0 auto;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  transition: opacity var(--duration-medium) ease;
+}
+
+.hero__portrait-fallback img {
+  display: block;
+  inline-size: min(46vw, 42rem);
+  block-size: auto;
+  filter: drop-shadow(1.75rem 1.2rem 1.2rem rgb(60 55 49 / 18%));
+  user-select: none;
+}
+
+.has-hero-webgl .hero__portrait-fallback {
+  opacity: 0;
+}
+
 .scene canvas {
   display: block;
   inline-size: 100%;
@@ -205,12 +192,16 @@
   position: fixed;
   /* Subject-depth copy: the transparent Three.js portrait at layer 30
      occludes the name and role while the canvas remains clear elsewhere. */
-  z-index: 20;
+  z-index: var(--depth-world);
   inset-block-start: clamp(6.75rem, 13.5vh, 9rem);
   inset-inline-start: 50%;
   inline-size: max-content;
   text-align: center;
   transform: translateX(-50%);
+}
+
+html:not(.has-js) .hero__identity {
+  position: absolute;
 }
 
 .hero__identity h1,
@@ -450,7 +441,7 @@
 
 .hero__backdrop {
   position: absolute;
-  z-index: 1;
+  z-index: var(--depth-far);
   inset-block-start: 50%;
   inset-inline: 0;
   inline-size: 100%;
@@ -468,6 +459,14 @@
 }
 
 @media (max-width: 850px) {
+  .hero__portrait-fallback {
+    inset-block-start: clamp(7rem, 17svh, 10rem);
+  }
+
+  .hero__portrait-fallback img {
+    inline-size: min(82vw, 34rem);
+  }
+
   .hero__identity {
     inset-block-start: clamp(6.5rem, 15vh, 8rem);
     inline-size: calc(100% - 2.5rem);
@@ -507,6 +506,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero__portrait-fallback {
+    transition: none;
+  }
   .is-intro-pending:not(.is-hero-entering) .site-header,
   .is-intro-pending:not(.is-hero-entering) .hero__identity h1,
   .is-intro-pending:not(.is-hero-entering) .hero__role,

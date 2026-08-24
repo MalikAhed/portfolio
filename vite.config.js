@@ -7,6 +7,11 @@ const positionFile = new URL(
   "./src/sections/about/about-copy-position.json",
   import.meta.url,
 );
+const sceneEditorEntryFile = fileURLToPath(
+  new URL("./src/scene-editor.js", import.meta.url),
+);
+const sceneEditorVirtualId = "virtual:scene-editor";
+const resolvedSceneEditorVirtualId = `\0${sceneEditorVirtualId}`;
 
 function aboutCopyPositionEditor() {
   return {
@@ -50,12 +55,41 @@ function aboutCopyPositionEditor() {
   };
 }
 
-export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? "/portfolio/" : "/",
+function developmentSceneEditors(command) {
+  return {
+    name: "development-scene-editors",
+    resolveId(source) {
+      if (source !== sceneEditorVirtualId) return null;
+      return command === "serve"
+        ? sceneEditorEntryFile
+        : resolvedSceneEditorVirtualId;
+    },
+    load(id) {
+      if (id !== resolvedSceneEditorVirtualId) return null;
+      return "export async function loadSceneEditorModules() { return null; }";
+    },
+    transformIndexHtml: {
+      order: "pre",
+      handler(html, context) {
+        if (context.server) return html;
+        return html.replace(
+          /\s*<!-- DEV_SCENE_EDITORS_START -->[\s\S]*?<!-- DEV_SCENE_EDITORS_END -->/,
+          "",
+        );
+      },
+    },
+  };
+}
+
+export default defineConfig(({ command }) => ({
+  base: process.env.VITE_BASE_PATH ?? "/",
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
-  plugins: [vue(), aboutCopyPositionEditor()],
-});
+  plugins: [
+    developmentSceneEditors(command),
+    ...(command === "serve" ? [vue(), aboutCopyPositionEditor()] : []),
+  ],
+}));

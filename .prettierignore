@@ -2,5 +2,6 @@
 dist/
 node_modules/
 public/assets/
-refrances/
+references/
+assets/source-art/
 package-lock.json

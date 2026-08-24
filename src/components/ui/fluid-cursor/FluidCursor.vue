@@ -177,9 +177,9 @@ onMounted(() => {
       ? (gl as WebGL2RenderingContext).HALF_FLOAT
       : (halfFloat && halfFloat.HALF_FLOAT_OES) || 0;
 
-    let formatRGBA: unknown;
-    let formatRG: unknown;
-    let formatR: unknown;
+    let formatRGBA: { internalFormat: number; format: number } | null;
+    let formatRG: { internalFormat: number; format: number } | null;
+    let formatR: { internalFormat: number; format: number } | null;
 
     if (isWebGL2) {
       formatRGBA = getSupportedFormat(
@@ -204,6 +204,12 @@ onMounted(() => {
       formatRGBA = getSupportedFormat(gl, gl.RGBA, gl.RGBA, halfFloatTexType);
       formatRG = getSupportedFormat(gl, gl.RGBA, gl.RGBA, halfFloatTexType);
       formatR = getSupportedFormat(gl, gl.RGBA, gl.RGBA, halfFloatTexType);
+    }
+
+    if (!formatRGBA || !formatRG || !formatR) {
+      throw new Error(
+        "Required floating-point render textures are unavailable.",
+      );
     }
 
     return {
@@ -269,7 +275,10 @@ onMounted(() => {
     );
 
     const fbo = gl.createFramebuffer();
-    if (!fbo) return false;
+    if (!fbo) {
+      gl.deleteTexture(texture);
+      return false;
+    }
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.framebufferTexture2D(
@@ -280,6 +289,10 @@ onMounted(() => {
       0,
     );
     const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.deleteFramebuffer(fbo);
+    gl.deleteTexture(texture);
     return status === gl.FRAMEBUFFER_COMPLETE;
   }
 
@@ -313,6 +326,15 @@ onMounted(() => {
     gl.shaderSource(shader, shaderSource);
     gl.compileShader(shader);
 
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      console.error(
+        "Fluid shader compilation failed.",
+        gl.getShaderInfoLog(shader),
+      );
+      gl.deleteShader(shader);
+      return null;
+    }
+
     return shader;
   }
 
@@ -326,6 +348,15 @@ onMounted(() => {
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.error(
+        "Fluid program linking failed.",
+        gl.getProgramInfoLog(program),
+      );
+      gl.deleteProgram(program);
+      return null;
+    }
 
     return program;
   }
@@ -866,6 +897,18 @@ onMounted(() => {
     };
   }
 
+  function deleteFBO(target: FBO | undefined) {
+    if (!target) return;
+    gl.deleteFramebuffer(target.fbo);
+    gl.deleteTexture(target.texture);
+  }
+
+  function deleteDoubleFBO(target: DoubleFBO | undefined) {
+    if (!target) return;
+    deleteFBO(target.read);
+    deleteFBO(target.write);
+  }
+
   function resizeFBO(
     target: FBO,
     w: number,
@@ -880,6 +923,7 @@ onMounted(() => {
     if (copyProgram.uniforms.uTexture)
       gl.uniform1i(copyProgram.uniforms.uTexture, target.attach(0));
     blit(newFBO, false);
+    deleteFBO(target);
     return newFBO;
   }
 
@@ -902,6 +946,7 @@ onMounted(() => {
       type,
       param,
     );
+    deleteFBO(target.write);
     target.write = createFBO(w, h, internalFormat, format, type, param);
     target.width = w;
     target.height = h;
@@ -963,6 +1008,7 @@ onMounted(() => {
       );
     }
 
+    deleteFBO(divergence);
     divergence = createFBO(
       simRes.width,
       simRes.height,
@@ -971,6 +1017,7 @@ onMounted(() => {
       texType,
       gl.NEAREST,
     );
+    deleteFBO(curl);
     curl = createFBO(
       simRes.width,
       simRes.height,
@@ -979,6 +1026,7 @@ onMounted(() => {
       texType,
       gl.NEAREST,
     );
+    deleteDoubleFBO(pressure);
     pressure = createDoubleFBO(
       simRes.width,
       simRes.height,
@@ -1617,6 +1665,12 @@ onMounted(() => {
     visibilityObserver.disconnect();
     document.removeEventListener("visibilitychange", handleVisibilityChange);
     window.removeEventListener(FLUID_SETTINGS_EVENT, handleFluidSettings);
+    deleteDoubleFBO(dye);
+    deleteDoubleFBO(velocity);
+    deleteFBO(divergence);
+    deleteFBO(curl);
+    deleteDoubleFBO(pressure);
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
   };
 
   if (effectEnabled) animationFrame = requestAnimationFrame(updateFrame);

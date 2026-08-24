@@ -6,8 +6,10 @@ const BACKGROUND_COLOR = 0xf5f0e8;
 // framebuffer adds GPU work without adding visible portrait detail.
 const MAX_PIXEL_COUNT = 1920 * 1080;
 const FINAL_CAMERA_Z = 5;
-const INTRO_MINIMUM_MS = 1150;
-const INTRO_CAMERA_DURATION_MS = 1550;
+const INTRO_MINIMUM_MS = 350;
+const INTRO_CAMERA_DURATION_MS = 650;
+const INTRO_FAILSAFE_MS = 1000;
+const INTRO_SESSION_KEY = "portfolio-intro-seen-v1";
 const PORTRAIT_SHADOW_PADDING = 72;
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`;
 const PORTRAIT_TEXTURE_SOURCES = [
@@ -21,7 +23,8 @@ const PORTRAIT_SHADOW_TEXTURE_SOURCES = [
 
 export function initHeroScene() {
   const stage = getRequiredElement("#scene");
-  const hero = stage.closest(".hero");
+  const worldStage = stage.closest("[data-world-stage]");
+  const hero = worldStage?.querySelector(".hero");
   const app = getRequiredElement("#app");
   const splashProgressFill = getRequiredElement(".splash__progress-fill");
   const splashPercentage = getRequiredElement(".splash__percentage");
@@ -55,13 +58,31 @@ export function initHeroScene() {
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   camera.position.set(0, 0, FINAL_CAMERA_Z);
 
-  const renderer = new THREE.WebGLRenderer({
-    antialias: false,
-    alpha: true,
-    depth: false,
-    powerPreference: "high-performance",
-    stencil: false,
-  });
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({
+      antialias: false,
+      alpha: true,
+      depth: false,
+      powerPreference: "high-performance",
+      stencil: false,
+    });
+  } catch (error) {
+    console.warn(
+      "WebGL is unavailable; using the static Hero portrait.",
+      error,
+    );
+    stage.dataset.sceneState = "fallback";
+    document.documentElement.classList.add("is-webgl-unavailable");
+    document.body.classList.remove(
+      "is-intro-pending",
+      "is-intro-exiting",
+      "is-hero-entering",
+    );
+    document.body.classList.add("is-intro-complete");
+    app.inert = false;
+    return () => {};
+  }
 
   renderer.setClearColor(BACKGROUND_COLOR, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -178,6 +199,7 @@ export function initHeroScene() {
     );
     layoutPortrait();
     stage.dataset.sceneState = "ready";
+    document.documentElement.classList.add("has-hero-webgl");
     requestSceneFrame();
     resolvePortraitReady();
   }
@@ -317,6 +339,11 @@ export function initHeroScene() {
     );
     document.body.classList.add("is-intro-complete");
     app.inert = false;
+    try {
+      sessionStorage.setItem(INTRO_SESSION_KEY, "true");
+    } catch {
+      // Storage can be unavailable in hardened browsing modes.
+    }
     renderer.render(scene, camera);
   }
 
@@ -341,22 +368,40 @@ export function initHeroScene() {
     camera.position.z = introCameraStartZ;
     introCameraStartTime = performance.now();
     document.body.classList.add("is-intro-exiting", "is-hero-entering");
-    scheduleIntro(finishIntro, 2200);
+    scheduleIntro(finishIntro, INTRO_CAMERA_DURATION_MS + 200);
     syncAnimationLoop();
   }
 
   function prepareIntro() {
-    if (reducedMotion.matches) {
+    let introSeen = false;
+    try {
+      introSeen = sessionStorage.getItem(INTRO_SESSION_KEY) === "true";
+    } catch {
+      // Treat unavailable storage as a first visit.
+    }
+
+    if (
+      reducedMotion.matches ||
+      introSeen ||
+      document.body.classList.contains("is-intro-complete") ||
+      window.scrollY > 1 ||
+      window.location.hash
+    ) {
       finishIntro();
       return;
     }
 
     const criticalImages = Array.from(
       document.querySelectorAll(
-        ".splash__mark, .brand__mark, .hero__window-shadow, .black-hole-image, .hero__window-glow",
+        ".splash__mark, .brand__mark, .hero__window-shadow",
       ),
     );
-    const fontReady = document.fonts?.ready ?? Promise.resolve();
+    const fontReady = document.fonts
+      ? Promise.allSettled([
+          document.fonts.load('400 1em "DM Serif Display"'),
+          document.fonts.load('700 1em "Manrope"'),
+        ])
+      : Promise.resolve();
     const criticalAssets = [
       portraitReady,
       fontReady,
@@ -376,7 +421,7 @@ export function initHeroScene() {
 
     const allCriticalAssets = Promise.allSettled(trackedAssets);
     const loadingFailsafe = new Promise((resolve) => {
-      scheduleIntro(resolve, 8000);
+      scheduleIntro(resolve, INTRO_FAILSAFE_MS);
     });
     const criticalAssetsReady = Promise.race([
       allCriticalAssets,
@@ -389,7 +434,7 @@ export function initHeroScene() {
       const elapsed = performance.now() - introBootTime;
       scheduleIntro(
         beginIntroReveal,
-        Math.max(420, INTRO_MINIMUM_MS - elapsed),
+        Math.max(120, INTRO_MINIMUM_MS - elapsed),
       );
     });
   }
@@ -546,10 +591,31 @@ export function initHeroScene() {
     syncAnimationLoop();
   }
 
+  function handleContextLost(event) {
+    event.preventDefault();
+    stage.dataset.sceneState = "fallback";
+    document.documentElement.classList.remove("has-hero-webgl");
+    document.documentElement.classList.add("is-webgl-unavailable");
+    finishIntro();
+  }
+
+  function handleContextRestored() {
+    document.documentElement.classList.remove("is-webgl-unavailable");
+    document.documentElement.classList.add("has-hero-webgl");
+    stage.dataset.sceneState = "ready";
+    resizeScene();
+    requestSceneFrame();
+  }
+
   hero.addEventListener("pointermove", handlePointerMove, { passive: true });
   hero.addEventListener("pointerleave", resetPointer);
   reducedMotion.addEventListener("change", handleMotionPreferenceChange);
   document.addEventListener("visibilitychange", syncAnimationLoop);
+  renderer.domElement.addEventListener("webglcontextlost", handleContextLost);
+  renderer.domElement.addEventListener(
+    "webglcontextrestored",
+    handleContextRestored,
+  );
 
   function resizeScene() {
     const cssWidth = Math.max(1, stage.clientWidth);
@@ -557,7 +623,7 @@ export function initHeroScene() {
     const heroHeight = Math.max(1, hero.clientHeight);
     const requestedRatio = Math.min(window.devicePixelRatio || 1, 1.75);
     const requestedPixels =
-      cssWidth * requestedRatio * heroHeight * requestedRatio;
+      cssWidth * requestedRatio * cssHeight * requestedRatio;
     const pixelScale =
       requestedPixels > MAX_PIXEL_COUNT
         ? Math.sqrt(MAX_PIXEL_COUNT / requestedPixels)
@@ -587,6 +653,14 @@ export function initHeroScene() {
     hero.removeEventListener("pointerleave", resetPointer);
     reducedMotion.removeEventListener("change", handleMotionPreferenceChange);
     document.removeEventListener("visibilitychange", syncAnimationLoop);
+    renderer.domElement.removeEventListener(
+      "webglcontextlost",
+      handleContextLost,
+    );
+    renderer.domElement.removeEventListener(
+      "webglcontextrestored",
+      handleContextRestored,
+    );
 
     const disposedGeometries = new Set();
     const disposedMaterials = new Set();
@@ -618,6 +692,7 @@ export function initHeroScene() {
 
     renderer.dispose();
     renderer.domElement.remove();
+    document.documentElement.classList.remove("has-hero-webgl");
   }
 
   return dispose;

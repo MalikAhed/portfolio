@@ -4,7 +4,7 @@ import { loadFluidSettings, publishFluidSettings } from "./fluid-settings.js";
 export function initFluidCursor() {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const settings = publishFluidSettings(loadFluidSettings());
-  if (reducedMotion.matches) return () => {};
+  if (reducedMotion.matches || !settings.enabled) return () => {};
 
   const hero = document.querySelector("[data-hero]");
   if (!hero) return () => {};

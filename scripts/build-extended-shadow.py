@@ -6,9 +6,9 @@ from PIL import Image, ImageFilter
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "refrances/generated-window-shadow-two-section-plate.png"
-OUTPUT = ROOT / "public/assets/window-shadow-two-section.png"
-PREVIEW = ROOT / "public/assets/window-shadow-two-section-preview.jpg"
+SOURCE = ROOT / "references/generated-window-shadow-two-section-plate.png"
+OUTPUT = ROOT / "assets/source-art/window-shadow-two-section.png"
+PREVIEW = ROOT / "assets/source-art/window-shadow-two-section-preview.jpg"
 
 TARGET_SIZE = (1672, 1882)
 CANVAS = (245, 240, 232)

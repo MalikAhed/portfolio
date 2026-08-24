@@ -1,6 +1,6 @@
 .splash {
   position: fixed;
-  z-index: 100;
+  z-index: var(--depth-system);
   inset: 0;
   display: grid;
   place-items: center;
@@ -14,7 +14,7 @@
   background: var(--color-splash);
   overflow: hidden;
   isolation: isolate;
-  animation: splash-failsafe 1ms linear 12s forwards;
+  animation: splash-failsafe 1ms linear 4s forwards;
   transform-origin: top center;
   will-change: opacity, transform;
 }

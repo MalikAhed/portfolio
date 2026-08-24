@@ -1,0 +1,206 @@
+.black-hole-editor {
+  position: fixed;
+  z-index: var(--depth-system);
+  inset: auto max(1rem, env(safe-area-inset-right, 0px))
+    max(1rem, env(safe-area-inset-bottom, 0px)) auto;
+  color: #f7f2e9;
+  font-family: var(--font-body);
+}
+
+.is-intro-pending:not(.is-intro-complete) .black-hole-editor {
+  display: none;
+}
+
+.black-hole-editor button,
+.black-hole-editor input,
+.black-hole-editor select {
+  font: inherit;
+}
+
+.black-hole-editor__toggle,
+.black-hole-editor__panel {
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 1rem;
+  color: inherit;
+  background: rgb(17 18 16 / 92%);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 22%);
+}
+
+.black-hole-editor__toggle {
+  min-block-size: 2.8rem;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+
+.black-hole-editor__panel {
+  display: grid;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  inline-size: min(21rem, calc(100vw - 2rem));
+  block-size: min(42rem, calc(100dvh - 2rem));
+  min-inline-size: min(16rem, calc(100vw - 1rem));
+  min-block-size: min(18rem, calc(100dvh - 1rem));
+  max-inline-size: calc(100vw - 1rem);
+  max-block-size: calc(100dvh - 1rem);
+  padding: 1rem;
+  overflow: auto;
+  resize: both;
+}
+
+.black-hole-editor__panel[hidden] {
+  display: none;
+}
+
+.black-hole-editor__heading,
+.black-hole-editor__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.black-hole-editor__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 0.75rem;
+  background: rgb(255 255 255 / 5%);
+}
+
+.black-hole-editor__tabs button {
+  min-block-size: 2rem;
+  border: 0;
+  border-radius: 0.55rem;
+  color: rgb(247 242 233 / 58%);
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.black-hole-editor__tabs button[aria-selected="true"] {
+  color: #f7f2e9;
+  background: rgb(255 255 255 / 10%);
+  box-shadow: 0 0.25rem 0.8rem rgb(0 0 0 / 12%);
+}
+
+.black-hole-editor__tab-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.black-hole-editor__tab-panel[hidden] {
+  display: none;
+}
+
+.black-hole-editor__drag-handle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.45rem;
+  min-block-size: 2rem;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.black-hole-editor__drag-handle:active {
+  cursor: grabbing;
+}
+
+.black-hole-editor__drag-handle span {
+  color: rgb(247 242 233 / 46%);
+  font-size: 1rem;
+  letter-spacing: -0.25em;
+}
+
+.black-hole-editor__close,
+.black-hole-editor__actions button {
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 0.65rem;
+  color: inherit;
+  background: rgb(255 255 255 / 7%);
+  cursor: pointer;
+}
+
+.black-hole-editor__close {
+  inline-size: 2rem;
+  block-size: 2rem;
+  font-size: 1.35rem;
+}
+
+.black-hole-editor label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.black-hole-editor input {
+  grid-column: 1 / -1;
+  inline-size: 100%;
+}
+
+.black-hole-editor select {
+  grid-column: 1 / -1;
+  min-block-size: 2.2rem;
+  inline-size: 100%;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 0.5rem;
+  padding-inline: 0.55rem;
+  color: inherit;
+  background: rgb(255 255 255 / 7%);
+  cursor: pointer;
+}
+
+.black-hole-editor input[type="range"] {
+  accent-color: #f7f2e9;
+  cursor: pointer;
+}
+
+.black-hole-editor input[type="color"] {
+  block-size: 2.2rem;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 0.5rem;
+  background: rgb(255 255 255 / 7%);
+  cursor: pointer;
+}
+
+.black-hole-editor output {
+  color: rgb(247 242 233 / 62%);
+  font-variant-numeric: tabular-nums;
+}
+
+.black-hole-editor__hint {
+  margin: -0.2rem 0 0;
+  color: rgb(247 242 233 / 58%);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.black-hole-editor__section-title {
+  margin: 0.15rem 0 -0.2rem;
+  color: rgb(247 242 233 / 46%);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.black-hole-editor__actions button {
+  flex: 1;
+  min-block-size: 2.35rem;
+  padding: 0.5rem;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 480px) {
+  .black-hole-editor__panel {
+    block-size: min(34rem, calc(100dvh - 1rem));
+  }
+}

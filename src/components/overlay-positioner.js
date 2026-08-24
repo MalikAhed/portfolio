@@ -1,6 +1,9 @@
-// v2 prevents a previously published, incorrect placement from overriding the
-// authored Hero/About checkpoint on returning browsers.
+// Stored placement is a local scene-editor concern. Production always uses the
+// source-controlled composition so returning visitors see the same world.
 const STORAGE_KEY = "portfolio-overlay-position-v2";
+const editorEnabled =
+  import.meta.env.DEV &&
+  new URLSearchParams(window.location.search).get("edit") === "scene";
 
 const DEFAULT_PLACEMENT = {
   x: -210.70892333984375,
@@ -12,6 +15,8 @@ const DEFAULT_PLACEMENT = {
 };
 
 function readLockedPlacement() {
+  if (!editorEnabled) return { ...DEFAULT_PLACEMENT };
+
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
     return Object.fromEntries(
@@ -30,21 +35,30 @@ export function initLockedOverlayPlacement() {
   if (!flow) return () => {};
 
   const placement = readLockedPlacement();
+  const halfAngle = (placement.angle * Math.PI) / 360;
+  let frame = 0;
 
-  function render() {
-    const halfAngle = (placement.angle * Math.PI) / 360;
+  function renderViewportPlacement() {
+    frame = 0;
     const tailSize = window.innerWidth / 2 / Math.tan(halfAngle);
-
-    flow.style.setProperty("--overlay-x", `${placement.x}px`);
-    flow.style.setProperty("--overlay-y", `${placement.y}px`);
-    flow.style.setProperty("--overlay-rotation", `${placement.rotation}deg`);
-    flow.style.setProperty("--overlay-scale", String(placement.scale));
     flow.style.setProperty("--portrait-tail-size", `${tailSize}px`);
-    flow.style.setProperty("--cutout-offset", `${placement.cutoutOffset}svh`);
   }
 
-  render();
-  window.addEventListener("resize", render);
+  function requestPlacementUpdate() {
+    if (frame) return;
+    frame = window.requestAnimationFrame(renderViewportPlacement);
+  }
 
-  return () => window.removeEventListener("resize", render);
+  flow.style.setProperty("--overlay-x", `${placement.x}px`);
+  flow.style.setProperty("--overlay-y", `${placement.y}px`);
+  flow.style.setProperty("--overlay-rotation", `${placement.rotation}deg`);
+  flow.style.setProperty("--overlay-scale", String(placement.scale));
+  flow.style.setProperty("--cutout-offset", `${placement.cutoutOffset}svh`);
+  renderViewportPlacement();
+  window.addEventListener("resize", requestPlacementUpdate);
+
+  return () => {
+    window.removeEventListener("resize", requestPlacementUpdate);
+    if (frame) window.cancelAnimationFrame(frame);
+  };
 }

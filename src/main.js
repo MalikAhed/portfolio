@@ -1,55 +1,138 @@
 import "@fontsource/anton/latin-400.css";
 import "@fontsource/dm-serif-display/latin-400.css";
 import "@fontsource/manrope/latin-400.css";
-import "@fontsource/manrope/latin-500.css";
 import "@fontsource/manrope/latin-600.css";
 import "@fontsource/manrope/latin-700.css";
 import "@fontsource/manrope/latin-800.css";
 
 import { initMobileNavigation } from "./components/site-header/mobile-navigation.js";
-import {
-  importOriginStateIntoLab,
-  installOriginStateResponder,
-} from "./components/origin-state-transfer.js";
-import { initHeroScene } from "./sections/hero/hero-scene.js";
 import { initLockedOverlayPlacement } from "./components/overlay-positioner.js";
-import { initCutoutScrollExit } from "./sections/hero/cutout-scroll-exit.js";
 import { initBlackHole } from "./sections/about/black-hole.js";
-import { initAboutCopyEditor } from "./sections/about/about-copy-editor.js";
-import { initFluidCursor } from "./components/fluid-cursor/fluid-cursor.js";
-import { initSceneStateCopy } from "./components/scene-state-copy/scene-state-copy.js";
+import { initCutoutScrollExit } from "./sections/hero/cutout-scroll-exit.js";
+import { initSkillsReveal } from "./sections/skills/skills.js";
 
-if ("scrollRestoration" in window.history) {
-  window.history.scrollRestoration = "manual";
+const app = document.querySelector("#app");
+const skipLink = document.querySelector(".skip-link");
+const mainContent = document.querySelector("#main-content");
+const disposers = [];
+let pageDisposed = false;
+let introReleaseTimer = 0;
+const sceneEditorEnabled =
+  import.meta.env.DEV &&
+  new URLSearchParams(window.location.search).get("edit") === "scene";
+const sceneEditors = document.querySelectorAll("[data-scene-editor]");
+
+document.documentElement.classList.add("has-cinematic-scene");
+document.documentElement.classList.toggle(
+  "has-scene-editor",
+  sceneEditorEnabled,
+);
+sceneEditors.forEach((editor) => {
+  editor.hidden = true;
+});
+
+function releaseIntro() {
+  if (introReleaseTimer) {
+    window.clearTimeout(introReleaseTimer);
+    introReleaseTimer = 0;
+  }
+  document.body.classList.remove(
+    "is-intro-pending",
+    "is-intro-exiting",
+    "is-hero-entering",
+  );
+  document.body.classList.add("is-intro-complete");
+  if (app) app.inert = false;
 }
 
-function resetInitialScroll() {
-  window.scrollTo(0, 0);
+if (window.location.hash) releaseIntro();
+else introReleaseTimer = window.setTimeout(releaseIntro, 2400);
+
+function handleSkipLinkClick() {
+  window.requestAnimationFrame(() => {
+    mainContent?.focus({ preventScroll: true });
+  });
 }
 
-resetInitialScroll();
-window.addEventListener("pageshow", resetInitialScroll);
+skipLink?.addEventListener("click", handleSkipLinkClick);
 
-const disposeOriginStateResponder = installOriginStateResponder();
-await importOriginStateIntoLab();
+function initializeFeature(name, initialize) {
+  try {
+    const dispose = initialize();
+    if (typeof dispose === "function") {
+      if (pageDisposed) dispose();
+      else disposers.push(dispose);
+    }
+  } catch (error) {
+    console.error(`${name} could not be initialized.`, error);
+    document.documentElement.classList.add("is-static-fallback");
+    releaseIntro();
+  }
+}
 
-const disposeFeatures = [
-  disposeOriginStateResponder,
-  initMobileNavigation(),
-  initHeroScene(),
-  initLockedOverlayPlacement(),
-  initCutoutScrollExit(),
-  initBlackHole(),
-  initAboutCopyEditor(),
-  initSceneStateCopy(),
-  initFluidCursor(),
-];
+initializeFeature("Mobile navigation", initMobileNavigation);
+initializeFeature("World overlay", initLockedOverlayPlacement);
+initializeFeature("Hero scroll handoff", initCutoutScrollExit);
+initializeFeature("About narrative", initBlackHole);
+initializeFeature("Skills reveal", initSkillsReveal);
+
+void import("./sections/hero/hero-scene.js")
+  .then(({ initHeroScene }) => {
+    initializeFeature("Hero scene", initHeroScene);
+  })
+  .catch((error) => {
+    console.error("Hero scene could not be loaded.", error);
+    document.documentElement.classList.add("is-static-fallback");
+    releaseIntro();
+  });
+
+if (sceneEditorEnabled) {
+  try {
+    const { loadSceneEditorModules } = await import("virtual:scene-editor");
+    const editorModules = await loadSceneEditorModules();
+    if (editorModules) {
+      const { originState, aboutEditor, sceneCopy, fluidCursor } =
+        editorModules;
+      sceneEditors.forEach((editor) => {
+        editor.hidden = false;
+      });
+      disposers.push(originState.installOriginStateResponder());
+      await originState.importOriginStateIntoLab();
+      initializeFeature("About copy editor", aboutEditor.initAboutCopyEditor);
+      initializeFeature("Scene state copy", sceneCopy.initSceneStateCopy);
+      initializeFeature("Fluid cursor lab", fluidCursor.initFluidCursor);
+    }
+  } catch (error) {
+    console.error("Scene editing tools could not be loaded.", error);
+  }
+}
+
+if (window.location.hash) {
+  window.requestAnimationFrame(() => {
+    let target = null;
+    try {
+      target = document.getElementById(
+        decodeURIComponent(window.location.hash.slice(1)),
+      );
+    } catch {
+      // Leave malformed fragments to the browser's default behavior.
+    }
+    if (!target) return;
+    target.scrollIntoView({ block: "start" });
+    if (target.id === "about") {
+      const holdDistance = Math.max(0, target.offsetHeight - innerHeight);
+      window.scrollBy(0, holdDistance * 0.4);
+    }
+  });
+}
 
 function handlePageHide(event) {
   if (event.persisted) return;
-  disposeFeatures.reverse().forEach((dispose) => dispose());
+  pageDisposed = true;
+  if (introReleaseTimer) window.clearTimeout(introReleaseTimer);
+  while (disposers.length) disposers.pop()?.();
+  skipLink?.removeEventListener("click", handleSkipLinkClick);
   window.removeEventListener("pagehide", handlePageHide);
-  window.removeEventListener("pageshow", resetInitialScroll);
 }
 
 window.addEventListener("pagehide", handlePageHide);

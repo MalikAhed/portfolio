@@ -90,7 +90,7 @@ function drawCurveTrail(
   if (travel <= 0) return;
   const trailStart = direction >= 0 ? Math.max(0, travel - TRAIL_SPAN) : travel;
   const trailEnd = direction >= 0 ? travel : Math.min(1, travel + TRAIL_SPAN);
-  const segments = 28;
+  const segments = 18;
 
   for (let index = 1; index <= segments; index += 1) {
     const localStart = (index - 1) / segments;
@@ -147,7 +147,9 @@ export function createScrollIdentityFlight({
   let renderedBlackHoleProgress = -1;
   let canvasIsVisible = false;
   let objectIsFormed = false;
-  let slowFrameStreak = 0;
+  let lastInputProgress = -1;
+  let lastInputAboutProgress = -1;
+  let lastImmediate = null;
 
   /*
    * Depth-world ownership:
@@ -211,9 +213,27 @@ export function createScrollIdentityFlight({
     const compression = easeOutCubic(compressionProgress);
     const splitDistance = Math.min(180, Math.max(80, window.innerWidth * 0.13));
     const dotHandoff = easeInOut(clamp((compressionProgress - 0.86) / 0.14));
-    const identityState = `${compressionProgress}:${flightProgress > 0}`;
+    const identityState = reducedMotion.matches
+      ? `reduced:${previousScrollProgress}`
+      : `${compressionProgress}:${flightProgress > 0}`;
     if (identityState !== renderedIdentityState) {
       [title, role].forEach((element, index) => {
+        if (reducedMotion.matches) {
+          const reducedExit = easeInOut(
+            clamp((previousScrollProgress - 0.55) / 0.22),
+          );
+          element.style.setProperty(
+            "opacity",
+            String(1 - reducedExit),
+            "important",
+          );
+          element.style.filter = "none";
+          element.style.scale = "1";
+          element.style.translate = "0 0";
+          element.style.transformOrigin = "50% 50%";
+          return;
+        }
+
         const direction = index === 0 ? -1 : 1;
         const { width, height } = pathGeometry.sizes[index];
         const finalScaleX = 10 / Math.max(1, width);
@@ -229,7 +249,7 @@ export function createScrollIdentityFlight({
         element.style.removeProperty("color");
         element.style.removeProperty("background-color");
         element.style.removeProperty("border-radius");
-        element.style.filter = `blur(${compression * (1 - compression) * 2}px)`;
+        element.style.filter = "none";
         element.style.scale = `${scaleX} ${scaleY}`;
         element.style.translate = `${direction * splitDistance * compression}px 0`;
         element.style.transformOrigin = "50% 50%";
@@ -259,12 +279,7 @@ export function createScrollIdentityFlight({
           ),
         );
         word.style.opacity = String(reveal);
-        const simplifyEffects =
-          reducedMotion.matches ||
-          object.classList.contains("is-performance-lite");
-        word.style.filter = simplifyEffects
-          ? "none"
-          : `blur(${(1 - reveal) * 10}px)`;
+        word.style.filter = "none";
         word.style.translate = reducedMotion.matches
           ? "none"
           : `0 ${(1 - reveal) * 0.85}em`;
@@ -358,11 +373,6 @@ export function createScrollIdentityFlight({
       ? Math.min((time - previousFrameTime) / 1000, 0.1)
       : 1 / 60;
     previousFrameTime = time;
-    if (delta > 1 / 40) slowFrameStreak += 1;
-    else slowFrameStreak = Math.max(0, slowFrameStreak - 1);
-    if (slowFrameStreak >= 3) {
-      object.classList.add("is-performance-lite");
-    }
     if (revealTarget === 1) {
       revealProgress = moveToward(
         revealProgress,
@@ -391,8 +401,20 @@ export function createScrollIdentityFlight({
     progress,
     { aboutProgress: nextAboutProgress = 0, immediate = false } = {},
   ) {
-    capturePathGeometry();
     const nextScrollProgress = clamp(progress);
+    const normalizedAboutProgress = clamp(nextAboutProgress);
+    if (
+      Math.abs(nextScrollProgress - lastInputProgress) < 0.0001 &&
+      Math.abs(normalizedAboutProgress - lastInputAboutProgress) < 0.0001 &&
+      immediate === lastImmediate
+    ) {
+      return;
+    }
+
+    lastInputProgress = nextScrollProgress;
+    lastInputAboutProgress = normalizedAboutProgress;
+    lastImmediate = immediate;
+    capturePathGeometry();
     movementDirection =
       Math.sign(nextScrollProgress - previousScrollProgress) ||
       movementDirection;
@@ -405,7 +427,7 @@ export function createScrollIdentityFlight({
       (nextScrollProgress - DOT_SCROLL_START) /
         (DOT_COLLISION_SCROLL - DOT_SCROLL_START),
     );
-    aboutProgress = clamp(nextAboutProgress);
+    aboutProgress = normalizedAboutProgress;
 
     if (immediate) {
       revealTarget = nextScrollProgress >= DOT_COLLISION_SCROLL ? 1 : 0;
@@ -478,7 +500,7 @@ export function createScrollIdentityFlight({
     });
     object.style.removeProperty("opacity");
     object.style.removeProperty("transform");
-    object.classList.remove("is-formed", "is-performance-lite");
+    object.classList.remove("is-formed");
     canvas.style.removeProperty("opacity");
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -488,7 +510,11 @@ export function createScrollIdentityFlight({
   renderComposition();
   return {
     dispose,
-    refreshLayout: () => capturePathGeometry(true),
+    refreshLayout: () => {
+      capturePathGeometry(true);
+      lastInputProgress = -1;
+      lastInputAboutProgress = -1;
+    },
     setProgress,
   };
 }

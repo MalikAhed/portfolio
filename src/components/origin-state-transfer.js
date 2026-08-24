@@ -1,9 +1,15 @@
-const SOURCE_PORT = "5173";
-const LAB_PORT = "5174";
+const SOURCE_PORT = import.meta.env.VITE_STATE_SOURCE_PORT ?? "5173";
+const LAB_PORT = import.meta.env.VITE_STATE_LAB_PORT ?? "5174";
 const TRANSFER_MARKER = "portfolio-lab-state-transfer-v1";
 const REQUEST_TYPE = "portfolio:request-origin-state:v1";
 const RESPONSE_TYPE = "portfolio:origin-state:v1";
 const TRANSFER_TIMEOUT_MS = 3000;
+const TRANSFERABLE_KEYS = new Set([
+  "portfolio-black-hole-v4",
+  "portfolio-black-hole-editor-v2",
+  "portfolio-hero-fluid-v4",
+  "portfolio-overlay-position-v2",
+]);
 
 function getOriginForPort(port) {
   const url = new URL(window.location.href);
@@ -15,9 +21,9 @@ function getOriginForPort(port) {
 }
 
 function readStorageEntries() {
-  return Array.from({ length: localStorage.length }, (_, index) => {
-    const key = localStorage.key(index);
-    return key === null ? null : [key, localStorage.getItem(key)];
+  return Array.from(TRANSFERABLE_KEYS, (key) => {
+    const value = localStorage.getItem(key);
+    return value === null ? null : [key, value];
   }).filter(Boolean);
 }
 
@@ -101,9 +107,10 @@ export function importOriginStateIntoLab() {
         return;
       }
 
-      localStorage.clear();
       event.data.entries.forEach(([key, value]) =>
-        localStorage.setItem(key, value),
+        TRANSFERABLE_KEYS.has(key)
+          ? localStorage.setItem(key, value)
+          : undefined,
       );
       localStorage.setItem(TRANSFER_MARKER, "complete");
       finish(true, "synced-from-portfolio");

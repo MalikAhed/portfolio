@@ -35,26 +35,11 @@ const ABOUT_BIO_END = 0.38;
 const ABOUT_ABSORPTION_START = 0.44;
 const ABOUT_ABSORPTION_FADE_START = 0.12;
 const ABOUT_ABSORPTION_FADE_END = 0.78;
-const ABOUT_BLACK_HOLE_FADE_START = 0.68;
-const ABOUT_BLACK_HOLE_FADE_END = 0.92;
 const ABOUT_BLACK_HOLE_FINAL_SCALE = Object.freeze({
   mobile: 1.4,
   desktop: 1.5,
   ultrawide: 1.6,
 });
-
-/*
- * Skills passage (depth-world / transition -> world layer)
- *
- * About now releases the black hole before this semantic scene enters. Skills
- * content scrolls naturally through the same world without a second sticky
- * beat. Reversing scroll restores the About transition directly from progress.
- */
-const SKILLS_CONTENT_START = 0.08;
-const SKILLS_CONTENT_END = 0.26;
-const SKILLS_NODE_START = 0.2;
-const SKILLS_NODE_STAGGER = 0.055;
-const SKILLS_NODE_DURATION = 0.2;
 
 const DEFAULT_STATE = Object.freeze({
   x: -11,
@@ -219,19 +204,17 @@ export function initBlackHole() {
   const statement = flow?.querySelector(".about__statement");
   const bio = flow?.querySelector("[data-about-bio]");
   const backdrop = flow?.querySelector(".about__backdrop");
-  const skills = flow?.querySelector(".skills");
-  const skillsComposition = skills?.querySelector(".skills__composition");
-  const skillsHeading = skills?.querySelector("[data-skills-heading]");
-  const skillsBackdrop = skills?.querySelector(".skills__backdrop");
-  const skillNodes = Array.from(
-    skills?.querySelectorAll(".skills__node") ?? [],
-  );
   const title = flow?.querySelector(".hero__identity h1");
   const role = flow?.querySelector(".hero__identity .hero__role");
   const statementWords = Array.from(
     flow?.querySelectorAll("[data-about-statement-word]") ?? [],
   );
-  const editor = document.querySelector(".black-hole-editor");
+  const editorEnabled =
+    import.meta.env.DEV &&
+    document.documentElement.classList.contains("has-scene-editor");
+  const editor = editorEnabled
+    ? document.querySelector(".black-hole-editor")
+    : null;
   if (
     !stage ||
     !flow ||
@@ -247,51 +230,47 @@ export function initBlackHole() {
     !statement ||
     !bio ||
     !backdrop ||
-    !skills ||
-    !skillsComposition ||
-    !skillsHeading ||
-    !skillsBackdrop ||
-    skillNodes.length === 0 ||
     !title ||
     !role ||
-    statementWords.length === 0 ||
-    !editor
+    statementWords.length === 0
   ) {
     return () => {};
   }
 
-  const toggle = editor.querySelector(".black-hole-editor__toggle");
-  const panel = editor.querySelector(".black-hole-editor__panel");
-  const close = editor.querySelector(".black-hole-editor__close");
-  const editorHandle = editor.querySelector(".black-hole-editor__drag-handle");
-  const reset = editor.querySelector("[data-black-hole-reset]");
-  const tabs = Array.from(editor.querySelectorAll("[data-black-hole-tab]"));
+  const toggle = editor?.querySelector(".black-hole-editor__toggle");
+  const panel = editor?.querySelector(".black-hole-editor__panel");
+  const close = editor?.querySelector(".black-hole-editor__close");
+  const editorHandle = editor?.querySelector(".black-hole-editor__drag-handle");
+  const reset = editor?.querySelector("[data-black-hole-reset]");
+  const tabs = Array.from(
+    editor?.querySelectorAll("[data-black-hole-tab]") ?? [],
+  );
   const tabPanels = Array.from(
-    editor.querySelectorAll("[data-black-hole-panel]"),
+    editor?.querySelectorAll("[data-black-hole-panel]") ?? [],
   );
   const controls = Object.fromEntries(
     Array.from(
-      editor.querySelectorAll("[data-black-hole-property]"),
+      editor?.querySelectorAll("[data-black-hole-property]") ?? [],
       (input) => [input.dataset.blackHoleProperty, input],
     ),
   );
   const outputs = Object.fromEntries(
     Array.from(
-      editor.querySelectorAll("[data-black-hole-output]"),
+      editor?.querySelectorAll("[data-black-hole-output]") ?? [],
       (output) => [output.dataset.blackHoleOutput, output],
     ),
   );
   const fluidControls = Object.fromEntries(
-    Array.from(editor.querySelectorAll("[data-fluid-property]"), (input) => [
-      input.dataset.fluidProperty,
-      input,
-    ]),
+    Array.from(
+      editor?.querySelectorAll("[data-fluid-property]") ?? [],
+      (input) => [input.dataset.fluidProperty, input],
+    ),
   );
   const fluidOutputs = Object.fromEntries(
-    Array.from(editor.querySelectorAll("[data-fluid-output]"), (output) => [
-      output.dataset.fluidOutput,
-      output,
-    ]),
+    Array.from(
+      editor?.querySelectorAll("[data-fluid-output]") ?? [],
+      (output) => [output.dataset.fluidOutput, output],
+    ),
   );
   const authoredOrbitLines = Array.from(
     orbitShape.querySelectorAll(".black-hole-orbit-line"),
@@ -305,9 +284,9 @@ export function initBlackHole() {
   topOrbitGroup.setAttribute("aria-hidden", "true");
   orbitMotion.append(topOrbitGroup);
   authoredOrbitLines.forEach((line) => line.setAttribute("display", "none"));
-  let state = loadState();
-  let fluidState = loadFluidSettings();
-  let editorLayout = loadEditorLayout();
+  let state = editorEnabled ? loadState() : { ...DEFAULT_STATE };
+  let fluidState = editorEnabled ? loadFluidSettings() : null;
+  let editorLayout = editorEnabled ? loadEditorLayout() : null;
   let orbitDrag = null;
   let editorDrag = null;
   let editorResizeActive = false;
@@ -315,6 +294,11 @@ export function initBlackHole() {
   let renderedTopDensity = 0;
   let orbitsInView = false;
   let blackHoleWorldVisible = true;
+  let narrativeInRange = true;
+  let orbitScrollActive = false;
+  let orbitScrollIdleTimer = 0;
+  let orbitWarmupHandle = 0;
+  let orbitWarmupUsesIdleCallback = false;
   let frame = 0;
   let objectReady = false;
   let disposed = false;
@@ -322,12 +306,13 @@ export function initBlackHole() {
   let journeyDistance = 1;
   let aboutTop = 0;
   let holdDistance = 1;
-  let skillsTop = 0;
-  let skillsDistance = 1;
+  let anchorWidth = 1;
   let gravityGeometry = null;
-  const nativeScrollTimeline =
-    CSS.supports?.("animation-timeline: scroll()") ?? false;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let renderedAboutProgress = -1;
+  let renderedAboutMotionPreference = reducedMotion.matches;
+  let viewportWidth = window.innerWidth;
+  let viewportHeight = window.innerHeight;
   const orbitVisibilityObserver = new IntersectionObserver(
     ([entry]) => {
       orbitsInView = entry.isIntersecting;
@@ -335,10 +320,32 @@ export function initBlackHole() {
     },
     { rootMargin: "80px 0px" },
   );
-  const resizeObserver = new ResizeObserver(() => {
-    if (panel.hidden) return;
-    clampEditorToViewport();
-  });
+  const aboutVisibilityObserver = new IntersectionObserver(
+    ([entry]) => {
+      about.classList.toggle("about--active", entry.isIntersecting);
+    },
+    { rootMargin: "30% 0px" },
+  );
+  const narrativeVisibility = new Map([
+    [hero, true],
+    [about, false],
+  ]);
+  const narrativeVisibilityObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        narrativeVisibility.set(entry.target, entry.isIntersecting);
+      });
+      narrativeInRange = Array.from(narrativeVisibility.values()).some(Boolean);
+      requestNarrativeUpdate();
+    },
+    { rootMargin: "60% 0px" },
+  );
+  const resizeObserver = panel
+    ? new ResizeObserver(() => {
+        if (panel.hidden) return;
+        clampEditorToViewport();
+      })
+    : null;
 
   function createOrbitTrack(direction, kind, gravityBand) {
     const track = document.createElementNS(SVG_NAMESPACE, "g");
@@ -509,11 +516,18 @@ export function initBlackHole() {
   }
 
   function updateOrbitActivity() {
+    if (orbitsInView) {
+      syncOrbitDensity();
+      syncTopOrbitDensity();
+      syncOrbitSpeed();
+    }
+    const worldIsActive = orbitsInView && blackHoleWorldVisible;
     const active =
-      orbitsInView &&
-      blackHoleWorldVisible &&
+      worldIsActive &&
+      !orbitScrollActive &&
       !document.hidden &&
       !reducedMotion.matches;
+    stage.classList.toggle("black-hole-stage--active", worldIsActive);
     stage.classList.toggle("black-hole-stage--orbits-active", active);
   }
 
@@ -557,6 +571,16 @@ export function initBlackHole() {
   }
 
   function renderAboutBeat(progress) {
+    if (
+      Math.abs(progress - renderedAboutProgress) < 0.0001 &&
+      renderedAboutMotionPreference === reducedMotion.matches &&
+      (progress < ABOUT_BIO_END || gravityGeometry)
+    ) {
+      return;
+    }
+    renderedAboutProgress = progress;
+    renderedAboutMotionPreference = reducedMotion.matches;
+
     const blackHoleShift = easeInOut(clamp(progress / ABOUT_SETTLE_END, 0, 1));
     const bioReveal = easeInOut(
       clamp(
@@ -571,6 +595,8 @@ export function initBlackHole() {
       1,
     );
     const absorption = easeInOut(absorptionRaw);
+    const blackHoleVisibility =
+      1 - easeInOut(clamp((absorptionRaw - 0.64) / 0.28, 0, 1));
     const collapseVisibility =
       1 -
       easeInOut(
@@ -581,52 +607,49 @@ export function initBlackHole() {
           1,
         ),
       );
-    const blackHoleVisibility =
-      1 -
-      easeInOut(
-        clamp(
-          (progress - ABOUT_BLACK_HOLE_FADE_START) /
-            (ABOUT_BLACK_HOLE_FADE_END - ABOUT_BLACK_HOLE_FADE_START),
-          0,
-          1,
-        ),
-      );
     const restingShift = reducedMotion.matches
       ? 0
-      : Math.min(110, window.innerHeight * 0.11) * blackHoleShift;
-    const finalLift = reducedMotion.matches
-      ? 0
-      : Math.min(230, Math.max(125, window.innerHeight * 0.22));
-    const shiftDistance =
-      restingShift * (1 - absorption) - finalLift * absorption;
+      : Math.min(110, viewportHeight * 0.11) * blackHoleShift;
     const restingScale = 1 - blackHoleShift * 0.28;
     const growthScale =
-      window.innerWidth <= 760
+      viewportWidth <= 760
         ? ABOUT_BLACK_HOLE_FINAL_SCALE.mobile
-        : window.innerWidth / Math.max(1, window.innerHeight) >= 2
+        : viewportWidth / Math.max(1, viewportHeight) >= 2
           ? ABOUT_BLACK_HOLE_FINAL_SCALE.ultrawide
           : ABOUT_BLACK_HOLE_FINAL_SCALE.desktop;
+    const rotation = (state.rotation * Math.PI) / 180;
+    const finalWidth = anchorWidth * state.size * growthScale;
+    const finalHeight = finalWidth * (9 / 16);
+    const rotatedHeight =
+      Math.abs(finalHeight * Math.cos(rotation)) +
+      Math.abs(finalWidth * Math.sin(rotation));
+    /* Exit position: the entire depth-world object, including its responsive
+       scale, clears the top edge before Skills enters the camera. */
+    const finalLift = reducedMotion.matches
+      ? 0
+      : viewportHeight / 2 +
+        state.y +
+        rotatedHeight / 2 +
+        Math.max(48, viewportHeight * 0.08);
+    const shiftDistance =
+      restingShift * (1 - absorption) - finalLift * absorption;
     const blackHoleScale = reducedMotion.matches
       ? 1
       : restingScale + (growthScale - restingScale) * absorption;
     const statementStartOffset = reducedMotion.matches
       ? 0
-      : Math.min(44, window.innerHeight * 0.05);
+      : Math.min(44, viewportHeight * 0.05);
 
     if (!gravityGeometry && progress >= ABOUT_BIO_END) {
       captureGravityGeometry();
     }
 
     const gravityTarget = {
-      x: window.innerWidth / 2 + state.x,
-      y: window.innerHeight / 2 + state.y - finalLift,
+      x: viewportWidth / 2 + state.x,
+      y: viewportHeight / 2 + state.y - finalLift,
     };
 
     stage.style.setProperty("--black-hole-settle-y", `${shiftDistance}px`);
-    stage.style.setProperty(
-      "--black-hole-settle-scale",
-      String(blackHoleScale),
-    );
     stage.style.setProperty(
       "--black-hole-world-opacity",
       String(blackHoleVisibility),
@@ -636,6 +659,10 @@ export function initBlackHole() {
       blackHoleWorldVisible = nextBlackHoleWorldVisible;
       updateOrbitActivity();
     }
+    stage.style.setProperty(
+      "--black-hole-settle-scale",
+      String(blackHoleScale),
+    );
     statement.style.setProperty(
       "--about-statement-settle-y",
       `${statementStartOffset * (1 - blackHoleShift)}px`,
@@ -643,62 +670,15 @@ export function initBlackHole() {
     statement.style.opacity = String(collapseVisibility);
     bio.style.opacity = String(bioReveal * collapseVisibility);
     backdrop.style.opacity = String(collapseVisibility);
-    bio.style.filter = reducedMotion.matches
-      ? "none"
-      : `blur(${(1 - bioReveal) * 7}px)`;
+    bio.style.filter = "none";
     bio.style.translate = `calc(-50% + var(--about-copy-x)) calc(var(--about-copy-y) + ${(1 - bioReveal) * 1.1}rem)`;
     applyGravityPull(statement, gravityTarget, absorptionRaw);
     applyGravityPull(bio, gravityTarget, absorptionRaw);
     applyGravityPull(backdrop, gravityTarget, absorptionRaw);
-    flow.style.setProperty(
-      "--world-gravity-scale",
-      reducedMotion.matches ? "1" : String(1 - absorption * 0.82),
-    );
-    flow.style.setProperty(
-      "--world-gravity-opacity",
-      String(collapseVisibility),
-    );
     about.classList.toggle(
       "about--absorbing",
       absorptionRaw > 0 && absorptionRaw < 1,
     );
-  }
-
-  function renderSkillsBeat(progress) {
-    const contentReveal = reducedMotion.matches
-      ? 1
-      : easeInOut(
-          clamp(
-            (progress - SKILLS_CONTENT_START) /
-              (SKILLS_CONTENT_END - SKILLS_CONTENT_START),
-            0,
-            1,
-          ),
-        );
-
-    skillsComposition.style.setProperty(
-      "--skills-content-opacity",
-      String(contentReveal),
-    );
-    skillsComposition.style.setProperty(
-      "--skills-heading-y",
-      `${(1 - contentReveal) * 32}px`,
-    );
-
-    skillNodes.forEach((node, index) => {
-      const reveal = reducedMotion.matches
-        ? 1
-        : easeInOut(
-            clamp(
-              (progress - (SKILLS_NODE_START + index * SKILLS_NODE_STAGGER)) /
-                SKILLS_NODE_DURATION,
-              0,
-              1,
-            ),
-          );
-      node.style.setProperty("--skill-opacity", String(reveal));
-      node.style.setProperty("--skill-enter-y", `${(1 - reveal) * 48}px`);
-    });
   }
 
   function updateNarrative() {
@@ -727,17 +707,10 @@ export function initBlackHole() {
 
     const holdScroll = clamp(window.scrollY - aboutTop, 0, holdDistance);
     const aboutBeat = holdScroll / holdDistance;
-    const skillsScroll = clamp(window.scrollY - skillsTop, 0, skillsDistance);
-    const skillsBeat = skillsScroll / skillsDistance;
     flightController.setProgress(window.scrollY / journeyDistance, {
       aboutProgress: aboutBeat,
       immediate: reducedMotion.matches,
     });
-    renderSkillsBeat(skillsBeat);
-
-    if (!nativeScrollTimeline) {
-      flow.style.setProperty("--overlay-hold-y", `${holdScroll}px`);
-    }
   }
 
   function requestNarrativeUpdate() {
@@ -746,22 +719,39 @@ export function initBlackHole() {
   }
 
   function refreshNarrativeLayout() {
+    viewportWidth = window.innerWidth;
+    viewportHeight = window.innerHeight;
     journeyDistance = Math.max(1, hero.offsetHeight * JOURNEY_SCROLL_RATIO);
     aboutTop = about.offsetTop;
     holdDistance = Math.max(1, about.offsetHeight - window.innerHeight);
-    skillsTop = skills.offsetTop;
-    skillsDistance = Math.max(1, skills.offsetHeight - window.innerHeight);
+    anchorWidth = Math.max(1, anchor.offsetWidth);
     gravityGeometry = null;
+    renderedAboutProgress = -1;
   }
 
   function handleNarrativeScroll() {
+    if (orbitsInView && blackHoleWorldVisible) {
+      if (!orbitScrollActive) {
+        orbitScrollActive = true;
+        updateOrbitActivity();
+      }
+      if (orbitScrollIdleTimer) window.clearTimeout(orbitScrollIdleTimer);
+      orbitScrollIdleTimer = window.setTimeout(() => {
+        orbitScrollIdleTimer = 0;
+        orbitScrollActive = false;
+        updateOrbitActivity();
+      }, 140);
+    }
+    if (!narrativeInRange) return;
     requestNarrativeUpdate();
   }
 
   function render() {
-    syncOrbitDensity();
-    syncTopOrbitDensity();
-    syncOrbitSpeed();
+    if (editorEnabled || orbitsInView) {
+      syncOrbitDensity();
+      syncTopOrbitDensity();
+      syncOrbitSpeed();
+    }
     stage.style.setProperty("--black-hole-x", `${state.x}px`);
     stage.style.setProperty("--black-hole-y", `${state.y}px`);
     stage.style.setProperty("--black-hole-depth", `${state.depth}px`);
@@ -798,53 +788,57 @@ export function initBlackHole() {
       "--black-hole-image-opacity",
       String(state.blackHoleOpacity),
     );
-    Object.entries(controls).forEach(([property, control]) => {
-      control.value = String(state[property]);
-    });
-    outputs.orbitX.value = `${Math.round(state.orbitX)}px`;
-    outputs.orbitY.value = `${Math.round(state.orbitY)}px`;
-    outputs.orbitScale.value = `${state.orbitScale.toFixed(2)}×`;
-    outputs.orbitHeight.value = `${state.orbitHeight.toFixed(2)}×`;
-    outputs.orbitSpeed.value = `${state.orbitSpeed.toFixed(2)}×`;
-    outputs.lineDensity.value = String(Math.round(state.lineDensity));
-    outputs.lineWidth.value = `${state.lineWidth.toFixed(2)}px`;
-    outputs.lineOpacity.value = `${Math.round(state.lineOpacity * 100)}%`;
-    outputs.topX.value = `${Math.round(state.topX)}px`;
-    outputs.topY.value = `${Math.round(state.topY)}px`;
-    outputs.topScale.value = `${state.topScale.toFixed(2)}×`;
-    outputs.topHeight.value = `${state.topHeight.toFixed(2)}×`;
-    outputs.topDensity.value = String(Math.round(state.topDensity));
-    outputs.topWidth.value = `${state.topWidth.toFixed(2)}px`;
-    outputs.topOpacity.value = `${Math.round(state.topOpacity * 100)}%`;
-    outputs.blackHoleOpacity.value = `${Math.round(
-      state.blackHoleOpacity * 100,
-    )}%`;
-    Object.entries(fluidControls).forEach(([property, control]) => {
-      control.value = String(fluidState[property]);
-    });
-    fluidOutputs.opacity.value = `${Math.round(fluidState.opacity * 100)}%`;
-    fluidOutputs.colorStrength.value = `${Math.round(
-      fluidState.colorStrength * 100,
-    )}%`;
-    fluidOutputs.fadeTime.value = `${fluidState.fadeTime.toFixed(2)}s`;
-    fluidOutputs.radius.value = fluidState.radius.toFixed(2);
-    fluidOutputs.force.value = String(Math.round(fluidState.force));
-    fluidOutputs.curl.value = fluidState.curl.toFixed(1);
-    fluidOutputs.reach.value = `${fluidState.reach.toFixed(2)}×`;
-    fluidOutputs.emissionRate.value = `${fluidState.emissionRate.toFixed(1)}/s`;
-    fluidOutputs.originX.value = `${Math.round(fluidState.originX * 100)}%`;
-    fluidOutputs.emitterGap.value = `${Math.round(
-      fluidState.emitterGap * 100,
-    )}%`;
-    fluidOutputs.emitterY.value = `${Math.round(fluidState.emitterY * 100)}%`;
-    fluidOutputs.emitterSpread.value = `${Math.round(
-      fluidState.emitterSpread * 100,
-    )}%`;
-    publishFluidSettings(fluidState);
+    if (editorEnabled) {
+      Object.entries(controls).forEach(([property, control]) => {
+        control.value = String(state[property]);
+      });
+      outputs.orbitX.value = `${Math.round(state.orbitX)}px`;
+      outputs.orbitY.value = `${Math.round(state.orbitY)}px`;
+      outputs.orbitScale.value = `${state.orbitScale.toFixed(2)}×`;
+      outputs.orbitHeight.value = `${state.orbitHeight.toFixed(2)}×`;
+      outputs.orbitSpeed.value = `${state.orbitSpeed.toFixed(2)}×`;
+      outputs.lineDensity.value = String(Math.round(state.lineDensity));
+      outputs.lineWidth.value = `${state.lineWidth.toFixed(2)}px`;
+      outputs.lineOpacity.value = `${Math.round(state.lineOpacity * 100)}%`;
+      outputs.topX.value = `${Math.round(state.topX)}px`;
+      outputs.topY.value = `${Math.round(state.topY)}px`;
+      outputs.topScale.value = `${state.topScale.toFixed(2)}×`;
+      outputs.topHeight.value = `${state.topHeight.toFixed(2)}×`;
+      outputs.topDensity.value = String(Math.round(state.topDensity));
+      outputs.topWidth.value = `${state.topWidth.toFixed(2)}px`;
+      outputs.topOpacity.value = `${Math.round(state.topOpacity * 100)}%`;
+      outputs.blackHoleOpacity.value = `${Math.round(
+        state.blackHoleOpacity * 100,
+      )}%`;
+      Object.entries(fluidControls).forEach(([property, control]) => {
+        control.value = String(fluidState[property]);
+      });
+      fluidOutputs.opacity.value = `${Math.round(fluidState.opacity * 100)}%`;
+      fluidOutputs.colorStrength.value = `${Math.round(
+        fluidState.colorStrength * 100,
+      )}%`;
+      fluidOutputs.fadeTime.value = `${fluidState.fadeTime.toFixed(2)}s`;
+      fluidOutputs.radius.value = fluidState.radius.toFixed(2);
+      fluidOutputs.force.value = String(Math.round(fluidState.force));
+      fluidOutputs.curl.value = fluidState.curl.toFixed(1);
+      fluidOutputs.reach.value = `${fluidState.reach.toFixed(2)}×`;
+      fluidOutputs.emissionRate.value = `${fluidState.emissionRate.toFixed(1)}/s`;
+      fluidOutputs.originX.value = `${Math.round(fluidState.originX * 100)}%`;
+      fluidOutputs.emitterGap.value = `${Math.round(
+        fluidState.emitterGap * 100,
+      )}%`;
+      fluidOutputs.emitterY.value = `${Math.round(fluidState.emitterY * 100)}%`;
+      fluidOutputs.emitterSpread.value = `${Math.round(
+        fluidState.emitterSpread * 100,
+      )}%`;
+      publishFluidSettings(fluidState);
+    }
+    renderedAboutProgress = -1;
     requestNarrativeUpdate();
   }
 
   function save() {
+    if (!editorEnabled) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
@@ -1091,34 +1085,36 @@ export function initBlackHole() {
     setEditorOpen(false);
   }
 
-  toggle.addEventListener("click", handleOpen);
-  close.addEventListener("click", handleClose);
-  editorHandle.addEventListener("pointerdown", handleEditorPointerDown);
-  editorHandle.addEventListener("pointermove", handleEditorPointerMove);
-  editorHandle.addEventListener("pointerup", handleEditorPointerUp);
-  editorHandle.addEventListener("pointercancel", handleEditorPointerUp);
-  editorHandle.addEventListener("keydown", handleEditorKeydown);
-  panel.addEventListener("pointerdown", handlePanelPointerDown);
-  window.addEventListener("pointerup", handlePanelPointerUp);
-  window.addEventListener("pointercancel", handlePanelPointerUp);
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", handleTabClick);
-    tab.addEventListener("keydown", handleTabKeydown);
-  });
-  reset.addEventListener("click", handleReset);
-  Object.values(controls).forEach((control) =>
-    control.addEventListener("input", handleControlInput),
-  );
-  Object.values(fluidControls).forEach((control) =>
-    control.addEventListener("input", handleFluidControlInput),
-  );
-  orbits.addEventListener("pointerdown", handleOrbitPointerDown);
-  orbits.addEventListener("pointermove", handleOrbitPointerMove);
-  orbits.addEventListener("pointerup", handleOrbitPointerUp);
-  orbits.addEventListener("pointercancel", handleOrbitPointerUp);
+  if (editorEnabled) {
+    toggle.addEventListener("click", handleOpen);
+    close.addEventListener("click", handleClose);
+    editorHandle.addEventListener("pointerdown", handleEditorPointerDown);
+    editorHandle.addEventListener("pointermove", handleEditorPointerMove);
+    editorHandle.addEventListener("pointerup", handleEditorPointerUp);
+    editorHandle.addEventListener("pointercancel", handleEditorPointerUp);
+    editorHandle.addEventListener("keydown", handleEditorKeydown);
+    panel.addEventListener("pointerdown", handlePanelPointerDown);
+    window.addEventListener("pointerup", handlePanelPointerUp);
+    window.addEventListener("pointercancel", handlePanelPointerUp);
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", handleTabClick);
+      tab.addEventListener("keydown", handleTabKeydown);
+    });
+    reset.addEventListener("click", handleReset);
+    Object.values(controls).forEach((control) =>
+      control.addEventListener("input", handleControlInput),
+    );
+    Object.values(fluidControls).forEach((control) =>
+      control.addEventListener("input", handleFluidControlInput),
+    );
+    orbits.addEventListener("pointerdown", handleOrbitPointerDown);
+    orbits.addEventListener("pointermove", handleOrbitPointerMove);
+    orbits.addEventListener("pointerup", handleOrbitPointerUp);
+    orbits.addEventListener("pointercancel", handleOrbitPointerUp);
+  }
   window.addEventListener("scroll", handleNarrativeScroll, { passive: true });
   function handleViewportResize() {
-    if (!panel.hidden) {
+    if (panel && !panel.hidden) {
       if (editorLayout) applyEditorLayout();
       else clampEditorToViewport();
     }
@@ -1129,6 +1125,7 @@ export function initBlackHole() {
 
   window.addEventListener("resize", handleViewportResize);
   function handleReducedMotionChange() {
+    renderedAboutProgress = -1;
     updateOrbitActivity();
     requestNarrativeUpdate();
   }
@@ -1144,40 +1141,61 @@ export function initBlackHole() {
     attributes: true,
     attributeFilter: ["class"],
   });
-  resizeObserver.observe(panel);
+  if (panel) resizeObserver?.observe(panel);
   orbitVisibilityObserver.observe(object);
+  aboutVisibilityObserver.observe(about);
+  narrativeVisibilityObserver.observe(hero);
+  narrativeVisibilityObserver.observe(about);
 
-  renderAboutBeat(0);
-  renderSkillsBeat(0);
-  render();
-  image
-    .decode()
-    .catch(() => undefined)
-    .finally(() => {
-      if (disposed) return;
-      objectReady = true;
-      stage.classList.add("black-hole-stage--ready");
-      requestNarrativeUpdate();
+  function warmOrbitGeometry() {
+    orbitWarmupHandle = 0;
+    if (disposed) return;
+    syncOrbitDensity();
+    syncTopOrbitDensity();
+    syncOrbitSpeed();
+  }
+
+  if ("requestIdleCallback" in window) {
+    orbitWarmupUsesIdleCallback = true;
+    orbitWarmupHandle = window.requestIdleCallback(warmOrbitGeometry, {
+      timeout: 1500,
     });
+  } else {
+    orbitWarmupHandle = window.setTimeout(warmOrbitGeometry, 700);
+  }
+
+  render();
+  function markObjectReady() {
+    if (disposed || objectReady) return;
+    objectReady = true;
+    stage.classList.add("black-hole-stage--ready");
+    requestNarrativeUpdate();
+  }
+
+  if (image.complete) markObjectReady();
+  else {
+    image.addEventListener("load", markObjectReady, { once: true });
+    image.addEventListener("error", markObjectReady, { once: true });
+  }
 
   return () => {
     disposed = true;
+    if (orbitScrollIdleTimer) window.clearTimeout(orbitScrollIdleTimer);
+    if (orbitWarmupHandle) {
+      if (orbitWarmupUsesIdleCallback) {
+        window.cancelIdleCallback(orbitWarmupHandle);
+      } else {
+        window.clearTimeout(orbitWarmupHandle);
+      }
+    }
+    image.removeEventListener("load", markObjectReady);
+    image.removeEventListener("error", markObjectReady);
     flightController?.dispose();
     stage.style.removeProperty("--black-hole-settle-y");
     stage.style.removeProperty("--black-hole-settle-scale");
     stage.style.removeProperty("--black-hole-world-opacity");
     statement.style.removeProperty("--about-statement-settle-y");
-    flow.style.removeProperty("--overlay-hold-y");
-    flow.style.removeProperty("--world-gravity-scale");
-    flow.style.removeProperty("--world-gravity-opacity");
     about.classList.remove("about--absorbing");
-    ["--skills-content-opacity", "--skills-heading-y"].forEach((property) =>
-      skillsComposition.style.removeProperty(property),
-    );
-    skillNodes.forEach((node) => {
-      node.style.removeProperty("--skill-opacity");
-      node.style.removeProperty("--skill-enter-y");
-    });
     [statement, bio, backdrop].forEach((element) => {
       element.style.removeProperty("--about-gravity-x");
       element.style.removeProperty("--about-gravity-y");
@@ -1187,38 +1205,42 @@ export function initBlackHole() {
     });
     bio.style.removeProperty("filter");
     bio.style.removeProperty("translate");
-    orbits.removeEventListener("pointerdown", handleOrbitPointerDown);
-    orbits.removeEventListener("pointermove", handleOrbitPointerMove);
-    orbits.removeEventListener("pointerup", handleOrbitPointerUp);
-    orbits.removeEventListener("pointercancel", handleOrbitPointerUp);
-    toggle.removeEventListener("click", handleOpen);
-    close.removeEventListener("click", handleClose);
-    editorHandle.removeEventListener("pointerdown", handleEditorPointerDown);
-    editorHandle.removeEventListener("pointermove", handleEditorPointerMove);
-    editorHandle.removeEventListener("pointerup", handleEditorPointerUp);
-    editorHandle.removeEventListener("pointercancel", handleEditorPointerUp);
-    editorHandle.removeEventListener("keydown", handleEditorKeydown);
-    panel.removeEventListener("pointerdown", handlePanelPointerDown);
-    window.removeEventListener("pointerup", handlePanelPointerUp);
-    window.removeEventListener("pointercancel", handlePanelPointerUp);
-    tabs.forEach((tab) => {
-      tab.removeEventListener("click", handleTabClick);
-      tab.removeEventListener("keydown", handleTabKeydown);
-    });
-    reset.removeEventListener("click", handleReset);
-    Object.values(controls).forEach((control) =>
-      control.removeEventListener("input", handleControlInput),
-    );
-    Object.values(fluidControls).forEach((control) =>
-      control.removeEventListener("input", handleFluidControlInput),
-    );
+    if (editorEnabled) {
+      orbits.removeEventListener("pointerdown", handleOrbitPointerDown);
+      orbits.removeEventListener("pointermove", handleOrbitPointerMove);
+      orbits.removeEventListener("pointerup", handleOrbitPointerUp);
+      orbits.removeEventListener("pointercancel", handleOrbitPointerUp);
+      toggle.removeEventListener("click", handleOpen);
+      close.removeEventListener("click", handleClose);
+      editorHandle.removeEventListener("pointerdown", handleEditorPointerDown);
+      editorHandle.removeEventListener("pointermove", handleEditorPointerMove);
+      editorHandle.removeEventListener("pointerup", handleEditorPointerUp);
+      editorHandle.removeEventListener("pointercancel", handleEditorPointerUp);
+      editorHandle.removeEventListener("keydown", handleEditorKeydown);
+      panel.removeEventListener("pointerdown", handlePanelPointerDown);
+      window.removeEventListener("pointerup", handlePanelPointerUp);
+      window.removeEventListener("pointercancel", handlePanelPointerUp);
+      tabs.forEach((tab) => {
+        tab.removeEventListener("click", handleTabClick);
+        tab.removeEventListener("keydown", handleTabKeydown);
+      });
+      reset.removeEventListener("click", handleReset);
+      Object.values(controls).forEach((control) =>
+        control.removeEventListener("input", handleControlInput),
+      );
+      Object.values(fluidControls).forEach((control) =>
+        control.removeEventListener("input", handleFluidControlInput),
+      );
+    }
     window.removeEventListener("scroll", handleNarrativeScroll);
     window.removeEventListener("resize", handleViewportResize);
     document.removeEventListener("visibilitychange", handleVisibilityChange);
     reducedMotion.removeEventListener("change", handleReducedMotionChange);
     introObserver.disconnect();
-    resizeObserver.disconnect();
+    resizeObserver?.disconnect();
     orbitVisibilityObserver.disconnect();
+    aboutVisibilityObserver.disconnect();
+    narrativeVisibilityObserver.disconnect();
     densityOrbitGroup.remove();
     topOrbitGroup.remove();
     authoredOrbitLines.forEach((line) => line.removeAttribute("display"));

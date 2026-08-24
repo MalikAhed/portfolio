@@ -4,33 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f5f0e8" />
+    <meta name="color-scheme" content="light" />
     <meta
       name="description"
-      content="Malik Abuallata — Full-stack developer portfolio."
+      content="Malik Abuallata is a full-stack developer creating expressive interfaces and dependable digital systems."
     />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="Malik Abuallata — Full-stack developer"
+    />
+    <meta
+      property="og:description"
+      content="Expressive interfaces and dependable digital systems, built across the stack."
+    />
+    <meta property="og:url" content="https://malikahed.github.io/portfolio/" />
+    <meta
+      property="og:image"
+      content="https://malikahed.github.io/portfolio/assets/malik-monogram-v2.png"
+    />
+    <meta property="og:image:alt" content="Malik Abuallata monogram" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="canonical" href="https://malikahed.github.io/portfolio/" />
+    <link rel="icon" type="image/webp" href="/assets/malik-monogram-v2.webp" />
     <style>
       html,
       body {
         margin: 0;
-        background: #111210;
+        background: #f5f0e8;
       }
       body.is-intro-pending:not(.is-intro-exiting) {
         overflow: hidden;
       }
-      body.is-intro-pending:not(.is-intro-exiting) #app {
-        visibility: hidden;
-      }
     </style>
     <noscript>
       <style>
-        body.is-intro-pending {
-          overflow: auto !important;
-        }
         .splash {
           display: none !important;
-        }
-        #app {
-          visibility: visible !important;
         }
       </style>
     </noscript>
@@ -54,10 +64,29 @@
       href="/assets/malik-cutout-shadow.avif"
       type="image/avif"
       fetchpriority="high"
+      crossorigin="anonymous"
     />
     <title>Malik Abuallata — Full-stack developer</title>
   </head>
-  <body id="top" class="is-intro-pending">
+  <body id="top">
+    <script>
+      document.documentElement.classList.add("has-js");
+      document.body.classList.add("is-intro-pending");
+      window.setTimeout(() => {
+        if (!document.body.classList.contains("is-intro-pending")) return;
+        if (
+          !document.documentElement.classList.contains("has-cinematic-scene")
+        ) {
+          document.documentElement.classList.remove("has-js");
+          document.documentElement.classList.add("is-static-fallback");
+        }
+        document.body.classList.remove("is-intro-pending", "is-intro-exiting");
+        document.body.classList.add("is-intro-complete");
+        const app = document.querySelector("#app");
+        if (app) app.inert = false;
+      }, 4000);
+    </script>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <div
       class="splash"
       role="status"
@@ -88,8 +117,24 @@
       </div>
     </div>
     <main id="app">
-      <div class="hero-about-flow">
-        <div class="two-section-overlay" aria-hidden="true">
+      <div
+        id="main-content"
+        class="world-stage hero-about-flow"
+        data-world-stage
+        tabindex="-1"
+      >
+        <div class="base-world" aria-hidden="true"></div>
+        <canvas
+          class="identity-flight-canvas depth-world__transition"
+          aria-hidden="true"
+        ></canvas>
+        <div
+          id="scene"
+          class="scene depth-world__subject"
+          aria-hidden="true"
+          data-hero-subject
+        ></div>
+        <div class="two-section-overlay depth-world__near" aria-hidden="true">
           <picture class="two-section-overlay__media">
             <source
               type="image/avif"
@@ -106,7 +151,10 @@
             />
           </picture>
         </div>
-        <div class="black-hole-stage" aria-hidden="true">
+        <div
+          class="black-hole-stage depth-world__transition"
+          aria-hidden="true"
+        >
           <div class="black-hole-anchor">
             <div class="black-hole-object">
               <img
@@ -121,6 +169,8 @@
                 width="2048"
                 height="1152"
                 alt=""
+                loading="lazy"
+                fetchpriority="low"
                 decoding="async"
                 draggable="false"
               />
@@ -199,14 +249,7 @@
           </div>
         </div>
         <section class="hero" aria-labelledby="hero-title" data-hero>
-          <canvas class="identity-flight-canvas" aria-hidden="true"></canvas>
-          <div
-            id="scene"
-            class="scene"
-            aria-hidden="true"
-            data-hero-subject
-          ></div>
-          <header class="site-header">
+          <header class="site-header interface-layer">
             <a
               class="brand"
               href="#top"
@@ -241,21 +284,10 @@
               aria-label="Primary navigation"
             >
               <a href="#about">about</a>
-              <a href="#work">work</a>
               <a href="#skills">skills</a>
-              <a href="#projects">projects</a>
-              <a href="#journal">journal</a>
-              <a
-                class="navigation__contact"
-                href="mailto:hello@malikabuallatta.com"
-                >contact</a
-              >
+              <a class="navigation__contact" href="#contact">contact</a>
             </nav>
-            <a
-              class="contact-link"
-              href="mailto:hello@malikabuallatta.com"
-              data-hero-cta
-            >
+            <a class="contact-link" href="#contact" data-hero-cta>
               <span class="contact-link__material" aria-hidden="true"></span>
               <span class="contact-link__label">contact</span>
               <span class="contact-link__flight" aria-hidden="true">
@@ -271,6 +303,18 @@
               </span>
             </a>
           </header>
+          <picture class="hero__portrait-fallback" aria-hidden="true">
+            <source type="image/webp" srcset="/assets/malik-cutout.webp" />
+            <img
+              src="/assets/malik-cutout.png"
+              width="900"
+              height="1272"
+              alt=""
+              fetchpriority="high"
+              decoding="async"
+              draggable="false"
+            />
+          </picture>
           <div class="hero__identity">
             <h1 id="hero-title" data-hero-title>Malik Abuallata</h1>
             <p class="hero__role">Full-stack developer</p>
@@ -280,11 +324,11 @@
         <section
           id="about"
           class="about"
-          aria-label="About"
+          aria-labelledby="about-title"
           aria-describedby="about-summary"
         >
           <div class="about__composition">
-            <p class="about__statement">
+            <h2 id="about-title" class="about__statement">
               <span
                 class="about__statement-line about__statement-line--lead"
                 data-about-statement-word
@@ -296,7 +340,7 @@
                 data-about-highlight
                 >endless creativity</span
               >
-            </p>
+            </h2>
             <div id="about-summary" class="about__bio" data-about-bio>
               <p>
                 I turn ambitious ideas into thoughtful digital experiences.
@@ -350,7 +394,28 @@
             <p class="skills__backdrop" aria-hidden="true">Skills</p>
           </div>
         </section>
-        <aside class="black-hole-editor" aria-label="Black hole editor">
+        <section id="contact" class="contact" aria-labelledby="contact-title">
+          <div class="contact__composition">
+            <p class="contact__eyebrow">The next orbit</p>
+            <h2 id="contact-title">Let’s make something with gravity.</h2>
+            <p class="contact__intro">
+              Have an ambitious product, interface, or technical problem in
+              mind? Tell me where you want to take it.
+            </p>
+            <a class="contact__action" href="mailto:hello@malikabuallatta.com">
+              <span>Start a conversation</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+            <p class="contact__backdrop" aria-hidden="true">Contact</p>
+          </div>
+        </section>
+        <!-- DEV_SCENE_EDITORS_START -->
+        <aside
+          class="black-hole-editor interface-layer"
+          aria-label="Black hole editor"
+          data-scene-editor
+          hidden
+        >
           <button
             class="black-hole-editor__toggle"
             type="button"
@@ -792,8 +857,10 @@
           </div>
         </aside>
         <aside
-          class="about-copy-editor"
+          class="about-copy-editor interface-layer"
           aria-label="About text position editor"
+          data-scene-editor
+          hidden
         >
           <button
             class="about-copy-editor__toggle"
@@ -866,6 +933,7 @@
             </button>
           </div>
         </aside>
+        <!-- DEV_SCENE_EDITORS_END -->
       </div>
     </main>
     <script type="module" src="/src/main.js"></script>
