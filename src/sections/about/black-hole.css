@@ -22,6 +22,7 @@
   --black-hole-top-opacity: 0.52;
   --black-hole-top-color: #24211c;
   --black-hole-image-opacity: 1;
+  --black-hole-world-opacity: 1;
   position: absolute;
   z-index: var(--black-hole-layer);
   /* Fill the real shared-world height instead of guessing it in viewport
@@ -29,6 +30,7 @@
      jumps directly to the document end. */
   inset: 0;
   overflow-x: clip;
+  opacity: var(--black-hole-world-opacity);
   pointer-events: none;
   perspective: 1600px;
   perspective-origin: 50% 50svh;

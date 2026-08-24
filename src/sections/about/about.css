@@ -1,8 +1,8 @@
 .about {
   position: relative;
-  /* 150svh of pinned travel: reveal, readable hold, then absorption. */
-  min-block-size: 250vh;
-  min-block-size: 250svh;
+  /* 90svh of pinned travel: a compact reveal, readable hold, then absorption. */
+  min-block-size: 190vh;
+  min-block-size: 190svh;
 }
 
 .about {
@@ -199,7 +199,7 @@
 
 @media (max-width: 760px) {
   .about {
-    min-block-size: max(72rem, 250svh);
+    min-block-size: max(72rem, 190svh);
   }
 
   .about__composition {
@@ -228,7 +228,7 @@
 
 @media (max-height: 560px) and (orientation: landscape) {
   .about {
-    min-block-size: max(60rem, 250svh);
+    min-block-size: max(60rem, 190svh);
   }
 
   .about__composition {

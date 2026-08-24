@@ -35,6 +35,26 @@ const ABOUT_BIO_END = 0.38;
 const ABOUT_ABSORPTION_START = 0.44;
 const ABOUT_ABSORPTION_FADE_START = 0.12;
 const ABOUT_ABSORPTION_FADE_END = 0.78;
+const ABOUT_BLACK_HOLE_FADE_START = 0.68;
+const ABOUT_BLACK_HOLE_FADE_END = 0.92;
+const ABOUT_BLACK_HOLE_FINAL_SCALE = Object.freeze({
+  mobile: 1.4,
+  desktop: 1.5,
+  ultrawide: 1.6,
+});
+
+/*
+ * Skills passage (depth-world / transition -> world layer)
+ *
+ * About now releases the black hole before this semantic scene enters. Skills
+ * content scrolls naturally through the same world without a second sticky
+ * beat. Reversing scroll restores the About transition directly from progress.
+ */
+const SKILLS_CONTENT_START = 0.08;
+const SKILLS_CONTENT_END = 0.26;
+const SKILLS_NODE_START = 0.2;
+const SKILLS_NODE_STAGGER = 0.055;
+const SKILLS_NODE_DURATION = 0.2;
 
 const DEFAULT_STATE = Object.freeze({
   x: -11,
@@ -199,6 +219,13 @@ export function initBlackHole() {
   const statement = flow?.querySelector(".about__statement");
   const bio = flow?.querySelector("[data-about-bio]");
   const backdrop = flow?.querySelector(".about__backdrop");
+  const skills = flow?.querySelector(".skills");
+  const skillsComposition = skills?.querySelector(".skills__composition");
+  const skillsHeading = skills?.querySelector("[data-skills-heading]");
+  const skillsBackdrop = skills?.querySelector(".skills__backdrop");
+  const skillNodes = Array.from(
+    skills?.querySelectorAll(".skills__node") ?? [],
+  );
   const title = flow?.querySelector(".hero__identity h1");
   const role = flow?.querySelector(".hero__identity .hero__role");
   const statementWords = Array.from(
@@ -220,6 +247,11 @@ export function initBlackHole() {
     !statement ||
     !bio ||
     !backdrop ||
+    !skills ||
+    !skillsComposition ||
+    !skillsHeading ||
+    !skillsBackdrop ||
+    skillNodes.length === 0 ||
     !title ||
     !role ||
     statementWords.length === 0 ||
@@ -282,6 +314,7 @@ export function initBlackHole() {
   let renderedLineDensity = 0;
   let renderedTopDensity = 0;
   let orbitsInView = false;
+  let blackHoleWorldVisible = true;
   let frame = 0;
   let objectReady = false;
   let disposed = false;
@@ -289,6 +322,8 @@ export function initBlackHole() {
   let journeyDistance = 1;
   let aboutTop = 0;
   let holdDistance = 1;
+  let skillsTop = 0;
+  let skillsDistance = 1;
   let gravityGeometry = null;
   const nativeScrollTimeline =
     CSS.supports?.("animation-timeline: scroll()") ?? false;
@@ -474,7 +509,11 @@ export function initBlackHole() {
   }
 
   function updateOrbitActivity() {
-    const active = orbitsInView && !document.hidden && !reducedMotion.matches;
+    const active =
+      orbitsInView &&
+      blackHoleWorldVisible &&
+      !document.hidden &&
+      !reducedMotion.matches;
     stage.classList.toggle("black-hole-stage--orbits-active", active);
   }
 
@@ -542,6 +581,16 @@ export function initBlackHole() {
           1,
         ),
       );
+    const blackHoleVisibility =
+      1 -
+      easeInOut(
+        clamp(
+          (progress - ABOUT_BLACK_HOLE_FADE_START) /
+            (ABOUT_BLACK_HOLE_FADE_END - ABOUT_BLACK_HOLE_FADE_START),
+          0,
+          1,
+        ),
+      );
     const restingShift = reducedMotion.matches
       ? 0
       : Math.min(110, window.innerHeight * 0.11) * blackHoleShift;
@@ -553,10 +602,10 @@ export function initBlackHole() {
     const restingScale = 1 - blackHoleShift * 0.28;
     const growthScale =
       window.innerWidth <= 760
-        ? 1.85
+        ? ABOUT_BLACK_HOLE_FINAL_SCALE.mobile
         : window.innerWidth / Math.max(1, window.innerHeight) >= 2
-          ? 2.5
-          : 2.25;
+          ? ABOUT_BLACK_HOLE_FINAL_SCALE.ultrawide
+          : ABOUT_BLACK_HOLE_FINAL_SCALE.desktop;
     const blackHoleScale = reducedMotion.matches
       ? 1
       : restingScale + (growthScale - restingScale) * absorption;
@@ -578,6 +627,15 @@ export function initBlackHole() {
       "--black-hole-settle-scale",
       String(blackHoleScale),
     );
+    stage.style.setProperty(
+      "--black-hole-world-opacity",
+      String(blackHoleVisibility),
+    );
+    const nextBlackHoleWorldVisible = blackHoleVisibility > 0.002;
+    if (nextBlackHoleWorldVisible !== blackHoleWorldVisible) {
+      blackHoleWorldVisible = nextBlackHoleWorldVisible;
+      updateOrbitActivity();
+    }
     statement.style.setProperty(
       "--about-statement-settle-y",
       `${statementStartOffset * (1 - blackHoleShift)}px`,
@@ -606,6 +664,43 @@ export function initBlackHole() {
     );
   }
 
+  function renderSkillsBeat(progress) {
+    const contentReveal = reducedMotion.matches
+      ? 1
+      : easeInOut(
+          clamp(
+            (progress - SKILLS_CONTENT_START) /
+              (SKILLS_CONTENT_END - SKILLS_CONTENT_START),
+            0,
+            1,
+          ),
+        );
+
+    skillsComposition.style.setProperty(
+      "--skills-content-opacity",
+      String(contentReveal),
+    );
+    skillsComposition.style.setProperty(
+      "--skills-heading-y",
+      `${(1 - contentReveal) * 32}px`,
+    );
+
+    skillNodes.forEach((node, index) => {
+      const reveal = reducedMotion.matches
+        ? 1
+        : easeInOut(
+            clamp(
+              (progress - (SKILLS_NODE_START + index * SKILLS_NODE_STAGGER)) /
+                SKILLS_NODE_DURATION,
+              0,
+              1,
+            ),
+          );
+      node.style.setProperty("--skill-opacity", String(reveal));
+      node.style.setProperty("--skill-enter-y", `${(1 - reveal) * 48}px`);
+    });
+  }
+
   function updateNarrative() {
     frame = 0;
     const introPending = document.body.classList.contains("is-intro-pending");
@@ -632,10 +727,13 @@ export function initBlackHole() {
 
     const holdScroll = clamp(window.scrollY - aboutTop, 0, holdDistance);
     const aboutBeat = holdScroll / holdDistance;
+    const skillsScroll = clamp(window.scrollY - skillsTop, 0, skillsDistance);
+    const skillsBeat = skillsScroll / skillsDistance;
     flightController.setProgress(window.scrollY / journeyDistance, {
       aboutProgress: aboutBeat,
       immediate: reducedMotion.matches,
     });
+    renderSkillsBeat(skillsBeat);
 
     if (!nativeScrollTimeline) {
       flow.style.setProperty("--overlay-hold-y", `${holdScroll}px`);
@@ -651,6 +749,8 @@ export function initBlackHole() {
     journeyDistance = Math.max(1, hero.offsetHeight * JOURNEY_SCROLL_RATIO);
     aboutTop = about.offsetTop;
     holdDistance = Math.max(1, about.offsetHeight - window.innerHeight);
+    skillsTop = skills.offsetTop;
+    skillsDistance = Math.max(1, skills.offsetHeight - window.innerHeight);
     gravityGeometry = null;
   }
 
@@ -1048,6 +1148,7 @@ export function initBlackHole() {
   orbitVisibilityObserver.observe(object);
 
   renderAboutBeat(0);
+  renderSkillsBeat(0);
   render();
   image
     .decode()
@@ -1064,11 +1165,19 @@ export function initBlackHole() {
     flightController?.dispose();
     stage.style.removeProperty("--black-hole-settle-y");
     stage.style.removeProperty("--black-hole-settle-scale");
+    stage.style.removeProperty("--black-hole-world-opacity");
     statement.style.removeProperty("--about-statement-settle-y");
     flow.style.removeProperty("--overlay-hold-y");
     flow.style.removeProperty("--world-gravity-scale");
     flow.style.removeProperty("--world-gravity-opacity");
     about.classList.remove("about--absorbing");
+    ["--skills-content-opacity", "--skills-heading-y"].forEach((property) =>
+      skillsComposition.style.removeProperty(property),
+    );
+    skillNodes.forEach((node) => {
+      node.style.removeProperty("--skill-opacity");
+      node.style.removeProperty("--skill-enter-y");
+    });
     [statement, bio, backdrop].forEach((element) => {
       element.style.removeProperty("--about-gravity-x");
       element.style.removeProperty("--about-gravity-y");
