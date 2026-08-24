@@ -37,6 +37,10 @@ const SCENE_VARIABLES = Object.freeze({
     "--black-hole-top-opacity",
     "--black-hole-top-color",
     "--black-hole-image-opacity",
+    "--black-hole-line-glow",
+    "--black-hole-core-light-size",
+    "--black-hole-core-light-opacity",
+    "--black-hole-core-pulse-speed",
   ]),
   aboutCopy: Object.freeze([
     "--about-copy-x",
@@ -69,6 +73,10 @@ const BLACK_HOLE_VARIABLE_STATE = Object.freeze({
   topOpacity: "--black-hole-top-opacity",
   topColor: "--black-hole-top-color",
   blackHoleOpacity: "--black-hole-image-opacity",
+  lineGlow: "--black-hole-line-glow",
+  coreLightSize: "--black-hole-core-light-size",
+  coreLightOpacity: "--black-hole-core-light-opacity",
+  corePulseSpeed: "--black-hole-core-pulse-speed",
 });
 
 function readStoredValue(key) {
@@ -245,6 +253,12 @@ function createSceneSnapshot() {
       state: readControls("[data-about-copy-property]", "aboutCopyProperty"),
       liveVariables: readCustomProperties(aboutCopy, SCENE_VARIABLES.aboutCopy),
       geometry: readRect(aboutCopy),
+    },
+    fluidCursor: {
+      state: readControls("[data-fluid-property]", "fluidProperty"),
+      opacity: getComputedStyle(document.documentElement)
+        .getPropertyValue("--fluid-cursor-opacity")
+        .trim(),
     },
     liveScene: {
       flowVariables,

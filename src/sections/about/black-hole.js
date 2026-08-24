@@ -1,4 +1,10 @@
 import { createScrollIdentityFlight } from "./identity-flight.js";
+import {
+  DEFAULT_FLUID_SETTINGS,
+  loadFluidSettings,
+  publishFluidSettings,
+  saveFluidSettings,
+} from "../../components/fluid-cursor/fluid-settings.js";
 
 // v4 makes this authored checkpoint authoritative on origins that may still
 // contain the earlier, incorrect v3 browser state.
@@ -41,6 +47,10 @@ const DEFAULT_STATE = Object.freeze({
   topOpacity: 0.74,
   topColor: "#000000",
   blackHoleOpacity: 1,
+  lineGlow: 8,
+  coreLightSize: 0.78,
+  coreLightOpacity: 0.82,
+  corePulseSpeed: 3.4,
 });
 
 const DEFAULT_EDITOR_LAYOUT = Object.freeze({
@@ -73,6 +83,10 @@ const STATE_LIMITS = Object.freeze({
   topWidth: [0.5, 14],
   topOpacity: [0.02, 1],
   blackHoleOpacity: [0, 1],
+  lineGlow: [0, 28],
+  coreLightSize: [0.2, 2],
+  coreLightOpacity: [0, 1],
+  corePulseSpeed: [1, 8],
 });
 
 function clamp(value, minimum, maximum) {
@@ -227,6 +241,18 @@ export function initBlackHole() {
       (output) => [output.dataset.blackHoleOutput, output],
     ),
   );
+  const fluidControls = Object.fromEntries(
+    Array.from(editor.querySelectorAll("[data-fluid-property]"), (input) => [
+      input.dataset.fluidProperty,
+      input,
+    ]),
+  );
+  const fluidOutputs = Object.fromEntries(
+    Array.from(editor.querySelectorAll("[data-fluid-output]"), (output) => [
+      output.dataset.fluidOutput,
+      output,
+    ]),
+  );
   const authoredOrbitLines = Array.from(
     orbitShape.querySelectorAll(".black-hole-orbit-line"),
   );
@@ -240,6 +266,7 @@ export function initBlackHole() {
   orbitMotion.append(topOrbitGroup);
   authoredOrbitLines.forEach((line) => line.setAttribute("display", "none"));
   let state = loadState();
+  let fluidState = loadFluidSettings();
   let editorLayout = loadEditorLayout();
   let orbitDrag = null;
   let editorDrag = null;
@@ -559,6 +586,19 @@ export function initBlackHole() {
       "--black-hole-image-opacity",
       String(state.blackHoleOpacity),
     );
+    stage.style.setProperty("--black-hole-line-glow", `${state.lineGlow}px`);
+    stage.style.setProperty(
+      "--black-hole-core-light-size",
+      String(state.coreLightSize),
+    );
+    stage.style.setProperty(
+      "--black-hole-core-light-opacity",
+      String(state.coreLightOpacity),
+    );
+    stage.style.setProperty(
+      "--black-hole-core-pulse-speed",
+      `${state.corePulseSpeed}s`,
+    );
 
     Object.entries(controls).forEach(([property, control]) => {
       control.value = String(state[property]);
@@ -581,6 +621,25 @@ export function initBlackHole() {
     outputs.blackHoleOpacity.value = `${Math.round(
       state.blackHoleOpacity * 100,
     )}%`;
+    outputs.lineGlow.value = `${state.lineGlow.toFixed(1)}px`;
+    outputs.coreLightSize.value = `${state.coreLightSize.toFixed(2)}×`;
+    outputs.coreLightOpacity.value = `${Math.round(
+      state.coreLightOpacity * 100,
+    )}%`;
+    outputs.corePulseSpeed.value = `${state.corePulseSpeed.toFixed(1)}s`;
+
+    Object.entries(fluidControls).forEach(([property, control]) => {
+      control.value = String(fluidState[property]);
+    });
+    fluidOutputs.opacity.value = `${Math.round(fluidState.opacity * 100)}%`;
+    fluidOutputs.outerRate.value = `${Math.round(fluidState.outerRate * 100)}%`;
+    fluidOutputs.outerSize.value = `${fluidState.outerSize.toFixed(2)}×`;
+    fluidOutputs.outerDistance.value = fluidState.outerDistance.toFixed(3);
+    fluidOutputs.fade.value = fluidState.fade.toFixed(1);
+    fluidOutputs.radius.value = fluidState.radius.toFixed(2);
+    fluidOutputs.force.value = String(Math.round(fluidState.force));
+    fluidOutputs.curl.value = fluidState.curl.toFixed(1);
+    publishFluidSettings(fluidState);
     requestNarrativeUpdate();
   }
 
@@ -782,6 +841,19 @@ export function initBlackHole() {
     save();
   }
 
+  function handleFluidControlInput(event) {
+    const property = event.currentTarget.dataset.fluidProperty;
+    fluidState = {
+      ...fluidState,
+      [property]:
+        event.currentTarget.type === "color"
+          ? event.currentTarget.value
+          : Number(event.currentTarget.value),
+    };
+    fluidState = saveFluidSettings(fluidState);
+    render();
+  }
+
   function handleReset() {
     state = {
       ...state,
@@ -803,7 +875,12 @@ export function initBlackHole() {
       topOpacity: DEFAULT_STATE.topOpacity,
       topColor: DEFAULT_STATE.topColor,
       blackHoleOpacity: DEFAULT_STATE.blackHoleOpacity,
+      lineGlow: DEFAULT_STATE.lineGlow,
+      coreLightSize: DEFAULT_STATE.coreLightSize,
+      coreLightOpacity: DEFAULT_STATE.coreLightOpacity,
+      corePulseSpeed: DEFAULT_STATE.corePulseSpeed,
     };
+    fluidState = saveFluidSettings(DEFAULT_FLUID_SETTINGS);
     render();
     save();
   }
@@ -833,6 +910,9 @@ export function initBlackHole() {
   reset.addEventListener("click", handleReset);
   Object.values(controls).forEach((control) =>
     control.addEventListener("input", handleControlInput),
+  );
+  Object.values(fluidControls).forEach((control) =>
+    control.addEventListener("input", handleFluidControlInput),
   );
   orbits.addEventListener("pointerdown", handleOrbitPointerDown);
   orbits.addEventListener("pointermove", handleOrbitPointerMove);
@@ -912,6 +992,9 @@ export function initBlackHole() {
     reset.removeEventListener("click", handleReset);
     Object.values(controls).forEach((control) =>
       control.removeEventListener("input", handleControlInput),
+    );
+    Object.values(fluidControls).forEach((control) =>
+      control.removeEventListener("input", handleFluidControlInput),
     );
     window.removeEventListener("scroll", handleNarrativeScroll);
     window.removeEventListener("resize", handleViewportResize);

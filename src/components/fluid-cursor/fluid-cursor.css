@@ -23,7 +23,7 @@
 }
 
 body.is-intro-complete .inspira-fluid-cursor {
-  opacity: 0.88;
+  opacity: var(--fluid-cursor-opacity, 0.6);
 }
 
 @media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {

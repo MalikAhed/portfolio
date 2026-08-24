@@ -22,6 +22,10 @@
   --black-hole-top-opacity: 0.52;
   --black-hole-top-color: #24211c;
   --black-hole-image-opacity: 1;
+  --black-hole-line-glow: 8px;
+  --black-hole-core-light-size: 0.78;
+  --black-hole-core-light-opacity: 0.82;
+  --black-hole-core-pulse-speed: 3.4s;
   position: absolute;
   z-index: var(--black-hole-layer);
   /* Fill the real shared-world height instead of guessing it in viewport
@@ -87,6 +91,7 @@
 }
 
 .black-hole-image,
+.black-hole-core-light,
 .black-hole-orbits {
   position: absolute;
   inset: 0;
@@ -101,8 +106,29 @@
   opacity: var(--black-hole-image-opacity);
 }
 
-.black-hole-orbits {
+.black-hole-core-light {
   z-index: 1;
+  inset: 50% auto auto 50%;
+  inline-size: 24%;
+  block-size: 8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgb(255 255 255 / 100%) 0 9%,
+    rgb(255 255 255 / 82%) 18%,
+    rgb(255 255 255 / 34%) 42%,
+    rgb(255 255 255 / 0%) 74%
+  );
+  filter: blur(1px)
+    drop-shadow(0 0 var(--black-hole-line-glow) rgb(255 255 255 / 62%));
+  opacity: var(--black-hole-core-light-opacity);
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(var(--black-hole-core-light-size));
+  transform-origin: 50% 50%;
+}
+
+.black-hole-orbits {
+  z-index: 2;
   overflow: visible;
   color: var(--black-hole-orbit-color);
   pointer-events: none;
@@ -192,6 +218,11 @@
   animation-play-state: running;
 }
 
+.black-hole-stage--orbits-active .black-hole-core-light {
+  animation: black-hole-core-light-pulse var(--black-hole-core-pulse-speed)
+    ease-in-out infinite;
+}
+
 @keyframes black-hole-orbit-clockwise {
   to {
     --orbit-progress: -1000;
@@ -204,6 +235,17 @@
   }
 }
 
+@keyframes black-hole-core-light-pulse {
+  0%,
+  100% {
+    opacity: calc(var(--black-hole-core-light-opacity) * 0.78);
+  }
+
+  50% {
+    opacity: var(--black-hole-core-light-opacity);
+  }
+}
+
 .black-hole-stage--editing .black-hole-orbit-hit {
   pointer-events: stroke;
   cursor: move;
@@ -212,6 +254,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .black-hole-orbit-track {
+    animation: none;
+  }
+
+  .black-hole-core-light {
     animation: none;
   }
 }
@@ -278,7 +324,7 @@
 
 .black-hole-editor__tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.25rem;
   padding: 0.2rem;
   border-radius: 0.75rem;

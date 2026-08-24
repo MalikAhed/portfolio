@@ -2,6 +2,7 @@
 import type { HTMLAttributes } from "vue";
 import { cn } from "@inspira-ui/plugins";
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { FLUID_SETTINGS_EVENT } from "../../fluid-cursor/fluid-settings.js";
 
 interface ColorRGB {
   r: number;
@@ -22,6 +23,11 @@ interface Props {
   splatForce?: number;
   shading?: boolean;
   colorUpdateSpeed?: number;
+  smokeColor?: string;
+  outerColor?: string;
+  outerRate?: number;
+  outerSize?: number;
+  outerDistance?: number;
   backColor?: ColorRGB;
   transparent?: boolean;
   class?: HTMLAttributes["class"];
@@ -40,6 +46,11 @@ const props = withDefaults(defineProps<Props>(), {
   splatForce: 6000,
   shading: true,
   colorUpdateSpeed: 10,
+  smokeColor: "#f4f6f8",
+  outerColor: "#151719",
+  outerRate: 0.035,
+  outerSize: 0.48,
+  outerDistance: 0.072,
   backColor: () => ({ r: 0.5, g: 0, b: 0 }),
   transparent: true,
 });
@@ -75,10 +86,21 @@ function pointerPrototype(): Pointer {
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 let disposeSimulation = () => {};
 
-// Discrete neutral values keep every splat inside the authored monochrome
-// palette. Advection blends them into natural black-to-white smoke gradients.
-const MONOCHROME_PALETTE = Object.freeze([0.14, 0.34, 0.68, 1]);
+// A narrow, high-key neutral range gives the original fluid movement a soft
+// silver-white smoke appearance instead of dark ink-like bands.
+const MONOCHROME_PALETTE = Object.freeze([0.8, 0.87, 0.94, 1]);
 let monochromeColorIndex = 0;
+
+function hexToRgb(value: string): ColorRGB {
+  const match = /^#([0-9a-f]{6})$/i.exec(value);
+  if (!match) return { r: 1, g: 1, b: 1 };
+  const color = Number.parseInt(match[1], 16);
+  return {
+    r: ((color >> 16) & 255) / 255,
+    g: ((color >> 8) & 255) / 255,
+    b: (color & 255) / 255,
+  };
+}
 
 onBeforeUnmount(() => disposeSimulation());
 
@@ -88,6 +110,11 @@ onMounted(() => {
 
   // Pointer and config setup
   const pointers: Pointer[] = [pointerPrototype()];
+  let smokeColor = hexToRgb(props.smokeColor);
+  let outerColor = hexToRgb(props.outerColor);
+  let outerRate = props.outerRate;
+  let outerSize = props.outerSize;
+  let outerDistance = props.outerDistance;
 
   const config = {
     SIM_RESOLUTION: props.simResolution,
@@ -487,13 +514,12 @@ onMounted(() => {
             c *= diffuse;
           #endif
 
-          // Dye intensity carries the chosen monochrome tone. Coverage is
-          // calculated separately so black and dark-gray splats stay visible
-          // instead of becoming transparent. The RGB output is premultiplied
-          // to match gl.ONE / gl.ONE_MINUS_SRC_ALPHA compositing below.
+          // Dye intensity supplies coverage independently from hue, allowing
+          // the editor's smoke tint and the rare black edge wisp to coexist.
+          // RGB remains premultiplied for the blend mode used below.
           float tone = clamp(max(c.r, max(c.g, c.b)), 0.0, 1.0);
           float coverage = smoothstep(0.001, 0.018, tone) * 0.84;
-          gl_FragColor = vec4(vec3(tone) * coverage, coverage);
+          gl_FragColor = vec4(clamp(c, 0.0, 1.0) * coverage, coverage);
         }
       `;
 
@@ -1270,10 +1296,39 @@ onMounted(() => {
   }
 
   // -------------------- Interaction --------------------
+  let outerEdgeProgress = 0;
+
   function splatPointer(pointer: Pointer) {
     const dx = pointer.deltaX * config.SPLAT_FORCE;
     const dy = pointer.deltaY * config.SPLAT_FORCE;
     splat(pointer.texcoordX, pointer.texcoordY, dx, dy, pointer.color);
+
+    // Occasionally place a small near-black wisp behind the direction of
+    // travel. Its offset keeps it on the far trailing edge instead of letting
+    // it muddy the pale center of the fluid.
+    const distance = Math.hypot(pointer.deltaX, pointer.deltaY);
+    outerEdgeProgress += outerRate;
+    if (outerEdgeProgress < 1 || distance < 0.0001) return;
+    outerEdgeProgress %= 1;
+
+    const edgeX = Math.min(
+      0.99,
+      Math.max(
+        0.01,
+        pointer.texcoordX - (pointer.deltaX / distance) * outerDistance,
+      ),
+    );
+    const edgeY = Math.min(
+      0.99,
+      Math.max(
+        0.01,
+        pointer.texcoordY - (pointer.deltaY / distance) * outerDistance,
+      ),
+    );
+    const strongestChannel = Math.max(outerColor.r, outerColor.g, outerColor.b);
+    const visibleOuterColor =
+      strongestChannel < 0.025 ? { r: 0.025, g: 0.025, b: 0.025 } : outerColor;
+    splatDye(edgeX, edgeY, visibleOuterColor, outerSize);
   }
 
   function clickSplat(pointer: Pointer) {
@@ -1318,11 +1373,31 @@ onMounted(() => {
     blit(velocity.write);
     velocity.swap();
 
+    splatDye(x, y, color);
+  }
+
+  function splatDye(x: number, y: number, color: ColorRGB, radiusScale = 1) {
+    splatProgram.bind();
     if (splatProgram.uniforms.uTarget) {
       gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
     }
+    if (splatProgram.uniforms.aspectRatio) {
+      gl.uniform1f(
+        splatProgram.uniforms.aspectRatio,
+        canvas!.width / canvas!.height,
+      );
+    }
+    if (splatProgram.uniforms.point) {
+      gl.uniform2f(splatProgram.uniforms.point, x, y);
+    }
     if (splatProgram.uniforms.color) {
       gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
+    }
+    if (splatProgram.uniforms.radius) {
+      gl.uniform1f(
+        splatProgram.uniforms.radius,
+        correctRadius((config.SPLAT_RADIUS / 100) * radiusScale)!,
+      );
     }
     blit(dye.write);
     dye.swap();
@@ -1390,7 +1465,11 @@ onMounted(() => {
     const intensity = MONOCHROME_PALETTE[monochromeColorIndex];
     monochromeColorIndex =
       (monochromeColorIndex + 1) % MONOCHROME_PALETTE.length;
-    return { r: intensity, g: intensity, b: intensity };
+    return {
+      r: smokeColor.r * intensity,
+      g: smokeColor.g * intensity,
+      b: smokeColor.b * intensity,
+    };
   }
 
   function HSVtoRGB(h: number, s: number, v: number): ColorRGB {
@@ -1519,12 +1598,43 @@ onMounted(() => {
     animationFrame = requestAnimationFrame(updateFrame);
   }
 
+  function handleFluidSettings(event: Event) {
+    const detail = (
+      event as CustomEvent<{
+        color: string;
+        outerColor: string;
+        outerRate: number;
+        outerSize: number;
+        outerDistance: number;
+        fade: number;
+        radius: number;
+        force: number;
+        curl: number;
+      }>
+    ).detail;
+    if (!detail) return;
+
+    smokeColor = hexToRgb(detail.color);
+    outerColor = hexToRgb(detail.outerColor);
+    outerRate = detail.outerRate;
+    outerSize = detail.outerSize;
+    outerDistance = detail.outerDistance;
+    config.DENSITY_DISSIPATION = detail.fade;
+    config.SPLAT_RADIUS = detail.radius;
+    config.SPLAT_FORCE = detail.force;
+    config.CURL = detail.curl;
+    pointers.forEach((pointer) => {
+      pointer.color = generateColor();
+    });
+  }
+
   window.addEventListener("mousedown", handleMouseDown);
   window.addEventListener("mousemove", handleMouseMove);
   window.addEventListener("touchstart", handleTouchStart, false);
   window.addEventListener("touchmove", handleTouchMove, false);
   window.addEventListener("touchend", handleTouchEnd);
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener(FLUID_SETTINGS_EVENT, handleFluidSettings);
   // ------------------------------------------------------------
   // Add watchers for prop changes
   watch(
@@ -1562,6 +1672,7 @@ onMounted(() => {
     window.removeEventListener("touchmove", handleTouchMove, false);
     window.removeEventListener("touchend", handleTouchEnd);
     document.removeEventListener("visibilitychange", handleVisibilityChange);
+    window.removeEventListener(FLUID_SETTINGS_EVENT, handleFluidSettings);
   };
 
   animationFrame = requestAnimationFrame(updateFrame);

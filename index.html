@@ -124,6 +124,7 @@
                 decoding="async"
                 draggable="false"
               />
+              <div class="black-hole-core-light" aria-hidden="true"></div>
               <svg
                 class="black-hole-orbits"
                 viewBox="0 0 2048 1152"
@@ -374,6 +375,17 @@
               >
                 Object
               </button>
+              <button
+                id="black-hole-tab-material"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="black-hole-panel-material"
+                data-black-hole-tab="material"
+                tabindex="-1"
+              >
+                Lines material
+              </button>
             </div>
             <div
               id="black-hole-panel-rim"
@@ -569,6 +581,145 @@
                   min="0"
                   max="1"
                   step="0.01"
+              /></label>
+            </div>
+            <div
+              id="black-hole-panel-material"
+              class="black-hole-editor__tab-panel"
+              role="tabpanel"
+              aria-labelledby="black-hole-tab-material"
+              data-black-hole-panel="material"
+              hidden
+            >
+              <p class="black-hole-editor__section-title">Center light</p>
+              <p class="black-hole-editor__hint">
+                The orbit lines use their original smooth material. These
+                controls tune the lightweight center light independently.
+              </p>
+              <label
+                >Center glow <output data-black-hole-output="lineGlow"></output
+                ><input
+                  data-black-hole-property="lineGlow"
+                  type="range"
+                  min="0"
+                  max="28"
+                  step="0.5"
+              /></label>
+              <label
+                >Center size
+                <output data-black-hole-output="coreLightSize"></output
+                ><input
+                  data-black-hole-property="coreLightSize"
+                  type="range"
+                  min="0.2"
+                  max="2"
+                  step="0.01"
+              /></label>
+              <label
+                >Center light
+                <output data-black-hole-output="coreLightOpacity"></output
+                ><input
+                  data-black-hole-property="coreLightOpacity"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+              /></label>
+              <label
+                >Light pulse
+                <output data-black-hole-output="corePulseSpeed"></output
+                ><input
+                  data-black-hole-property="corePulseSpeed"
+                  type="range"
+                  min="1"
+                  max="8"
+                  step="0.1"
+              /></label>
+
+              <p class="black-hole-editor__section-title">Cursor smoke</p>
+              <label
+                >Inner color
+                <input data-fluid-property="color" type="color" value="#f4f6f8"
+              /></label>
+              <label
+                >Outer color
+                <input
+                  data-fluid-property="outerColor"
+                  type="color"
+                  value="#151719"
+              /></label>
+              <label
+                >Outer amount <output data-fluid-output="outerRate"></output
+                ><input
+                  data-fluid-property="outerRate"
+                  type="range"
+                  min="0"
+                  max="0.25"
+                  step="0.005"
+              /></label>
+              <label
+                >Outer size <output data-fluid-output="outerSize"></output
+                ><input
+                  data-fluid-property="outerSize"
+                  type="range"
+                  min="0.1"
+                  max="1.5"
+                  step="0.01"
+              /></label>
+              <label
+                >Outer distance
+                <output data-fluid-output="outerDistance"></output
+                ><input
+                  data-fluid-property="outerDistance"
+                  type="range"
+                  min="0.01"
+                  max="0.2"
+                  step="0.002"
+              /></label>
+              <label
+                >Smoke opacity <output data-fluid-output="opacity"></output
+                ><input
+                  data-fluid-property="opacity"
+                  type="range"
+                  min="0.05"
+                  max="0.9"
+                  step="0.01"
+              /></label>
+              <label
+                >Fade speed <output data-fluid-output="fade"></output
+                ><input
+                  data-fluid-property="fade"
+                  type="range"
+                  min="1"
+                  max="20"
+                  step="0.1"
+              /></label>
+              <label
+                >Trail size <output data-fluid-output="radius"></output
+                ><input
+                  data-fluid-property="radius"
+                  type="range"
+                  min="0.04"
+                  max="0.4"
+                  step="0.01"
+              /></label>
+              <label
+                >Push force <output data-fluid-output="force"></output
+                ><input
+                  data-fluid-property="force"
+                  type="range"
+                  min="500"
+                  max="9000"
+                  step="100"
+              /></label>
+              <label
+                >Swirl <output data-fluid-output="curl"></output
+                ><input
+                  data-fluid-property="curl"
+                  type="range"
+                  min="0"
+                  max="12"
+                  step="0.1"
               /></label>
             </div>
             <div class="black-hole-editor__actions">

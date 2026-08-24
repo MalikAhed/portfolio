@@ -1,9 +1,12 @@
+import { loadFluidSettings, publishFluidSettings } from "./fluid-settings.js";
+
 /** Mounts the registry FluidCursor as an isolated depth-world Vue island. */
 export function initFluidCursor() {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const precisePointer = window.matchMedia(
     "(hover: hover) and (pointer: fine)",
   );
+  const settings = publishFluidSettings(loadFluidSettings());
   if (reducedMotion.matches || !precisePointer.matches) return () => {};
 
   let disposed = false;
@@ -26,13 +29,18 @@ export function initFluidCursor() {
       simResolution: 96,
       dyeResolution: 640,
       captureResolution: 384,
-      densityDissipation: 3.5,
+      densityDissipation: settings.fade,
       velocityDissipation: 2,
       pressure: 0.1,
       pressureIterations: 12,
-      curl: 3,
-      splatRadius: 0.18,
-      splatForce: 5200,
+      curl: settings.curl,
+      splatRadius: settings.radius,
+      splatForce: settings.force,
+      smokeColor: settings.color,
+      outerColor: settings.outerColor,
+      outerRate: settings.outerRate,
+      outerSize: settings.outerSize,
+      outerDistance: settings.outerDistance,
       shading: true,
       transparent: true,
     });
