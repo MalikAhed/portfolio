@@ -1,5 +1,6 @@
 @import "./foundation.css";
 @import "../components/splash/splash.css";
+@import "../components/fluid-cursor/fluid-cursor.css";
 @import "../sections/hero/hero.css";
 @import "../sections/about/about.css";
 @import "../sections/about/black-hole.css";

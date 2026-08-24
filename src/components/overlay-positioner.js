@@ -1,12 +1,14 @@
-const STORAGE_KEY = "portfolio-overlay-position";
+// v2 prevents a previously published, incorrect placement from overriding the
+// authored Hero/About checkpoint on returning browsers.
+const STORAGE_KEY = "portfolio-overlay-position-v2";
 
 const DEFAULT_PLACEMENT = {
-  x: 0,
-  y: 0,
-  rotation: 0,
-  scale: 1,
-  angle: 110,
-  cutoutOffset: 0,
+  x: -210.70892333984375,
+  y: -141.93353271484375,
+  rotation: 11,
+  scale: 1.54,
+  angle: 122,
+  cutoutOffset: -35,
 };
 
 function readLockedPlacement() {

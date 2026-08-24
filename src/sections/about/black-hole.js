@@ -1,12 +1,13 @@
 import { createScrollIdentityFlight } from "./identity-flight.js";
 
-const STORAGE_KEY = "portfolio-black-hole-v3";
-const EDITOR_STORAGE_KEY = "portfolio-black-hole-editor-v1";
+// v4 makes this authored checkpoint authoritative on origins that may still
+// contain the earlier, incorrect v3 browser state.
+const STORAGE_KEY = "portfolio-black-hole-v4";
+const EDITOR_STORAGE_KEY = "portfolio-black-hole-editor-v2";
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const ELLIPSE_BEZIER_FACTOR = 0.5522847498;
 const ORBIT_PATH_LENGTH = 1000;
 const ORBIT_GRAVITY_BANDS = 1;
-const ORBIT_SCROLL_RESUME_DELAY_MS = 140;
 const ORBIT_BASE_DURATIONS = Object.freeze({
   rim: Object.freeze({ clockwise: 7.5, counter: 9 }),
   top: Object.freeze({ clockwise: 8.1, counter: 9.6 }),
@@ -16,30 +17,37 @@ const ORBIT_BASE_DURATIONS = Object.freeze({
 const JOURNEY_SCROLL_RATIO = 1;
 
 const DEFAULT_STATE = Object.freeze({
-  x: 0,
-  y: 0,
+  x: -11,
+  y: 126,
   depth: 0,
-  size: 1.35,
+  size: 1.08,
   rotation: 0,
   order: 35,
-  orbitX: 0,
-  orbitY: 0,
-  orbitScale: 1,
-  orbitHeight: 1,
-  orbitColor: "#101010",
-  orbitSpeed: 1.6,
-  lineDensity: 12,
-  lineWidth: 13.5,
-  lineOpacity: 0.88,
-  topX: 36,
-  topY: -42,
-  topScale: 1.12,
-  topHeight: 1.35,
-  topDensity: 7,
-  topWidth: 6.5,
-  topOpacity: 0.68,
-  topColor: "#171512",
-  blackHoleOpacity: 0.42,
+  orbitX: 42,
+  orbitY: -20,
+  orbitScale: 1.14,
+  orbitHeight: 0.25,
+  orbitColor: "#000000",
+  orbitSpeed: 0.4,
+  lineDensity: 18,
+  lineWidth: 5.25,
+  lineOpacity: 1,
+  topX: -15,
+  topY: -50,
+  topScale: 0.45,
+  topHeight: 2.5,
+  topDensity: 12,
+  topWidth: 1,
+  topOpacity: 0.74,
+  topColor: "#000000",
+  blackHoleOpacity: 1,
+});
+
+const DEFAULT_EDITOR_LAYOUT = Object.freeze({
+  x: 7.9852213859558105,
+  y: 7.9852213859558105,
+  width: 343.98907470703125,
+  height: 287.9884338378906,
 });
 
 const STATE_LIMITS = Object.freeze({
@@ -153,7 +161,7 @@ function loadEditorLayout() {
   } catch {
     // A missing or stale editor layout should not affect the scene controls.
   }
-  return null;
+  return { ...DEFAULT_EDITOR_LAYOUT };
 }
 
 export function initBlackHole() {
@@ -246,8 +254,6 @@ export function initBlackHole() {
   let journeyDistance = 1;
   let aboutTop = 0;
   let holdDistance = 1;
-  let orbitResumeTimer = 0;
-  let orbitsSuppressed = false;
   const nativeScrollTimeline =
     CSS.supports?.("animation-timeline: scroll()") ?? false;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -280,6 +286,8 @@ export function initBlackHole() {
       `black-hole-orbit-track--gravity-${gravityBand + 1}`,
     );
     track.dataset.baseDuration = String(baseDuration);
+    track.dataset.orbitKind = kind;
+    track.dataset.orbitDirection = direction;
     track.style.animationDuration = `${baseDuration / state.orbitSpeed}s`;
     return track;
   }
@@ -430,11 +438,7 @@ export function initBlackHole() {
   }
 
   function updateOrbitActivity() {
-    const active =
-      orbitsInView &&
-      !orbitsSuppressed &&
-      !document.hidden &&
-      !reducedMotion.matches;
+    const active = orbitsInView && !document.hidden && !reducedMotion.matches;
     stage.classList.toggle("black-hole-stage--orbits-active", active);
   }
 
@@ -512,14 +516,8 @@ export function initBlackHole() {
   }
 
   function handleNarrativeScroll() {
-    orbitsSuppressed = true;
-    updateOrbitActivity();
-    window.clearTimeout(orbitResumeTimer);
-    orbitResumeTimer = window.setTimeout(() => {
-      orbitsSuppressed = false;
-      updateOrbitActivity();
-    }, ORBIT_SCROLL_RESUME_DELAY_MS);
     requestNarrativeUpdate();
+    requestMagneticFieldUpdate();
   }
 
   function render() {
@@ -585,6 +583,7 @@ export function initBlackHole() {
       state.blackHoleOpacity * 100,
     )}%`;
     requestNarrativeUpdate();
+    requestMagneticFieldUpdate();
   }
 
   function save() {
@@ -858,7 +857,11 @@ export function initBlackHole() {
     requestNarrativeUpdate();
   }
 
-  document.addEventListener("visibilitychange", updateOrbitActivity);
+  function handleVisibilityChange() {
+    updateOrbitActivity();
+  }
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
   reducedMotion.addEventListener("change", handleReducedMotionChange);
   const introObserver = new MutationObserver(requestNarrativeUpdate);
   introObserver.observe(document.body, {
@@ -914,7 +917,7 @@ export function initBlackHole() {
     );
     window.removeEventListener("scroll", handleNarrativeScroll);
     window.removeEventListener("resize", handleViewportResize);
-    document.removeEventListener("visibilitychange", updateOrbitActivity);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
     reducedMotion.removeEventListener("change", handleReducedMotionChange);
     introObserver.disconnect();
     resizeObserver.disconnect();
@@ -923,6 +926,6 @@ export function initBlackHole() {
     topOrbitGroup.remove();
     authoredOrbitLines.forEach((line) => line.removeAttribute("display"));
     if (frame) window.cancelAnimationFrame(frame);
-    window.clearTimeout(orbitResumeTimer);
+    resetMagneticField();
   };
 }

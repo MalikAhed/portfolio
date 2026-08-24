@@ -16,6 +16,8 @@ import { initLockedOverlayPlacement } from "./components/overlay-positioner.js";
 import { initCutoutScrollExit } from "./sections/hero/cutout-scroll-exit.js";
 import { initBlackHole } from "./sections/about/black-hole.js";
 import { initAboutCopyEditor } from "./sections/about/about-copy-editor.js";
+import { initFluidCursor } from "./components/fluid-cursor/fluid-cursor.js";
+import { initSceneStateCopy } from "./components/scene-state-copy/scene-state-copy.js";
 
 if ("scrollRestoration" in window.history) {
   window.history.scrollRestoration = "manual";
@@ -39,6 +41,8 @@ const disposeFeatures = [
   initCutoutScrollExit(),
   initBlackHole(),
   initAboutCopyEditor(),
+  initSceneStateCopy(),
+  initFluidCursor(),
 ];
 
 function handlePageHide(event) {

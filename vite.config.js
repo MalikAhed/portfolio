@@ -1,4 +1,6 @@
 import { writeFile } from "node:fs/promises";
+import { fileURLToPath, URL } from "node:url";
+import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vite";
 
 const positionFile = new URL(
@@ -50,5 +52,10 @@ function aboutCopyPositionEditor() {
 
 export default defineConfig({
   base: process.env.GITHUB_ACTIONS ? "/portfolio/" : "/",
-  plugins: [aboutCopyPositionEditor()],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
+  plugins: [vue(), aboutCopyPositionEditor()],
 });

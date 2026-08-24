@@ -1,0 +1,19 @@
+.scene-state-copy__status {
+  min-block-size: 1em;
+  margin: -0.25rem 0 0;
+  color: rgb(247 242 233 / 64%);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+[data-full-scene-copy][data-copy-state="copied"] {
+  border-color: rgb(165 218 142 / 44%);
+  color: #dff5d6;
+  background: rgb(109 170 83 / 18%);
+}
+
+[data-full-scene-copy][data-copy-state="error"] {
+  border-color: rgb(255 148 135 / 40%);
+  color: #ffd6d0;
+}

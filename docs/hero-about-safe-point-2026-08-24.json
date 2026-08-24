@@ -1,0 +1,258 @@
+{
+  "schema": "portfolio-hero-about-scene-state",
+  "version": 1,
+  "capturedAt": "2026-08-24T19:18:42.812Z",
+  "source": {
+    "origin": "http://localhost:5173",
+    "pathname": "/"
+  },
+  "viewport": {
+    "width": 1300,
+    "height": 596,
+    "devicePixelRatio": 1.0507692098617554
+  },
+  "blackHole": {
+    "state": {
+      "x": -11,
+      "y": 126,
+      "depth": 0,
+      "size": 1.08,
+      "rotation": 0,
+      "order": 35,
+      "orbitX": 42,
+      "orbitY": -20,
+      "orbitScale": 1.14,
+      "orbitHeight": 0.25,
+      "orbitColor": "#000000",
+      "lineWidth": 5.25,
+      "lineOpacity": 1,
+      "topX": -15,
+      "topY": -50,
+      "topScale": 0.45,
+      "topHeight": 2.5,
+      "topWidth": 1,
+      "topOpacity": 0.74,
+      "topColor": "#000000",
+      "blackHoleOpacity": 1,
+      "orbitSpeed": 0.4,
+      "lineDensity": 18,
+      "topDensity": 12
+    },
+    "editorLayout": {
+      "x": 7.9852213859558105,
+      "y": 7.9852213859558105,
+      "width": 343.98907470703125,
+      "height": 287.9884338378906
+    },
+    "liveVariables": {
+      "--black-hole-x": "-11px",
+      "--black-hole-y": "126px",
+      "--black-hole-depth": "0px",
+      "--black-hole-size": "1.08",
+      "--black-hole-rotation": "0deg",
+      "--black-hole-layer": "35",
+      "--black-hole-orbit-x": "42px",
+      "--black-hole-orbit-y": "-20px",
+      "--black-hole-orbit-scale": "1.14",
+      "--black-hole-orbit-height": "0.25",
+      "--black-hole-orbit-color": "#000000",
+      "--black-hole-line-width": "5.25",
+      "--black-hole-line-opacity": "1",
+      "--black-hole-top-x": "-15px",
+      "--black-hole-top-y": "-50px",
+      "--black-hole-top-scale": "0.45",
+      "--black-hole-top-height": "2.5",
+      "--black-hole-top-width": "1",
+      "--black-hole-top-opacity": "0.74",
+      "--black-hole-top-color": "#000000",
+      "--black-hole-image-opacity": "1"
+    },
+    "geometry": {
+      "stage": {
+        "x": 0,
+        "y": -640.48,
+        "width": 1300,
+        "height": 1489.39
+      },
+      "object": {
+        "x": 122.19,
+        "y": 146.32,
+        "width": 1033.63,
+        "height": 581.4
+      },
+      "rimLines": 18,
+      "crownLines": 12
+    }
+  },
+  "shadowOverlay": {
+    "x": -210.70892333984375,
+    "y": -141.93353271484375,
+    "rotation": 11,
+    "scale": 1.54,
+    "geometry": {
+      "x": -718.38,
+      "y": -1233.54,
+      "width": 2315.34,
+      "height": 2183.21
+    }
+  },
+  "cutoutAndTriangle": {
+    "angle": 122,
+    "cutoutOffset": -35,
+    "portraitTailSize": "360.30088344429987px",
+    "clipPath": "polygon(0px 0px, 100% 0px, 100% 387.24px, 50% 747.541px, 0px 387.24px)",
+    "sceneGeometry": {
+      "x": 0,
+      "y": -911.68,
+      "width": 1300,
+      "height": 747.53
+    },
+    "canvas": {
+      "cssGeometry": {
+        "x": 0,
+        "y": -911.68,
+        "width": 1300,
+        "height": 747.53
+      },
+      "bufferWidth": 1365,
+      "bufferHeight": 785
+    }
+  },
+  "aboutCopy": {
+    "state": {
+      "x": 0,
+      "y": 0,
+      "width": 700,
+      "size": 8,
+      "weight": 400
+    },
+    "liveVariables": {
+      "--about-copy-x": "0px",
+      "--about-copy-y": "0px",
+      "--about-copy-width": "700px",
+      "--about-copy-size-adjust": "8px",
+      "--about-copy-weight": "400"
+    },
+    "geometry": {
+      "x": 300,
+      "y": 225.59,
+      "width": 699.99,
+      "height": 120.05
+    }
+  },
+  "liveScene": {
+    "flowVariables": {
+      "--overlay-x": "-210.70892333984375px",
+      "--overlay-y": "-141.93353271484375px",
+      "--overlay-rotation": "11deg",
+      "--overlay-scale": "1.54",
+      "--portrait-tail-size": "360.30088344429987px",
+      "--cutout-offset": "-35svh"
+    },
+    "heroGeometry": {
+      "x": 0,
+      "y": -640.48,
+      "width": 1300,
+      "height": 595.75
+    },
+    "flowGeometry": {
+      "x": 0,
+      "y": -640.48,
+      "width": 1300,
+      "height": 1489.39
+    },
+    "scrollY": 640.483154296875
+  },
+  "portfolioStorage": {
+    "portfolio-about-cutouts-v1": {
+      "top": {
+        "x": 137,
+        "y": 336,
+        "size": 1,
+        "rotation": 0,
+        "z": 5
+      },
+      "bottom": {
+        "x": -253,
+        "y": 0,
+        "size": 0.65,
+        "rotation": 0,
+        "z": 2
+      },
+      "dark": {
+        "x": 0,
+        "y": 27,
+        "size": 1.11,
+        "rotation": 0,
+        "z": 1
+      }
+    },
+    "portfolio-black-hole-editor-v1": {
+      "x": 7.9852213859558105,
+      "y": 7.9852213859558105,
+      "width": 343.98907470703125,
+      "height": 287.9884338378906
+    },
+    "portfolio-black-hole-v1": {
+      "x": -405.96388244628906,
+      "y": 206.3518524169922,
+      "depth": -1400,
+      "size": 1.48,
+      "rotation": -400,
+      "order": 39
+    },
+    "portfolio-black-hole-v3": {
+      "x": -11,
+      "y": 126,
+      "depth": 0,
+      "size": 1.08,
+      "rotation": 0,
+      "order": 35,
+      "orbitX": 42,
+      "orbitY": -20,
+      "orbitScale": 1.14,
+      "orbitHeight": 0.25,
+      "orbitSpeed": 0.4,
+      "lineDensity": 18,
+      "lineWidth": 5.25,
+      "lineOpacity": 1,
+      "topX": -15,
+      "topY": -50,
+      "topScale": 0.45,
+      "topHeight": 2.5,
+      "topDensity": 12,
+      "topWidth": 1,
+      "topOpacity": 0.74,
+      "blackHoleOpacity": 1,
+      "orbitColor": "#000000",
+      "topColor": "#000000"
+    },
+    "portfolio-flower-layout-v1": {
+      "wide": {
+        "start": {
+          "x": -0.004469928549585697,
+          "y": -0.23549415845436658,
+          "scale": 1
+        },
+        "end": {
+          "x": -0.08447921471421765,
+          "y": -0.12309768508864287,
+          "scale": 1
+        },
+        "top": {
+          "x": 0.1554881175591613,
+          "y": -0.026624644861730058,
+          "scale": 1
+        }
+      }
+    },
+    "portfolio-overlay-position": {
+      "x": -210.70892333984375,
+      "y": -141.93353271484375,
+      "rotation": 11,
+      "scale": 1.54,
+      "angle": 122,
+      "cutoutOffset": -35
+    }
+  }
+}

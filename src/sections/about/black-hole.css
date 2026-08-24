@@ -188,16 +188,8 @@
   animation-play-state: paused;
 }
 
-.black-hole-stage--orbits-active
-  .black-hole-object.is-formed
-  .black-hole-orbit-track {
+.black-hole-stage--orbits-active .black-hole-orbit-track {
   animation-play-state: running;
-}
-
-.black-hole-object.is-performance-lite
-  .black-hole-orbits__shape
-  .black-hole-orbit-track--counter {
-  animation-play-state: paused !important;
 }
 
 @keyframes black-hole-orbit-clockwise {
