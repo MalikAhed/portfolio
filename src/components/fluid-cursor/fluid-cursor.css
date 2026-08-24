@@ -2,9 +2,9 @@
 .inspira-fluid-cursor {
   position: fixed;
   inset: 0;
-  /* Depth-world atmosphere: above live hero copy (20), below the cutout
-     subject canvas (30), the black hole (35), and interface controls (40+). */
-  z-index: 25;
+  /* Far-depth atmosphere: it shares the base-world plane (0), while even the
+     faint oversized display copy begins at 1 and all live text sits higher. */
+  z-index: 0;
   inline-size: 100%;
   block-size: 100%;
   pointer-events: none;
@@ -12,8 +12,6 @@
 
 .inspira-fluid-cursor {
   opacity: 0;
-  mix-blend-mode: luminosity;
-  filter: grayscale(1) contrast(1.16);
   transition: opacity 260ms var(--ease-smooth);
 }
 
@@ -25,7 +23,7 @@
 }
 
 body.is-intro-complete .inspira-fluid-cursor {
-  opacity: 0.78;
+  opacity: 0.88;
 }
 
 @media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {

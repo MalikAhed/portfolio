@@ -517,7 +517,6 @@ export function initBlackHole() {
 
   function handleNarrativeScroll() {
     requestNarrativeUpdate();
-    requestMagneticFieldUpdate();
   }
 
   function render() {
@@ -583,7 +582,6 @@ export function initBlackHole() {
       state.blackHoleOpacity * 100,
     )}%`;
     requestNarrativeUpdate();
-    requestMagneticFieldUpdate();
   }
 
   function save() {
@@ -926,6 +924,5 @@ export function initBlackHole() {
     topOrbitGroup.remove();
     authoredOrbitLines.forEach((line) => line.removeAttribute("display"));
     if (frame) window.cancelAnimationFrame(frame);
-    resetMagneticField();
   };
 }

@@ -77,7 +77,7 @@ let disposeSimulation = () => {};
 
 // Discrete neutral values keep every splat inside the authored monochrome
 // palette. Advection blends them into natural black-to-white smoke gradients.
-const MONOCHROME_PALETTE = Object.freeze([0.035, 0.16, 0.42, 0.92]);
+const MONOCHROME_PALETTE = Object.freeze([0.14, 0.34, 0.68, 1]);
 let monochromeColorIndex = 0;
 
 onBeforeUnmount(() => disposeSimulation());
@@ -487,8 +487,13 @@ onMounted(() => {
             c *= diffuse;
           #endif
 
-          float a = max(c.r, max(c.g, c.b));
-          gl_FragColor = vec4(c, a);
+          // Dye intensity carries the chosen monochrome tone. Coverage is
+          // calculated separately so black and dark-gray splats stay visible
+          // instead of becoming transparent. The RGB output is premultiplied
+          // to match gl.ONE / gl.ONE_MINUS_SRC_ALPHA compositing below.
+          float tone = clamp(max(c.r, max(c.g, c.b)), 0.0, 1.0);
+          float coverage = smoothstep(0.001, 0.018, tone) * 0.84;
+          gl_FragColor = vec4(vec3(tone) * coverage, coverage);
         }
       `;
 
