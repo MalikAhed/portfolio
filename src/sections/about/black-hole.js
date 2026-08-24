@@ -47,10 +47,6 @@ const DEFAULT_STATE = Object.freeze({
   topOpacity: 0.74,
   topColor: "#000000",
   blackHoleOpacity: 1,
-  lineGlow: 8,
-  coreLightSize: 0.78,
-  coreLightOpacity: 0.82,
-  corePulseSpeed: 3.4,
 });
 
 const DEFAULT_EDITOR_LAYOUT = Object.freeze({
@@ -83,10 +79,6 @@ const STATE_LIMITS = Object.freeze({
   topWidth: [0.5, 14],
   topOpacity: [0.02, 1],
   blackHoleOpacity: [0, 1],
-  lineGlow: [0, 28],
-  coreLightSize: [0.2, 2],
-  coreLightOpacity: [0, 1],
-  corePulseSpeed: [1, 8],
 });
 
 function clamp(value, minimum, maximum) {
@@ -586,20 +578,6 @@ export function initBlackHole() {
       "--black-hole-image-opacity",
       String(state.blackHoleOpacity),
     );
-    stage.style.setProperty("--black-hole-line-glow", `${state.lineGlow}px`);
-    stage.style.setProperty(
-      "--black-hole-core-light-size",
-      String(state.coreLightSize),
-    );
-    stage.style.setProperty(
-      "--black-hole-core-light-opacity",
-      String(state.coreLightOpacity),
-    );
-    stage.style.setProperty(
-      "--black-hole-core-pulse-speed",
-      `${state.corePulseSpeed}s`,
-    );
-
     Object.entries(controls).forEach(([property, control]) => {
       control.value = String(state[property]);
     });
@@ -621,24 +599,27 @@ export function initBlackHole() {
     outputs.blackHoleOpacity.value = `${Math.round(
       state.blackHoleOpacity * 100,
     )}%`;
-    outputs.lineGlow.value = `${state.lineGlow.toFixed(1)}px`;
-    outputs.coreLightSize.value = `${state.coreLightSize.toFixed(2)}×`;
-    outputs.coreLightOpacity.value = `${Math.round(
-      state.coreLightOpacity * 100,
-    )}%`;
-    outputs.corePulseSpeed.value = `${state.corePulseSpeed.toFixed(1)}s`;
-
     Object.entries(fluidControls).forEach(([property, control]) => {
       control.value = String(fluidState[property]);
     });
     fluidOutputs.opacity.value = `${Math.round(fluidState.opacity * 100)}%`;
-    fluidOutputs.outerRate.value = `${Math.round(fluidState.outerRate * 100)}%`;
-    fluidOutputs.outerSize.value = `${fluidState.outerSize.toFixed(2)}×`;
-    fluidOutputs.outerDistance.value = fluidState.outerDistance.toFixed(3);
-    fluidOutputs.fade.value = fluidState.fade.toFixed(1);
+    fluidOutputs.colorStrength.value = `${Math.round(
+      fluidState.colorStrength * 100,
+    )}%`;
+    fluidOutputs.fadeTime.value = `${fluidState.fadeTime.toFixed(2)}s`;
     fluidOutputs.radius.value = fluidState.radius.toFixed(2);
     fluidOutputs.force.value = String(Math.round(fluidState.force));
     fluidOutputs.curl.value = fluidState.curl.toFixed(1);
+    fluidOutputs.reach.value = `${fluidState.reach.toFixed(2)}×`;
+    fluidOutputs.emissionRate.value = `${fluidState.emissionRate.toFixed(1)}/s`;
+    fluidOutputs.originX.value = `${Math.round(fluidState.originX * 100)}%`;
+    fluidOutputs.emitterGap.value = `${Math.round(
+      fluidState.emitterGap * 100,
+    )}%`;
+    fluidOutputs.emitterY.value = `${Math.round(fluidState.emitterY * 100)}%`;
+    fluidOutputs.emitterSpread.value = `${Math.round(
+      fluidState.emitterSpread * 100,
+    )}%`;
     publishFluidSettings(fluidState);
     requestNarrativeUpdate();
   }
@@ -846,7 +827,8 @@ export function initBlackHole() {
     fluidState = {
       ...fluidState,
       [property]:
-        event.currentTarget.type === "color"
+        event.currentTarget.type === "color" ||
+        event.currentTarget.tagName === "SELECT"
           ? event.currentTarget.value
           : Number(event.currentTarget.value),
     };
@@ -875,10 +857,6 @@ export function initBlackHole() {
       topOpacity: DEFAULT_STATE.topOpacity,
       topColor: DEFAULT_STATE.topColor,
       blackHoleOpacity: DEFAULT_STATE.blackHoleOpacity,
-      lineGlow: DEFAULT_STATE.lineGlow,
-      coreLightSize: DEFAULT_STATE.coreLightSize,
-      coreLightOpacity: DEFAULT_STATE.coreLightOpacity,
-      corePulseSpeed: DEFAULT_STATE.corePulseSpeed,
     };
     fluidState = saveFluidSettings(DEFAULT_FLUID_SETTINGS);
     render();

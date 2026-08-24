@@ -11,6 +11,7 @@ interface ColorRGB {
 }
 
 interface Props {
+  enabled?: boolean;
   simResolution?: number;
   dyeResolution?: number;
   captureResolution?: number;
@@ -23,17 +24,23 @@ interface Props {
   splatForce?: number;
   shading?: boolean;
   colorUpdateSpeed?: number;
+  colorMode?: "original" | "custom";
   smokeColor?: string;
-  outerColor?: string;
-  outerRate?: number;
-  outerSize?: number;
-  outerDistance?: number;
+  secondaryColor?: string;
+  colorStrength?: number;
+  emitterReach?: number;
+  emissionRate?: number;
+  originX?: number;
+  emitterGap?: number;
+  emitterY?: number;
+  emitterSpread?: number;
   backColor?: ColorRGB;
   transparent?: boolean;
   class?: HTMLAttributes["class"];
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  enabled: false,
   simResolution: 128,
   dyeResolution: 1440,
   captureResolution: 512,
@@ -46,50 +53,22 @@ const props = withDefaults(defineProps<Props>(), {
   splatForce: 6000,
   shading: true,
   colorUpdateSpeed: 10,
-  smokeColor: "#f4f6f8",
-  outerColor: "#151719",
-  outerRate: 0.035,
-  outerSize: 0.48,
-  outerDistance: 0.072,
+  colorMode: "original",
+  smokeColor: "#ff0000",
+  secondaryColor: "#0000ff",
+  colorStrength: 0.24,
+  emitterReach: 1.25,
+  emissionRate: 8,
+  originX: 0.5,
+  emitterGap: 0.07,
+  emitterY: 0.14,
+  emitterSpread: 0.08,
   backColor: () => ({ r: 0.5, g: 0, b: 0 }),
   transparent: true,
 });
 
-interface Pointer {
-  id: number;
-  texcoordX: number;
-  texcoordY: number;
-  prevTexcoordX: number;
-  prevTexcoordY: number;
-  deltaX: number;
-  deltaY: number;
-  down: boolean;
-  moved: boolean;
-  color: ColorRGB;
-}
-
-function pointerPrototype(): Pointer {
-  return {
-    id: -1,
-    texcoordX: 0,
-    texcoordY: 0,
-    prevTexcoordX: 0,
-    prevTexcoordY: 0,
-    deltaX: 0,
-    deltaY: 0,
-    down: false,
-    moved: false,
-    color: { r: 0, g: 0, b: 0 },
-  };
-}
-
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 let disposeSimulation = () => {};
-
-// A narrow, high-key neutral range gives the original fluid movement a soft
-// silver-white smoke appearance instead of dark ink-like bands.
-const MONOCHROME_PALETTE = Object.freeze([0.8, 0.87, 0.94, 1]);
-let monochromeColorIndex = 0;
 
 function hexToRgb(value: string): ColorRGB {
   const match = /^#([0-9a-f]{6})$/i.exec(value);
@@ -108,13 +87,18 @@ onMounted(() => {
   const canvas = canvasRef.value;
   if (!canvas) return;
 
-  // Pointer and config setup
-  const pointers: Pointer[] = [pointerPrototype()];
+  // Hero-owned ambient emitter setup. No pointer input reaches the simulation.
+  let effectEnabled = props.enabled;
+  let colorMode = props.colorMode;
   let smokeColor = hexToRgb(props.smokeColor);
-  let outerColor = hexToRgb(props.outerColor);
-  let outerRate = props.outerRate;
-  let outerSize = props.outerSize;
-  let outerDistance = props.outerDistance;
+  let secondaryColor = hexToRgb(props.secondaryColor);
+  let colorStrength = props.colorStrength;
+  let emitterReach = props.emitterReach;
+  let emissionRate = props.emissionRate;
+  let originX = props.originX;
+  let emitterGap = props.emitterGap;
+  let emitterY = props.emitterY;
+  let emitterSpread = props.emitterSpread;
 
   const config = {
     SIM_RESOLUTION: props.simResolution,
@@ -514,12 +498,8 @@ onMounted(() => {
             c *= diffuse;
           #endif
 
-          // Dye intensity supplies coverage independently from hue, allowing
-          // the editor's smoke tint and the rare black edge wisp to coexist.
-          // RGB remains premultiplied for the blend mode used below.
-          float tone = clamp(max(c.r, max(c.g, c.b)), 0.0, 1.0);
-          float coverage = smoothstep(0.001, 0.018, tone) * 0.84;
-          gl_FragColor = vec4(clamp(c, 0.0, 1.0) * coverage, coverage);
+          float a = max(c.r, max(c.g, c.b));
+          gl_FragColor = vec4(c, a);
         }
       `;
 
@@ -1040,18 +1020,23 @@ onMounted(() => {
 
   let lastUpdateTime = Date.now();
   let colorUpdateTimer = 0.0;
+  let emissionTimer = 1;
+  let leftEmitterColor = generateColor("left");
+  let rightEmitterColor = generateColor("right");
+  let streamsPrimed = false;
   let animationFrame = 0;
   let running = true;
+  let sceneVisible = true;
 
   function updateFrame() {
-    if (!running || document.hidden) {
+    if (!running || !effectEnabled || document.hidden || !sceneVisible) {
       animationFrame = 0;
       return;
     }
     const dt = calcDeltaTime();
     if (resizeCanvas()) initFramebuffers();
     updateColors(dt);
-    applyInputs();
+    emitFromBehindSubject(dt);
     step(dt);
     render(null);
     animationFrame = requestAnimationFrame(updateFrame);
@@ -1080,18 +1065,97 @@ onMounted(() => {
     colorUpdateTimer += dt * config.COLOR_UPDATE_SPEED;
     if (colorUpdateTimer >= 1) {
       colorUpdateTimer = wrap(colorUpdateTimer, 0, 1);
-      pointers.forEach((p) => {
-        p.color = generateColor();
-      });
+      leftEmitterColor = generateColor("left");
+      rightEmitterColor = generateColor("right");
     }
   }
 
-  function applyInputs() {
-    for (const p of pointers) {
-      if (p.moved) {
-        p.moved = false;
-        splatPointer(p);
-      }
+  function emitFromBehindSubject(dt: number) {
+    if (!streamsPrimed) {
+      primeSubjectStreams();
+      streamsPrimed = true;
+    }
+
+    emissionTimer += dt * emissionRate;
+    if (emissionTimer < 1) return;
+
+    const bursts = Math.min(2, Math.floor(emissionTimer));
+    emissionTimer %= 1;
+    const outwardVelocity = config.SPLAT_FORCE * 0.018 * emitterReach;
+    const cornerRise = outwardVelocity * (0.12 + emitterSpread * 1.8);
+    const leftOriginX = Math.max(0.02, originX - emitterGap * 0.5);
+    const rightOriginX = Math.min(0.98, originX + emitterGap * 0.5);
+
+    for (let remaining = bursts; remaining > 0; remaining -= 1) {
+      // Both nozzles sit behind the lower portrait. Their velocity fans up
+      // and outward from a fixed origin toward the two top corners.
+      splat(
+        leftOriginX,
+        emitterY,
+        -outwardVelocity,
+        cornerRise,
+        leftEmitterColor,
+      );
+      splatDye(
+        Math.max(0.02, leftOriginX - 0.06),
+        emitterY + 0.018,
+        leftEmitterColor,
+        0.72,
+      );
+      splat(
+        rightOriginX,
+        emitterY,
+        outwardVelocity,
+        cornerRise,
+        rightEmitterColor,
+      );
+      splatDye(
+        Math.min(0.98, rightOriginX + 0.06),
+        emitterY + 0.018,
+        rightEmitterColor,
+        0.72,
+      );
+    }
+  }
+
+  function primeSubjectStreams() {
+    const outwardVelocity = config.SPLAT_FORCE * 0.018 * emitterReach;
+    const cornerRise = outwardVelocity * (0.12 + emitterSpread * 1.8);
+    const leftOriginX = Math.max(0.02, originX - emitterGap * 0.5);
+    const rightOriginX = Math.min(0.98, originX + emitterGap * 0.5);
+
+    for (let index = 0; index < 4; index += 1) {
+      const progress = index / 3;
+      const travel = progress * 0.13;
+      const rise = progress * (0.06 + emitterSpread * 0.5);
+      const radiusScale = 1 - progress * 0.12;
+
+      splat(
+        Math.max(0.02, leftOriginX - travel),
+        Math.min(0.98, emitterY + rise),
+        -outwardVelocity,
+        cornerRise,
+        leftEmitterColor,
+      );
+      splatDye(
+        Math.max(0.02, leftOriginX - travel),
+        Math.min(0.98, emitterY + rise),
+        leftEmitterColor,
+        radiusScale,
+      );
+      splat(
+        Math.min(0.98, rightOriginX + travel),
+        Math.min(0.98, emitterY + rise),
+        outwardVelocity,
+        cornerRise,
+        rightEmitterColor,
+      );
+      splatDye(
+        Math.min(0.98, rightOriginX + travel),
+        Math.min(0.98, emitterY + rise),
+        rightEmitterColor,
+        radiusScale,
+      );
     }
   }
 
@@ -1295,52 +1359,7 @@ onMounted(() => {
     blit(target, false);
   }
 
-  // -------------------- Interaction --------------------
-  let outerEdgeProgress = 0;
-
-  function splatPointer(pointer: Pointer) {
-    const dx = pointer.deltaX * config.SPLAT_FORCE;
-    const dy = pointer.deltaY * config.SPLAT_FORCE;
-    splat(pointer.texcoordX, pointer.texcoordY, dx, dy, pointer.color);
-
-    // Occasionally place a small near-black wisp behind the direction of
-    // travel. Its offset keeps it on the far trailing edge instead of letting
-    // it muddy the pale center of the fluid.
-    const distance = Math.hypot(pointer.deltaX, pointer.deltaY);
-    outerEdgeProgress += outerRate;
-    if (outerEdgeProgress < 1 || distance < 0.0001) return;
-    outerEdgeProgress %= 1;
-
-    const edgeX = Math.min(
-      0.99,
-      Math.max(
-        0.01,
-        pointer.texcoordX - (pointer.deltaX / distance) * outerDistance,
-      ),
-    );
-    const edgeY = Math.min(
-      0.99,
-      Math.max(
-        0.01,
-        pointer.texcoordY - (pointer.deltaY / distance) * outerDistance,
-      ),
-    );
-    const strongestChannel = Math.max(outerColor.r, outerColor.g, outerColor.b);
-    const visibleOuterColor =
-      strongestChannel < 0.025 ? { r: 0.025, g: 0.025, b: 0.025 } : outerColor;
-    splatDye(edgeX, edgeY, visibleOuterColor, outerSize);
-  }
-
-  function clickSplat(pointer: Pointer) {
-    const color = generateColor();
-    color.r *= 10;
-    color.g *= 10;
-    color.b *= 10;
-    const dx = 10 * (Math.random() - 0.5);
-    const dy = 30 * (Math.random() - 0.5);
-    splat(pointer.texcoordX, pointer.texcoordY, dx, dy, color);
-  }
-
+  // -------------------- Ambient emission --------------------
   function splat(
     x: number,
     y: number,
@@ -1410,65 +1429,20 @@ onMounted(() => {
     return radius;
   }
 
-  function updatePointerDownData(
-    pointer: Pointer,
-    id: number,
-    posX: number,
-    posY: number,
-  ) {
-    pointer.id = id;
-    pointer.down = true;
-    pointer.moved = false;
-    pointer.texcoordX = posX / canvas!.width;
-    pointer.texcoordY = 1 - posY / canvas!.height;
-    pointer.prevTexcoordX = pointer.texcoordX;
-    pointer.prevTexcoordY = pointer.texcoordY;
-    pointer.deltaX = 0;
-    pointer.deltaY = 0;
-    pointer.color = generateColor();
-  }
+  function generateColor(side: "left" | "right"): ColorRGB {
+    if (colorMode === "original") {
+      const color = HSVtoRGB(Math.random(), 1, 1);
+      color.r *= colorStrength;
+      color.g *= colorStrength;
+      color.b *= colorStrength;
+      return color;
+    }
 
-  function updatePointerMoveData(
-    pointer: Pointer,
-    posX: number,
-    posY: number,
-    color: ColorRGB,
-  ) {
-    pointer.prevTexcoordX = pointer.texcoordX;
-    pointer.prevTexcoordY = pointer.texcoordY;
-    pointer.texcoordX = posX / canvas!.width;
-    pointer.texcoordY = 1 - posY / canvas!.height;
-    pointer.deltaX = correctDeltaX(pointer.texcoordX - pointer.prevTexcoordX)!;
-    pointer.deltaY = correctDeltaY(pointer.texcoordY - pointer.prevTexcoordY)!;
-    pointer.moved =
-      Math.abs(pointer.deltaX) > 0 || Math.abs(pointer.deltaY) > 0;
-    pointer.color = color;
-  }
-
-  function updatePointerUpData(pointer: Pointer) {
-    pointer.down = false;
-  }
-
-  function correctDeltaX(delta: number) {
-    const aspectRatio = canvas!.width / canvas!.height;
-    if (aspectRatio < 1) delta *= aspectRatio;
-    return delta;
-  }
-
-  function correctDeltaY(delta: number) {
-    const aspectRatio = canvas!.width / canvas!.height;
-    if (aspectRatio > 1) delta /= aspectRatio;
-    return delta;
-  }
-
-  function generateColor(): ColorRGB {
-    const intensity = MONOCHROME_PALETTE[monochromeColorIndex];
-    monochromeColorIndex =
-      (monochromeColorIndex + 1) % MONOCHROME_PALETTE.length;
+    const source = side === "left" ? smokeColor : secondaryColor;
     return {
-      r: smokeColor.r * intensity,
-      g: smokeColor.g * intensity,
-      b: smokeColor.b * intensity,
+      r: source.r * colorStrength,
+      g: source.g * colorStrength,
+      b: source.b * colorStrength,
     };
   }
 
@@ -1523,116 +1497,92 @@ onMounted(() => {
     return ((value - min) % range) + min;
   }
 
-  // -------------------- Event Listeners --------------------
-  function handleMouseDown(e: MouseEvent) {
-    const pointer = pointers[0];
-    const posX = scaleByPixelRatio(e.clientX);
-    const posY = scaleByPixelRatio(e.clientY);
-    updatePointerDownData(pointer, -1, posX, posY);
-    clickSplat(pointer);
-  }
-
-  // Start rendering on first mouse move
-  function handleFirstMouseMove(e: MouseEvent) {
-    const pointer = pointers[0];
-    const posX = scaleByPixelRatio(e.clientX);
-    const posY = scaleByPixelRatio(e.clientY);
-    const color = generateColor();
-    updatePointerMoveData(pointer, posX, posY, color);
-    document.body.removeEventListener("mousemove", handleFirstMouseMove);
-  }
-  document.body.addEventListener("mousemove", handleFirstMouseMove);
-
-  function handleMouseMove(e: MouseEvent) {
-    const pointer = pointers[0];
-    const posX = scaleByPixelRatio(e.clientX);
-    const posY = scaleByPixelRatio(e.clientY);
-    const color = pointer.color;
-    updatePointerMoveData(pointer, posX, posY, color);
-  }
-
-  // Start rendering on first touch
-  function handleFirstTouchStart(e: TouchEvent) {
-    const touches = e.targetTouches;
-    const pointer = pointers[0];
-    for (let i = 0; i < touches.length; i++) {
-      const posX = scaleByPixelRatio(touches[i].clientX);
-      const posY = scaleByPixelRatio(touches[i].clientY);
-      updatePointerDownData(pointer, touches[i].identifier, posX, posY);
-    }
-    document.body.removeEventListener("touchstart", handleFirstTouchStart);
-  }
-  document.body.addEventListener("touchstart", handleFirstTouchStart);
-
-  function handleTouchStart(e: TouchEvent) {
-    const touches = e.targetTouches;
-    const pointer = pointers[0];
-    for (let i = 0; i < touches.length; i++) {
-      const posX = scaleByPixelRatio(touches[i].clientX);
-      const posY = scaleByPixelRatio(touches[i].clientY);
-      updatePointerDownData(pointer, touches[i].identifier, posX, posY);
-    }
-  }
-
-  function handleTouchMove(e: TouchEvent) {
-    const touches = e.targetTouches;
-    const pointer = pointers[0];
-    for (let i = 0; i < touches.length; i++) {
-      const posX = scaleByPixelRatio(touches[i].clientX);
-      const posY = scaleByPixelRatio(touches[i].clientY);
-      updatePointerMoveData(pointer, posX, posY, pointer.color);
-    }
-  }
-
-  function handleTouchEnd(e: TouchEvent) {
-    const touches = e.changedTouches;
-    const pointer = pointers[0];
-    for (let i = 0; i < touches.length; i++) {
-      updatePointerUpData(pointer);
-    }
-  }
-
   function handleVisibilityChange() {
-    if (document.hidden || animationFrame || !running) return;
+    if (
+      !effectEnabled ||
+      document.hidden ||
+      !sceneVisible ||
+      animationFrame ||
+      !running
+    )
+      return;
     lastUpdateTime = Date.now();
     animationFrame = requestAnimationFrame(updateFrame);
   }
 
+  const visibilityObserver = new IntersectionObserver(([entry]) => {
+    sceneVisible = entry.isIntersecting;
+    if (
+      !effectEnabled ||
+      !sceneVisible ||
+      animationFrame ||
+      !running ||
+      document.hidden
+    )
+      return;
+    lastUpdateTime = Date.now();
+    animationFrame = requestAnimationFrame(updateFrame);
+  });
+  visibilityObserver.observe(canvas);
+
   function handleFluidSettings(event: Event) {
     const detail = (
       event as CustomEvent<{
+        enabled: boolean;
+        colorMode: "original" | "custom";
         color: string;
-        outerColor: string;
-        outerRate: number;
-        outerSize: number;
-        outerDistance: number;
-        fade: number;
+        secondaryColor: string;
+        colorStrength: number;
+        fadeTime: number;
         radius: number;
         force: number;
         curl: number;
+        reach: number;
+        emissionRate: number;
+        originX: number;
+        emitterGap: number;
+        emitterY: number;
+        emitterSpread: number;
       }>
     ).detail;
     if (!detail) return;
 
+    const wasEnabled = effectEnabled;
+    effectEnabled = detail.enabled;
+    colorMode = detail.colorMode;
     smokeColor = hexToRgb(detail.color);
-    outerColor = hexToRgb(detail.outerColor);
-    outerRate = detail.outerRate;
-    outerSize = detail.outerSize;
-    outerDistance = detail.outerDistance;
-    config.DENSITY_DISSIPATION = detail.fade;
+    secondaryColor = hexToRgb(detail.secondaryColor);
+    colorStrength = detail.colorStrength;
+    config.DENSITY_DISSIPATION = Math.log(10) / detail.fadeTime;
     config.SPLAT_RADIUS = detail.radius;
     config.SPLAT_FORCE = detail.force;
     config.CURL = detail.curl;
-    pointers.forEach((pointer) => {
-      pointer.color = generateColor();
-    });
+    emitterReach = detail.reach;
+    emissionRate = detail.emissionRate;
+    originX = detail.originX;
+    emitterGap = detail.emitterGap;
+    emitterY = detail.emitterY;
+    emitterSpread = detail.emitterSpread;
+    leftEmitterColor = generateColor("left");
+    rightEmitterColor = generateColor("right");
+
+    if (!effectEnabled) {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
+      return;
+    }
+
+    if (!wasEnabled) {
+      initFramebuffers();
+      streamsPrimed = false;
+      emissionTimer = 1;
+    }
+    if (!animationFrame && sceneVisible && !document.hidden && running) {
+      lastUpdateTime = Date.now();
+      animationFrame = requestAnimationFrame(updateFrame);
+    }
   }
 
-  window.addEventListener("mousedown", handleMouseDown);
-  window.addEventListener("mousemove", handleMouseMove);
-  window.addEventListener("touchstart", handleTouchStart, false);
-  window.addEventListener("touchmove", handleTouchMove, false);
-  window.addEventListener("touchend", handleTouchEnd);
   document.addEventListener("visibilitychange", handleVisibilityChange);
   window.addEventListener(FLUID_SETTINGS_EVENT, handleFluidSettings);
   // ------------------------------------------------------------
@@ -1664,27 +1614,17 @@ onMounted(() => {
   disposeSimulation = () => {
     running = false;
     if (animationFrame) cancelAnimationFrame(animationFrame);
-    document.body.removeEventListener("mousemove", handleFirstMouseMove);
-    document.body.removeEventListener("touchstart", handleFirstTouchStart);
-    window.removeEventListener("mousedown", handleMouseDown);
-    window.removeEventListener("mousemove", handleMouseMove);
-    window.removeEventListener("touchstart", handleTouchStart, false);
-    window.removeEventListener("touchmove", handleTouchMove, false);
-    window.removeEventListener("touchend", handleTouchEnd);
+    visibilityObserver.disconnect();
     document.removeEventListener("visibilitychange", handleVisibilityChange);
     window.removeEventListener(FLUID_SETTINGS_EVENT, handleFluidSettings);
   };
 
-  animationFrame = requestAnimationFrame(updateFrame);
+  if (effectEnabled) animationFrame = requestAnimationFrame(updateFrame);
 });
 </script>
 
 <template>
-  <div
-    :class="
-      cn(`pointer-events-none fixed top-0 left-0 z-50 size-full`, props.class)
-    "
-  >
+  <div :class="cn(`pointer-events-none size-full`, props.class)">
     <canvas id="fluid" ref="canvasRef" class="block h-screen w-screen" />
   </div>
 </template>

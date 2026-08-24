@@ -124,7 +124,6 @@
                 decoding="async"
                 draggable="false"
               />
-              <div class="black-hole-core-light" aria-hidden="true"></div>
               <svg
                 class="black-hole-orbits"
                 viewBox="0 0 2048 1152"
@@ -384,7 +383,7 @@
                 data-black-hole-tab="material"
                 tabindex="-1"
               >
-                Lines material
+                Cursor fluid
               </button>
             </div>
             <div
@@ -591,111 +590,67 @@
               data-black-hole-panel="material"
               hidden
             >
-              <p class="black-hole-editor__section-title">Center light</p>
+              <p class="black-hole-editor__section-title">Cursor fluid</p>
               <p class="black-hole-editor__hint">
-                The orbit lines use their original smooth material. These
-                controls tune the lightweight center light independently.
+                Two ambient streams emerge from behind the portrait's base and
+                shoot toward the top-left and top-right corners. There is no
+                cursor interaction.
               </p>
               <label
-                >Center glow <output data-black-hole-output="lineGlow"></output
-                ><input
-                  data-black-hole-property="lineGlow"
-                  type="range"
-                  min="0"
-                  max="28"
-                  step="0.5"
+                >Effect
+                <select data-fluid-property="enabled">
+                  <option value="false">Off</option>
+                  <option value="true">On</option>
+                </select></label
+              >
+              <label
+                >Color mode
+                <select data-fluid-property="colorMode">
+                  <option value="original">Original rainbow</option>
+                  <option value="custom">Custom left / right</option>
+                </select></label
+              >
+              <label
+                >Left color
+                <input data-fluid-property="color" type="color" value="#ff0000"
               /></label>
               <label
-                >Center size
-                <output data-black-hole-output="coreLightSize"></output
-                ><input
-                  data-black-hole-property="coreLightSize"
-                  type="range"
-                  min="0.2"
-                  max="2"
-                  step="0.01"
-              /></label>
-              <label
-                >Center light
-                <output data-black-hole-output="coreLightOpacity"></output
-                ><input
-                  data-black-hole-property="coreLightOpacity"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-              /></label>
-              <label
-                >Light pulse
-                <output data-black-hole-output="corePulseSpeed"></output
-                ><input
-                  data-black-hole-property="corePulseSpeed"
-                  type="range"
-                  min="1"
-                  max="8"
-                  step="0.1"
-              /></label>
-
-              <p class="black-hole-editor__section-title">Cursor smoke</p>
-              <label
-                >Inner color
-                <input data-fluid-property="color" type="color" value="#f4f6f8"
-              /></label>
-              <label
-                >Outer color
+                >Right color
                 <input
-                  data-fluid-property="outerColor"
+                  data-fluid-property="secondaryColor"
                   type="color"
-                  value="#151719"
+                  value="#0000ff"
               /></label>
               <label
-                >Outer amount <output data-fluid-output="outerRate"></output
+                >Color strength
+                <output data-fluid-output="colorStrength"></output
                 ><input
-                  data-fluid-property="outerRate"
+                  data-fluid-property="colorStrength"
                   type="range"
-                  min="0"
-                  max="0.25"
-                  step="0.005"
-              /></label>
-              <label
-                >Outer size <output data-fluid-output="outerSize"></output
-                ><input
-                  data-fluid-property="outerSize"
-                  type="range"
-                  min="0.1"
-                  max="1.5"
+                  min="0.02"
+                  max="0.5"
                   step="0.01"
               /></label>
               <label
-                >Outer distance
-                <output data-fluid-output="outerDistance"></output
-                ><input
-                  data-fluid-property="outerDistance"
-                  type="range"
-                  min="0.01"
-                  max="0.2"
-                  step="0.002"
-              /></label>
-              <label
-                >Smoke opacity <output data-fluid-output="opacity"></output
+                >Fluid opacity <output data-fluid-output="opacity"></output
                 ><input
                   data-fluid-property="opacity"
                   type="range"
                   min="0.05"
-                  max="0.9"
+                  max="1"
                   step="0.01"
               /></label>
               <label
-                >Fade speed <output data-fluid-output="fade"></output
+                >Fade time <output data-fluid-output="fadeTime"></output
                 ><input
-                  data-fluid-property="fade"
+                  data-fluid-property="fadeTime"
                   type="range"
-                  min="1"
-                  max="20"
-                  step="0.1"
+                  min="0.15"
+                  max="4"
+                  step="0.05"
               /></label>
               <label
-                >Trail size <output data-fluid-output="radius"></output
+                >Stream size <output data-fluid-output="radius"></output
                 ><input
                   data-fluid-property="radius"
                   type="range"
@@ -704,7 +659,7 @@
                   step="0.01"
               /></label>
               <label
-                >Push force <output data-fluid-output="force"></output
+                >Flow power <output data-fluid-output="force"></output
                 ><input
                   data-fluid-property="force"
                   type="range"
@@ -720,6 +675,62 @@
                   min="0"
                   max="12"
                   step="0.1"
+              /></label>
+              <label
+                >Reach <output data-fluid-output="reach"></output
+                ><input
+                  data-fluid-property="reach"
+                  type="range"
+                  min="0.2"
+                  max="2.5"
+                  step="0.05"
+              /></label>
+              <label
+                >Emission rate <output data-fluid-output="emissionRate"></output
+                ><input
+                  data-fluid-property="emissionRate"
+                  type="range"
+                  min="1"
+                  max="20"
+                  step="0.5"
+              /></label>
+              <label
+                >Horizontal position
+                <output data-fluid-output="originX"></output
+                ><input
+                  data-fluid-property="originX"
+                  type="range"
+                  min="0.1"
+                  max="0.9"
+                  step="0.01"
+              /></label>
+              <label
+                >Source separation
+                <output data-fluid-output="emitterGap"></output
+                ><input
+                  data-fluid-property="emitterGap"
+                  type="range"
+                  min="0.02"
+                  max="0.5"
+                  step="0.01"
+              /></label>
+              <label
+                >Vertical position <output data-fluid-output="emitterY"></output
+                ><input
+                  data-fluid-property="emitterY"
+                  type="range"
+                  min="0.08"
+                  max="0.92"
+                  step="0.01"
+              /></label>
+              <label
+                >Launch angle <output data-fluid-output="emitterSpread"></output
+                ><input
+                  data-fluid-property="emitterSpread"
+                  type="range"
+                  min="0"
+                  max="0.35"
+                  step="0.01"
               /></label>
             </div>
             <div class="black-hole-editor__actions">

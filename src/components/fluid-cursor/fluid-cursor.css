@@ -1,13 +1,19 @@
 .fluid-cursor-host,
 .inspira-fluid-cursor {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  /* Far-depth atmosphere: it shares the base-world plane (0), while even the
-     faint oversized display copy begins at 1 and all live text sits higher. */
-  z-index: 0;
   inline-size: 100%;
   block-size: 100%;
   pointer-events: none;
+}
+
+.fluid-cursor-host {
+  /* Hero-owned subject atmosphere: behind live copy (20) and Malik's
+     camera-space cutout (30). This deliberate clip is requested for Hero only. */
+  z-index: 0;
+  block-size: 100vh;
+  block-size: 100svh;
+  overflow: hidden;
 }
 
 .inspira-fluid-cursor {
@@ -26,7 +32,7 @@ body.is-intro-complete .inspira-fluid-cursor {
   opacity: var(--fluid-cursor-opacity, 0.6);
 }
 
-@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .fluid-cursor-host {
     display: none;
   }
