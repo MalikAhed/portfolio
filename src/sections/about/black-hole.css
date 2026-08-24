@@ -1,0 +1,419 @@
+.black-hole-stage {
+  --black-hole-x: 0px;
+  --black-hole-y: 0px;
+  --black-hole-depth: 0px;
+  --black-hole-size: 1.35;
+  --black-hole-rotation: 0deg;
+  --black-hole-layer: 35;
+  --black-hole-settle-y: 0px;
+  --black-hole-settle-scale: 1;
+  --black-hole-orbit-x: 0px;
+  --black-hole-orbit-y: 0px;
+  --black-hole-orbit-scale: 1;
+  --black-hole-orbit-height: 1;
+  --black-hole-orbit-color: #353129;
+  --black-hole-line-width: 7;
+  --black-hole-line-opacity: 0.74;
+  --black-hole-top-x: 0px;
+  --black-hole-top-y: -18px;
+  --black-hole-top-scale: 1;
+  --black-hole-top-height: 1;
+  --black-hole-top-width: 4;
+  --black-hole-top-opacity: 0.52;
+  --black-hole-top-color: #24211c;
+  --black-hole-image-opacity: 1;
+  position: absolute;
+  z-index: var(--black-hole-layer);
+  /* Fill the real shared-world height instead of guessing it in viewport
+     units. This keeps the anchor alive through About, even when a fast scroll
+     jumps directly to the document end. */
+  inset: 0;
+  overflow-x: clip;
+  pointer-events: none;
+  perspective: 1600px;
+  perspective-origin: 50% 50svh;
+  transform-style: preserve-3d;
+}
+
+.black-hole-anchor {
+  /* World position: 150svh into the shared Hero/About flow. It moves with the
+     section while emerging, reaches the camera center exactly when About pins,
+     then performs the second fixed-time downward settle. */
+  position: sticky;
+  inset-block-start: 50vh;
+  inset-block-start: 50svh;
+  block-size: 0;
+  inline-size: min(72rem, 78vw);
+  margin-block-start: 150vh;
+  margin-block-start: 150svh;
+  margin-inline: auto;
+  transform: translate3d(
+      var(--black-hole-x),
+      var(--black-hole-y),
+      var(--black-hole-depth)
+    )
+    translateY(var(--black-hole-settle-y)) rotate(var(--black-hole-rotation))
+    scale(var(--black-hole-size)) scale(var(--black-hole-settle-scale));
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.identity-flight-canvas {
+  position: fixed;
+  /* The canvas is only the crisp compositor layer. identity-flight.js joins
+     the fixed identity to the black hole's live sticky anchor, so collision
+     and reverse scrolling share the exact same on-screen point. */
+  z-index: 4;
+  inset: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.black-hole-object {
+  position: absolute;
+  inset: 0 auto auto 0;
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, -50%, 0) scale(0);
+  transform-origin: 50% 50%;
+  user-select: none;
+  will-change: opacity, transform;
+}
+
+.black-hole-image,
+.black-hole-orbits {
+  position: absolute;
+  inset: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.black-hole-image {
+  z-index: 0;
+  object-fit: contain;
+  opacity: var(--black-hole-image-opacity);
+}
+
+.black-hole-orbits {
+  z-index: 1;
+  overflow: visible;
+  color: var(--black-hole-orbit-color);
+  pointer-events: none;
+}
+
+.black-hole-orbits__motion {
+  transform: translate3d(
+      var(--black-hole-orbit-x),
+      var(--black-hole-orbit-y),
+      0
+    )
+    scale(var(--black-hole-orbit-scale));
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+.black-hole-orbits__shape {
+  transform: scaleY(var(--black-hole-orbit-height));
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+.black-hole-orbits__top-lines {
+  color: var(--black-hole-top-color);
+  transform: translate3d(var(--black-hole-top-x), var(--black-hole-top-y), 0)
+    scale(var(--black-hole-top-scale)) scaleY(var(--black-hole-top-height));
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+@property --orbit-progress {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.black-hole-orbit-line {
+  --orbit-line-width-factor: 1;
+  --orbit-line-opacity-factor: 1;
+  fill: none;
+  stroke: url("#black-hole-edge-ink");
+  stroke-dasharray: var(--orbit-dash-pattern, 320 680);
+  stroke-dashoffset: calc(var(--orbit-progress, 0) + var(--orbit-phase, 0));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: calc(
+    var(--black-hole-line-width) * var(--orbit-line-width-factor)
+  );
+  opacity: calc(
+    var(--black-hole-line-opacity) * var(--orbit-line-opacity-factor)
+  );
+}
+
+.black-hole-orbit-line--fine {
+  --orbit-line-width-factor: 0.5;
+  --orbit-line-opacity-factor: 0.7;
+}
+
+.black-hole-orbit-line--semicircle {
+  --orbit-line-width-factor: 0.72;
+  --orbit-line-opacity-factor: 0.86;
+}
+
+.black-hole-orbit-line--top {
+  stroke: currentColor;
+  stroke-width: calc(
+    var(--black-hole-top-width) * var(--orbit-line-width-factor)
+  );
+  opacity: calc(
+    var(--black-hole-top-opacity) * var(--orbit-line-opacity-factor)
+  );
+}
+
+.black-hole-orbit-track--clockwise {
+  animation: black-hole-orbit-clockwise 7.5s linear infinite;
+}
+
+.black-hole-orbit-track--counter {
+  animation: black-hole-orbit-counter 9s linear infinite;
+}
+
+.black-hole-orbit-track {
+  animation-play-state: paused;
+}
+
+.black-hole-stage--orbits-active
+  .black-hole-object.is-formed
+  .black-hole-orbit-track {
+  animation-play-state: running;
+}
+
+.black-hole-object.is-performance-lite
+  .black-hole-orbits__shape
+  .black-hole-orbit-track--counter {
+  animation-play-state: paused !important;
+}
+
+@keyframes black-hole-orbit-clockwise {
+  to {
+    --orbit-progress: -1000;
+  }
+}
+
+@keyframes black-hole-orbit-counter {
+  to {
+    --orbit-progress: 1000;
+  }
+}
+
+.black-hole-stage--editing .black-hole-orbit-hit {
+  pointer-events: stroke;
+  cursor: move;
+  touch-action: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .black-hole-orbit-track {
+    animation: none;
+  }
+}
+
+.black-hole-editor {
+  position: fixed;
+  z-index: 130;
+  inset: auto max(1rem, env(safe-area-inset-right, 0px))
+    max(1rem, env(safe-area-inset-bottom, 0px)) auto;
+  color: #f7f2e9;
+  font-family: var(--font-body);
+}
+
+.is-intro-pending:not(.is-intro-complete) .black-hole-editor {
+  display: none;
+}
+
+.black-hole-editor button,
+.black-hole-editor input {
+  font: inherit;
+}
+
+.black-hole-editor__toggle,
+.black-hole-editor__panel {
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 1rem;
+  color: inherit;
+  background: rgb(17 18 16 / 92%);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 22%);
+}
+
+.black-hole-editor__toggle {
+  min-block-size: 2.8rem;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+
+.black-hole-editor__panel {
+  display: grid;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  inline-size: min(21rem, calc(100vw - 2rem));
+  block-size: min(42rem, calc(100dvh - 2rem));
+  min-inline-size: min(16rem, calc(100vw - 1rem));
+  min-block-size: min(18rem, calc(100dvh - 1rem));
+  max-inline-size: calc(100vw - 1rem);
+  max-block-size: calc(100dvh - 1rem);
+  padding: 1rem;
+  overflow: auto;
+  resize: both;
+}
+
+.black-hole-editor__panel[hidden] {
+  display: none;
+}
+
+.black-hole-editor__heading,
+.black-hole-editor__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.black-hole-editor__tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 0.75rem;
+  background: rgb(255 255 255 / 5%);
+}
+
+.black-hole-editor__tabs button {
+  min-block-size: 2rem;
+  border: 0;
+  border-radius: 0.55rem;
+  color: rgb(247 242 233 / 58%);
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.black-hole-editor__tabs button[aria-selected="true"] {
+  color: #f7f2e9;
+  background: rgb(255 255 255 / 10%);
+  box-shadow: 0 0.25rem 0.8rem rgb(0 0 0 / 12%);
+}
+
+.black-hole-editor__tab-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.black-hole-editor__tab-panel[hidden] {
+  display: none;
+}
+
+.black-hole-editor__drag-handle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.45rem;
+  min-block-size: 2rem;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.black-hole-editor__drag-handle:active {
+  cursor: grabbing;
+}
+
+.black-hole-editor__drag-handle span {
+  color: rgb(247 242 233 / 46%);
+  font-size: 1rem;
+  letter-spacing: -0.25em;
+}
+
+.black-hole-editor__close,
+.black-hole-editor__actions button {
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 0.65rem;
+  color: inherit;
+  background: rgb(255 255 255 / 7%);
+  cursor: pointer;
+}
+
+.black-hole-editor__close {
+  inline-size: 2rem;
+  block-size: 2rem;
+  font-size: 1.35rem;
+}
+
+.black-hole-editor label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.black-hole-editor input {
+  grid-column: 1 / -1;
+  inline-size: 100%;
+}
+
+.black-hole-editor input[type="range"] {
+  accent-color: #f7f2e9;
+  cursor: pointer;
+}
+
+.black-hole-editor input[type="color"] {
+  block-size: 2.2rem;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 0.5rem;
+  background: rgb(255 255 255 / 7%);
+  cursor: pointer;
+}
+
+.black-hole-editor output {
+  color: rgb(247 242 233 / 62%);
+  font-variant-numeric: tabular-nums;
+}
+
+.black-hole-editor__hint {
+  margin: -0.2rem 0 0;
+  color: rgb(247 242 233 / 58%);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.black-hole-editor__section-title {
+  margin: 0.15rem 0 -0.2rem;
+  color: rgb(247 242 233 / 46%);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.black-hole-editor__actions button {
+  flex: 1;
+  min-block-size: 2.35rem;
+  padding: 0.5rem;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 480px) {
+  .black-hole-editor__panel {
+    block-size: min(34rem, calc(100dvh - 1rem));
+  }
+}

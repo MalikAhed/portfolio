@@ -1,0 +1,6 @@
+.venv/
+dist/
+node_modules/
+public/assets/
+refrances/
+package-lock.json

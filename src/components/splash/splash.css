@@ -1,0 +1,214 @@
+.splash {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  min-block-size: 100vh;
+  min-block-size: 100svh;
+  padding: max(1.5rem, env(safe-area-inset-top, 0px))
+    max(1.5rem, env(safe-area-inset-right, 0px))
+    max(1.5rem, env(safe-area-inset-bottom, 0px))
+    max(1.5rem, env(safe-area-inset-left, 0px));
+  color: var(--color-canvas);
+  background: var(--color-splash);
+  overflow: hidden;
+  isolation: isolate;
+  animation: splash-failsafe 1ms linear 12s forwards;
+  transform-origin: top center;
+  will-change: opacity, transform;
+}
+
+.splash::before {
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(circle at 50% 45%, rgb(255 255 255 / 7%), transparent 28%),
+    linear-gradient(
+      125deg,
+      transparent 35%,
+      rgb(255 255 255 / 3%),
+      transparent 66%
+    );
+  content: "";
+  opacity: 0.7;
+  pointer-events: none;
+  transform: rotate(-4deg);
+}
+
+.splash__center {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  inline-size: min(21rem, calc(100vw - 3rem));
+}
+
+.splash__mark-shell {
+  display: grid;
+  place-items: center;
+  inline-size: clamp(5rem, min(8vw, 14svh), 7.5rem);
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.splash__mark {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  filter: invert(1);
+  user-select: none;
+}
+
+.splash__name {
+  margin: 0.35rem 0 0;
+  font-size: clamp(0.72rem, 0.8vw, 0.88rem);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.splash__loader {
+  position: relative;
+  display: grid;
+  gap: 0.65rem;
+  inline-size: 100%;
+  margin-block-start: 1.25rem;
+  color: rgb(245 240 232 / 58%);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.splash__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.splash__progress {
+  position: relative;
+  display: block;
+  inline-size: 100%;
+  block-size: 0.45rem;
+  padding: 2px;
+  border: 1px solid rgb(245 240 232 / 30%);
+  border-radius: 999px;
+  background: rgb(245 240 232 / 6%);
+  overflow: hidden;
+}
+
+.splash__progress-fill {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--color-canvas);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 420ms var(--ease-smooth);
+  will-change: transform;
+}
+
+.splash__percentage {
+  min-inline-size: 3ch;
+  color: var(--color-canvas);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.is-intro-pending .splash__mark-shell {
+  animation: splash-mark-reveal 900ms var(--ease-emphasized) 100ms both;
+}
+
+.is-intro-pending .splash__mark {
+  animation: splash-mark-settle 1100ms var(--ease-emphasized) 80ms both;
+}
+
+.is-intro-pending .splash__name,
+.is-intro-pending .splash__loader {
+  animation: splash-copy-in 700ms var(--ease-smooth) 450ms both;
+}
+
+.is-intro-exiting .splash {
+  animation: splash-exit 850ms var(--ease-emphasized) forwards;
+}
+
+.is-intro-exiting .splash__center {
+  animation: splash-center-exit 780ms var(--ease-emphasized) both;
+}
+
+.is-intro-complete .splash {
+  display: none;
+}
+
+@keyframes splash-mark-reveal {
+  from {
+    opacity: 0;
+    clip-path: inset(8% 8% 8% 8%);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0);
+  }
+}
+
+@keyframes splash-mark-settle {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes splash-copy-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.75rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes splash-exit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    transform: translate3d(0, -1.5%, 0);
+  }
+}
+
+@keyframes splash-center-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.72;
+    transform: scale(1.045);
+  }
+}
+
+@keyframes splash-failsafe {
+  to {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash {
+    display: none;
+  }
+}

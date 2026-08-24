@@ -1,0 +1,521 @@
+#app {
+  min-block-size: 100vh;
+  min-block-size: 100svh;
+}
+
+.hero-about-flow {
+  --overlay-x: 0px;
+  --overlay-y: 0px;
+  --overlay-hold-y: 0px;
+  --overlay-rotation: 0deg;
+  --overlay-scale: 1;
+  --portrait-tail-size: 5rem;
+  --cutout-offset: 0svh;
+  --scene-scroll-y: 0px;
+  --hero-outro: 0;
+  --hero-backdrop-outro: 0;
+  position: relative;
+  overflow: visible;
+  background: var(--color-canvas);
+}
+
+.hero-about-flow::before {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  background:
+    radial-gradient(circle at 54% 48%, rgb(255 255 255 / 72%), transparent 34%),
+    linear-gradient(
+      120deg,
+      rgb(233 228 220 / 46%),
+      transparent 38% 62%,
+      rgb(223 216 206 / 30%)
+    ),
+    var(--color-canvas);
+  content: "";
+  pointer-events: none;
+}
+
+.site-header .brand {
+  opacity: calc(1 - var(--hero-outro));
+  translate: calc(var(--hero-outro) * -3.5rem) 0;
+}
+
+.site-header .navigation {
+  opacity: calc(1 - var(--hero-outro));
+  translate: 0 calc(var(--hero-outro) * -2.75rem);
+}
+
+.site-header .contact-link,
+.site-header .menu-toggle {
+  opacity: calc(1 - var(--hero-outro));
+  translate: calc(var(--hero-outro) * min(3.5rem, 3vw)) 0;
+}
+
+.hero__backdrop {
+  opacity: calc(1 - var(--hero-backdrop-outro));
+  translate: 0 calc(var(--hero-backdrop-outro) * 6rem);
+}
+
+.two-section-overlay {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  block-size: 200vh;
+  block-size: 200svh;
+  overflow-x: clip;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 64%,
+    rgb(0 0 0 / 96%) 70%,
+    rgb(0 0 0 / 72%) 80%,
+    rgb(0 0 0 / 28%) 91%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 64%,
+    rgb(0 0 0 / 96%) 70%,
+    rgb(0 0 0 / 72%) 80%,
+    rgb(0 0 0 / 28%) 91%,
+    transparent 100%
+  );
+  transform: translate3d(0, var(--overlay-hold-y), 0);
+  will-change: transform;
+}
+
+@supports (animation-timeline: scroll()) {
+  .two-section-overlay {
+    animation: overlay-about-hold linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 250svh;
+  }
+}
+
+@keyframes overlay-about-hold {
+  0%,
+  40% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  60%,
+  100% {
+    transform: translate3d(0, 50svh, 0);
+  }
+}
+
+.two-section-overlay__media,
+.two-section-overlay__image {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.two-section-overlay__image {
+  object-fit: cover;
+  object-position: center top;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(
+    ellipse 82% 94% at 50% 48%,
+    #000 68%,
+    rgb(0 0 0 / 92%) 76%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 82% 94% at 50% 48%,
+    #000 68%,
+    rgb(0 0 0 / 92%) 76%,
+    transparent 100%
+  );
+  transform: translate3d(var(--overlay-x), var(--overlay-y), 0)
+    rotate(var(--overlay-rotation)) scale(var(--overlay-scale));
+  transform-origin: center;
+  user-select: none;
+}
+
+.hero {
+  --portrait-point: 100%;
+  position: relative;
+  /* The hero remains part of the shared world instead of trapping its live
+     copy in a section-local stacking context. World art can now keep its
+     documented depth order: backdrop, live copy, window shadow, portrait. */
+  z-index: auto;
+  inline-size: 100%;
+  overflow: visible;
+  background: transparent;
+  min-block-size: 100vh;
+  min-block-size: 100svh;
+}
+
+.about {
+  position: relative;
+  z-index: 2;
+  min-block-size: 100vh;
+  min-block-size: 100svh;
+}
+
+.scene {
+  position: absolute;
+  z-index: 30;
+  inset: 0 0 auto;
+  block-size: calc(100vh + var(--cutout-offset) + var(--portrait-tail-size));
+  block-size: calc(100svh + var(--cutout-offset) + var(--portrait-tail-size));
+  pointer-events: none;
+  transform: translate3d(0, var(--scene-scroll-y), 0);
+  will-change: transform;
+  -webkit-clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100svh + var(--cutout-offset)),
+    50% calc(100svh + var(--cutout-offset) + var(--portrait-tail-size)),
+    0 calc(100svh + var(--cutout-offset))
+  );
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100svh + var(--cutout-offset)),
+    50% calc(100svh + var(--cutout-offset) + var(--portrait-tail-size)),
+    0 calc(100svh + var(--cutout-offset))
+  );
+}
+
+.scene canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.hero__identity {
+  position: fixed;
+  /* Subject-depth copy: the transparent Three.js portrait at layer 30
+     occludes the name and role while the canvas remains clear elsewhere. */
+  z-index: 20;
+  inset-block-start: clamp(6.75rem, 13.5vh, 9rem);
+  inset-inline-start: 50%;
+  inline-size: max-content;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.hero__identity h1,
+.hero__identity p,
+.hero__backdrop {
+  margin: 0;
+}
+
+.is-intro-pending:not(.is-hero-entering) .site-header,
+.is-intro-pending:not(.is-hero-entering) .hero__identity h1,
+.is-intro-pending:not(.is-hero-entering) .hero__role,
+.is-intro-pending:not(.is-hero-entering) .hero__backdrop {
+  opacity: 0;
+}
+
+.is-hero-entering .site-header {
+  animation: intro-header-in 900ms var(--ease-emphasized) 180ms both;
+}
+
+.is-hero-entering .brand,
+.is-hero-entering .menu-toggle,
+.is-hero-entering .navigation a,
+.is-hero-entering .contact-link {
+  animation: intro-control-in 760ms var(--ease-emphasized) both;
+}
+
+.is-hero-entering .brand {
+  animation-delay: 260ms;
+}
+.is-hero-entering .navigation a:nth-child(1) {
+  animation-delay: 330ms;
+}
+.is-hero-entering .navigation a:nth-child(2) {
+  animation-delay: 380ms;
+}
+.is-hero-entering .navigation a:nth-child(3) {
+  animation-delay: 430ms;
+}
+.is-hero-entering .navigation a:nth-child(4) {
+  animation-delay: 480ms;
+}
+.is-hero-entering .navigation a:nth-child(5) {
+  animation-delay: 530ms;
+}
+.is-hero-entering .contact-link,
+.is-hero-entering .menu-toggle {
+  animation-delay: 420ms;
+}
+
+.is-hero-entering .hero__identity h1 {
+  animation: intro-title-in 900ms var(--ease-emphasized) 180ms both;
+}
+
+.hero__role-letter {
+  display: inline-block;
+  white-space: pre;
+}
+
+.hero__role-highlight {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+.hero__role-highlight::before {
+  position: absolute;
+  z-index: -1;
+  inset: -0.01em -0.3em -0.1em -0.22em;
+  border-radius: 39% 11% 34% 8% / 25% 43% 19% 38%;
+  background:
+    repeating-linear-gradient(
+      176deg,
+      rgb(255 255 255 / 7%) 0 0.035em,
+      transparent 0.035em 0.09em
+    ),
+    linear-gradient(93deg, #484743 0%, #55534f 52%, #464541 100%);
+  box-shadow:
+    0.08em 0.04em 0 rgb(55 54 51 / 24%),
+    -0.04em -0.025em 0 rgb(92 89 84 / 16%);
+  clip-path: polygon(
+    0 27%,
+    4% 9%,
+    13% 15%,
+    24% 7%,
+    38% 13%,
+    51% 5%,
+    64% 12%,
+    79% 4%,
+    91% 11%,
+    100% 21%,
+    98% 79%,
+    89% 91%,
+    76% 85%,
+    63% 95%,
+    49% 88%,
+    34% 96%,
+    21% 87%,
+    9% 94%,
+    2% 86%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 48%,
+    transparent 62%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    #000 0%,
+    #000 48%,
+    transparent 62%,
+    transparent 100%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 220% 100%;
+  mask-size: 220% 100%;
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
+  content: "";
+  opacity: 0.54;
+  transform: rotate(-1.2deg) scaleX(1);
+  transform-origin: left center;
+}
+
+.is-intro-pending .hero__role-highlight::before {
+  opacity: 0;
+}
+
+.is-hero-entering .hero__role-highlight::before {
+  animation: intro-handmade-highlight 700ms var(--ease-smooth) 900ms both;
+}
+
+.is-hero-entering .hero__role-letter {
+  animation: intro-letter-in 560ms var(--ease-emphasized) both;
+  animation-delay: calc(260ms + var(--letter-index) * 20ms);
+}
+
+.is-hero-entering .hero__backdrop {
+  animation: intro-backdrop-in 1250ms var(--ease-emphasized) 260ms both;
+}
+
+@keyframes intro-header-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes intro-control-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -1rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes intro-title-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translate3d(0, 1.5rem, 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes intro-letter-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(0, 1.35em, 0);
+  }
+  65% {
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes intro-backdrop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-48%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@keyframes intro-handmade-highlight {
+  from {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+    opacity: 0;
+  }
+  4% {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+    opacity: 0.54;
+  }
+  to {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+    opacity: 0.54;
+  }
+}
+
+.hero__identity h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.15vw, 3.3rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+}
+
+.hero__identity p {
+  margin-block-start: 0.25rem;
+  font-size: clamp(1.55rem, 3.3vw, 3.45rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.hero__backdrop {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 50%;
+  inset-inline: 0;
+  inline-size: 100%;
+  overflow-inline: clip;
+  color: #e9e4dc;
+  font-family: var(--font-condensed);
+  font-size: clamp(8rem, 25vw, 27rem);
+  line-height: 0.72;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-align: center;
+  transform: translateY(-50%);
+  user-select: none;
+}
+
+@media (max-width: 850px) {
+  .hero__identity {
+    inset-block-start: clamp(6.5rem, 15vh, 8rem);
+    inline-size: calc(100% - 2.5rem);
+    text-align: center;
+  }
+
+  .hero__backdrop {
+    inset-block-start: 50%;
+    font-size: clamp(6.8rem, 29vw, 12rem);
+  }
+}
+
+@media (max-width: 680px) {
+  .hero__identity {
+    inset-block-start: clamp(10.25rem, calc(17vh + 3rem), 12rem);
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .hero__identity {
+    inset-block-start: 6.25rem;
+  }
+
+  .hero__identity h1 {
+    font-size: 2rem;
+  }
+
+  .hero__identity p {
+    margin-block-start: 0.35rem;
+    font-size: 1.15rem;
+  }
+
+  .hero__backdrop {
+    inset-block-start: 52%;
+    font-size: 22vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-intro-pending:not(.is-hero-entering) .site-header,
+  .is-intro-pending:not(.is-hero-entering) .hero__identity h1,
+  .is-intro-pending:not(.is-hero-entering) .hero__role,
+  .is-intro-pending:not(.is-hero-entering) .hero__backdrop {
+    opacity: 1;
+    animation: none;
+  }
+
+  .is-hero-entering .hero__role-highlight::before {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+    animation: none;
+  }
+
+  .site-header .brand,
+  .site-header .navigation,
+  .site-header .contact-link,
+  .site-header .menu-toggle,
+  .hero__identity h1,
+  .hero__identity .hero__role,
+  .hero__backdrop {
+    translate: none;
+  }
+}

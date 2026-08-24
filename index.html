@@ -2,147 +2,659 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#07120f" />
-    <meta name="description" content="Malik Abuallatta is a full-stack developer building polished web products, accessible interfaces, and browser-first tools." />
-    <meta property="og:title" content="Malik Abuallatta — Full-stack developer" />
-    <meta property="og:description" content="Selected product, frontend, and full-stack work by Malik Abuallatta." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://malikahed.github.io/portfolio/" />
-    <title>Malik Abuallatta — Full-stack developer</title>
-    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css" />
-    <script src="./script.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f0e8" />
+    <meta
+      name="description"
+      content="Malik Abuallata — Full-stack developer portfolio."
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #111210;
+      }
+      body.is-intro-pending:not(.is-intro-exiting) {
+        overflow: hidden;
+      }
+      body.is-intro-pending:not(.is-intro-exiting) #app {
+        visibility: hidden;
+      }
+    </style>
+    <noscript>
+      <style>
+        body.is-intro-pending {
+          overflow: auto !important;
+        }
+        .splash {
+          display: none !important;
+        }
+        #app {
+          visibility: visible !important;
+        }
+      </style>
+    </noscript>
+    <link rel="stylesheet" href="/src/styles/index.css" />
+    <link
+      rel="preload"
+      as="image"
+      href="/assets/malik-monogram-v2.webp"
+      type="image/webp"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="/assets/malik-cutout.webp"
+      type="image/webp"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="/assets/malik-cutout-shadow.avif"
+      type="image/avif"
+      fetchpriority="high"
+    />
+    <title>Malik Abuallata — Full-stack developer</title>
   </head>
-  <body>
-    <a class="skip-link" href="#main">Skip to content</a>
-
-    <header class="site-header" data-header>
-      <a class="brand" href="#top" aria-label="Malik Abuallatta, home">
-        <span class="brand__mark" aria-hidden="true">MA</span>
-        <span class="brand__name">Malik Abuallatta</span>
-      </a>
-      <button class="menu-button" type="button" aria-expanded="false" aria-controls="primary-navigation" data-menu-button>
-        <span class="menu-button__label">Menu</span><span class="menu-button__icon" aria-hidden="true"></span>
-      </button>
-      <nav class="site-nav" id="primary-navigation" aria-label="Primary navigation" data-menu>
-        <a href="#work">Work</a><a href="#about">About</a><a href="#contact">Contact</a>
-        <a class="nav-github" href="https://github.com/MalikAhed" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
-      </nav>
-    </header>
-
-    <main id="main">
-      <section class="hero" id="top" data-hero>
-        <div class="hero__copy">
-          <p class="eyebrow"><span></span> Full-stack developer · Available for work</p>
-          <h1 data-hero-title>I build useful products with sharp, human interfaces.</h1>
-          <p class="hero__intro">I turn ambitious ideas into responsive, accessible software—from browser-powered tools to polished business websites.</p>
-          <div class="hero__actions">
-            <a class="button button--primary" href="#work">Explore my work <span aria-hidden="true">↓</span></a>
-            <a class="button button--quiet" href="mailto:malikabuallatta@gmail.com">Start a conversation</a>
+  <body id="top" class="is-intro-pending">
+    <div
+      class="splash"
+      role="status"
+      aria-label="Loading Malik Abuallata's portfolio"
+    >
+      <div class="splash__center">
+        <span class="splash__mark-shell" aria-hidden="true">
+          <img
+            class="splash__mark"
+            src="/assets/malik-monogram-v2.webp"
+            width="1024"
+            height="1024"
+            alt=""
+            decoding="async"
+            draggable="false"
+          />
+        </span>
+        <p class="splash__name">Malik Abuallata</p>
+        <div class="splash__loader" aria-hidden="true">
+          <div class="splash__status">
+            <span>Loading portfolio</span>
+            <span class="splash__percentage">0%</span>
+          </div>
+          <span class="splash__progress"
+            ><span class="splash__progress-fill"></span
+          ></span>
+        </div>
+      </div>
+    </div>
+    <main id="app">
+      <div class="hero-about-flow">
+        <div class="two-section-overlay" aria-hidden="true">
+          <picture class="two-section-overlay__media">
+            <source
+              type="image/avif"
+              srcset="/assets/window-shadow-two-section.avif"
+            />
+            <img
+              class="two-section-overlay__image hero__window-shadow"
+              src="/assets/window-shadow-two-section.webp"
+              width="1672"
+              height="1882"
+              alt=""
+              decoding="async"
+              draggable="false"
+            />
+          </picture>
+        </div>
+        <div class="black-hole-stage" aria-hidden="true">
+          <div class="black-hole-anchor">
+            <div class="black-hole-object">
+              <img
+                class="black-hole-image"
+                src="/assets/horizontal_black_hole_transparent.webp"
+                srcset="
+                  /assets/horizontal_black_hole_transparent-640.webp   640w,
+                  /assets/horizontal_black_hole_transparent-1024.webp 1024w,
+                  /assets/horizontal_black_hole_transparent.webp      2048w
+                "
+                sizes="(max-width: 1477px) 78vw, 1152px"
+                width="2048"
+                height="1152"
+                alt=""
+                decoding="async"
+                draggable="false"
+              />
+              <svg
+                class="black-hole-orbits"
+                viewBox="0 0 2048 1152"
+                aria-hidden="true"
+              >
+                <defs>
+                  <linearGradient
+                    id="black-hole-edge-ink"
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="0"
+                  >
+                    <stop
+                      offset="0"
+                      stop-color="currentColor"
+                      stop-opacity="0"
+                    />
+                    <stop
+                      offset="0.22"
+                      stop-color="currentColor"
+                      stop-opacity="0.72"
+                    />
+                    <stop
+                      offset="0.52"
+                      stop-color="currentColor"
+                      stop-opacity="0.9"
+                    />
+                    <stop
+                      offset="0.78"
+                      stop-color="currentColor"
+                      stop-opacity="0.66"
+                    />
+                    <stop
+                      offset="1"
+                      stop-color="currentColor"
+                      stop-opacity="0"
+                    />
+                  </linearGradient>
+                </defs>
+                <g class="black-hole-orbits__motion">
+                  <g class="black-hole-orbits__shape">
+                    <ellipse
+                      class="black-hole-orbit-line black-hole-orbit-line--clockwise black-hole-orbit-hit"
+                      cx="1024"
+                      cy="576"
+                      rx="748"
+                      ry="211"
+                      pathLength="1000"
+                    />
+                    <path
+                      class="black-hole-orbit-line black-hole-orbit-line--semicircle black-hole-orbit-line--clockwise black-hole-orbit-line--fine black-hole-orbit-hit"
+                      d="M 320 576 A 704 178 0 0 1 1728 576"
+                      pathLength="1000"
+                    />
+                    <ellipse
+                      class="black-hole-orbit-line black-hole-orbit-line--counter black-hole-orbit-hit"
+                      cx="1024"
+                      cy="580"
+                      rx="778"
+                      ry="238"
+                      pathLength="1000"
+                    />
+                    <path
+                      class="black-hole-orbit-line black-hole-orbit-line--semicircle black-hole-orbit-line--counter black-hole-orbit-line--fine black-hole-orbit-hit"
+                      d="M 358 576 A 666 151 0 0 0 1690 576"
+                      pathLength="1000"
+                    />
+                  </g>
+                </g>
+              </svg>
+            </div>
           </div>
         </div>
-
-        <div class="hero__stage" aria-label="A snapshot of Malik's development approach">
-          <div class="stage__glow" aria-hidden="true"></div>
-          <article class="build-card">
-            <div class="build-card__bar"><span class="build-card__lights" aria-hidden="true"><i></i><i></i><i></i></span><span>currently-building.js</span><span class="build-card__status">● live</span></div>
-            <div class="build-card__body">
-              <p><span class="code-key">const</span> developer = {</p>
-              <p><span class="code-prop">focus</span>: <span class="code-value">"useful products"</span>,</p>
-              <p><span class="code-prop">craft</span>: [<span class="code-value">"UX"</span>, <span class="code-value">"code"</span>, <span class="code-value">"accessibility"</span>],</p>
-              <p><span class="code-prop">mindset</span>: <span class="code-value">"ship, learn, refine"</span></p><p>};</p>
+        <section class="hero" aria-labelledby="hero-title" data-hero>
+          <canvas class="identity-flight-canvas" aria-hidden="true"></canvas>
+          <div
+            id="scene"
+            class="scene"
+            aria-hidden="true"
+            data-hero-subject
+          ></div>
+          <header class="site-header">
+            <a
+              class="brand"
+              href="#top"
+              aria-label="Malik Abuallata, home"
+              data-hero-brand
+            >
+              <img
+                class="brand__mark"
+                src="/assets/malik-monogram-v2.webp"
+                width="1024"
+                height="1024"
+                alt=""
+                aria-hidden="true"
+                decoding="async"
+                draggable="false"
+              />
+              <span class="brand__divider" aria-hidden="true"></span>
+              <span class="brand__name">malik abuallata</span>
+            </a>
+            <button
+              class="menu-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="primary-navigation"
+            >
+              <span class="menu-toggle__label">Menu</span>
+              <span class="menu-toggle__icon" aria-hidden="true"></span>
+            </button>
+            <nav
+              id="primary-navigation"
+              class="navigation"
+              aria-label="Primary navigation"
+            >
+              <a href="#about">about</a>
+              <a href="#work">work</a>
+              <a href="#skills">skills</a>
+              <a href="#projects">projects</a>
+              <a href="#journal">journal</a>
+              <a
+                class="navigation__contact"
+                href="mailto:hello@malikabuallatta.com"
+                >contact</a
+              >
+            </nav>
+            <a
+              class="contact-link"
+              href="mailto:hello@malikabuallatta.com"
+              data-hero-cta
+            >
+              <span class="contact-link__material" aria-hidden="true"></span>
+              <span class="contact-link__label">contact</span>
+              <span class="contact-link__flight" aria-hidden="true">
+                <svg
+                  class="contact-link__plane"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="m22 2-7 20-4-9-9-4Z"></path>
+                  <path d="M22 2 11 13"></path>
+                </svg>
+              </span>
+            </a>
+          </header>
+          <div class="hero__identity">
+            <h1 id="hero-title" data-hero-title>Malik Abuallata</h1>
+            <p class="hero__role">Full-stack developer</p>
+          </div>
+          <p class="hero__backdrop" aria-hidden="true">Portfolio</p>
+        </section>
+        <section
+          id="about"
+          class="about"
+          aria-label="About"
+          aria-describedby="about-summary"
+        >
+          <div class="about__composition">
+            <p class="about__statement">
+              <span
+                class="about__statement-line about__statement-line--lead"
+                data-about-statement-word
+                >Driven by</span
+              >
+              <span
+                class="about__statement-line about__statement-highlight"
+                data-about-statement-word
+                data-about-highlight
+                >endless creativity</span
+              >
+            </p>
+            <div id="about-summary" class="about__bio" data-about-bio>
+              <p>
+                I turn ambitious ideas into thoughtful digital experiences.
+                Working across design, interaction, and engineering, I build
+                expressive interfaces with solid systems beneath them.
+              </p>
             </div>
-            <div class="build-card__footer"><span>JavaScript</span><span>Node.js</span><span>Responsive UI</span></div>
-          </article>
-          <div class="signal signal--top"><strong>Browser-first</strong><span>Fast by design</span></div>
-          <div class="signal signal--bottom"><strong>Arabic + English</strong><span>Built for real audiences</span></div>
-        </div>
-
-        <div class="hero__facts" aria-label="Quick facts">
-          <div><strong>04</strong><span>public builds</span></div><div><strong>2D</strong><span>lean, resilient UI</span></div><div><strong>∞</strong><span>curiosity</span></div>
-        </div>
-      </section>
-
-      <section class="work section" id="work">
-        <div class="section-heading">
-          <div><p class="eyebrow"><span></span> Selected work</p><h2>Products with a point of view.</h2></div>
-          <p>Each project solves a different problem, but they share the same standard: clear purpose, thoughtful interaction, and details that hold up on every screen.</p>
-        </div>
-
-        <div class="project-grid">
-          <article class="project project--featured">
-            <div class="project__preview preview--chess" aria-hidden="true">
-              <div class="chess-board"><span>♜</span><span>♞</span><span>♝</span><span>♛</span><span>♙</span><span>♟</span><span>♙</span><span>♚</span><span>♔</span><span>♙</span><span>♘</span><span>♟</span><span>♖</span><span>♗</span><span>♘</span><span>♜</span></div>
-              <div class="eval-card"><span>Best move</span><strong>Nf6+</strong><i>+2.4</i></div>
+            <p class="about__backdrop" aria-hidden="true">About</p>
+          </div>
+        </section>
+        <aside class="black-hole-editor" aria-label="Black hole editor">
+          <button
+            class="black-hole-editor__toggle"
+            type="button"
+            aria-expanded="false"
+          >
+            Edit black hole
+          </button>
+          <div class="black-hole-editor__panel" hidden>
+            <div class="black-hole-editor__heading">
+              <button
+                class="black-hole-editor__drag-handle"
+                type="button"
+                aria-label="Move editor. Drag or use the arrow keys."
+              >
+                <span aria-hidden="true">⠿</span>
+                <strong>Black hole</strong>
+              </button>
+              <button
+                class="black-hole-editor__close"
+                type="button"
+                aria-label="Close"
+              >
+                ×
+              </button>
             </div>
-            <div class="project__content">
-              <div class="project__meta"><span>01 · Product engineering</span><span>JavaScript · Stockfish WASM</span></div>
-              <h3>StockThink</h3><p>Free chess game review that runs locally in the browser—deep engine analysis without a server, subscription, or upload.</p>
-              <ul class="project__tags" aria-label="StockThink features"><li>Privacy-first</li><li>Browser AI</li><li>Game analysis</li></ul>
-              <div class="project__links"><a href="https://github.com/MalikAhed/stockthink" target="_blank" rel="noreferrer">View source <span aria-hidden="true">↗</span></a></div>
+            <p class="black-hole-editor__hint">
+              Drag this title bar to move the editor, resize it from the lower
+              corner, or drag directly on an orbit line.
+            </p>
+            <div
+              class="black-hole-editor__tabs"
+              role="tablist"
+              aria-label="Orbital type"
+            >
+              <button
+                id="black-hole-tab-rim"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="black-hole-panel-rim"
+                data-black-hole-tab="rim"
+              >
+                Rim
+              </button>
+              <button
+                id="black-hole-tab-top"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="black-hole-panel-top"
+                data-black-hole-tab="top"
+                tabindex="-1"
+              >
+                Smart top
+              </button>
+              <button
+                id="black-hole-tab-object"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="black-hole-panel-object"
+                data-black-hole-tab="object"
+                tabindex="-1"
+              >
+                Object
+              </button>
             </div>
-          </article>
-
-          <article class="project">
-            <div class="project__preview preview--burger" aria-hidden="true"><span class="burger-word">CUBE</span><div class="burger"><i></i><b></b><em></em><strong></strong></div><span class="burger-stamp">Smashed<br />fresh</span></div>
-            <div class="project__content">
-              <div class="project__meta"><span>02 · Art-directed frontend</span><span>Vite · Modern CSS</span></div>
-              <h3>Cube Burger</h3><p>A bold restaurant experience with layered responsive composition, accessible interactions, and a ten-viewport visual test matrix.</p>
-              <div class="project__links"><a href="https://malikahed.github.io/cube-burger-site/" target="_blank" rel="noreferrer">Live site <span aria-hidden="true">↗</span></a><a href="https://github.com/MalikAhed/cube-burger-site" target="_blank" rel="noreferrer">Source</a></div>
+            <div
+              id="black-hole-panel-rim"
+              class="black-hole-editor__tab-panel"
+              role="tabpanel"
+              aria-labelledby="black-hole-tab-rim"
+              data-black-hole-panel="rim"
+            >
+              <p class="black-hole-editor__section-title">Rim layout</p>
+              <label
+                >All orbit speed
+                <output data-black-hole-output="orbitSpeed"></output
+                ><input
+                  data-black-hole-property="orbitSpeed"
+                  type="range"
+                  min="0.25"
+                  max="2.5"
+                  step="0.05"
+              /></label>
+              <label
+                >Orbit X <output data-black-hole-output="orbitX"></output
+                ><input
+                  data-black-hole-property="orbitX"
+                  type="range"
+                  min="-600"
+                  max="600"
+                  step="1"
+              /></label>
+              <label
+                >Orbit Y <output data-black-hole-output="orbitY"></output
+                ><input
+                  data-black-hole-property="orbitY"
+                  type="range"
+                  min="-400"
+                  max="400"
+                  step="1"
+              /></label>
+              <label
+                >Orbit size <output data-black-hole-output="orbitScale"></output
+                ><input
+                  data-black-hole-property="orbitScale"
+                  type="range"
+                  min="0.35"
+                  max="2.5"
+                  step="0.01"
+              /></label>
+              <label
+                >Oval height
+                <output data-black-hole-output="orbitHeight"></output
+                ><input
+                  data-black-hole-property="orbitHeight"
+                  type="range"
+                  min="0.25"
+                  max="3.8"
+                  step="0.01"
+              /></label>
+              <label
+                >Line density
+                <output data-black-hole-output="lineDensity"></output
+                ><input
+                  data-black-hole-property="lineDensity"
+                  type="range"
+                  min="1"
+                  max="18"
+                  step="1"
+              /></label>
+              <label
+                >Line width <output data-black-hole-output="lineWidth"></output
+                ><input
+                  data-black-hole-property="lineWidth"
+                  type="range"
+                  min="0.5"
+                  max="20"
+                  step="0.25"
+              /></label>
+              <label
+                >Line opacity
+                <output data-black-hole-output="lineOpacity"></output
+                ><input
+                  data-black-hole-property="lineOpacity"
+                  type="range"
+                  min="0.05"
+                  max="1"
+                  step="0.01"
+              /></label>
+              <label
+                >Dark line tint
+                <input
+                  data-black-hole-property="orbitColor"
+                  type="color"
+                  value="#353129"
+              /></label>
             </div>
-          </article>
-
-          <article class="project">
-            <div class="project__preview preview--study" aria-hidden="true"><div class="study-card study-card--back">١٠٧ سؤالاً</div><div class="study-card"><span>مراجعة</span><strong>تعلّم بثقة</strong><i>اسحب البطاقة للإجابة</i></div></div>
-            <div class="project__content">
-              <div class="project__meta"><span>03 · Arabic-first PWA</span><span>Vanilla JS · Offline</span></div>
-              <h3>Murajaa</h3><p>An Arabic study companion with focused flashcards, progress tracking, and offline access for learning anywhere.</p>
-              <div class="project__links"><a href="https://malikahed.github.io/Murajaa/" target="_blank" rel="noreferrer">Live app <span aria-hidden="true">↗</span></a><a href="https://github.com/MalikAhed/Murajaa" target="_blank" rel="noreferrer">Source</a></div>
+            <div
+              id="black-hole-panel-top"
+              class="black-hole-editor__tab-panel"
+              role="tabpanel"
+              aria-labelledby="black-hole-tab-top"
+              data-black-hole-panel="top"
+              hidden
+            >
+              <p class="black-hole-editor__hint">
+                Upper arcs inherit the rim position and scale, then stay locked
+                to the top half automatically.
+              </p>
+              <label
+                >Top X <output data-black-hole-output="topX"></output
+                ><input
+                  data-black-hole-property="topX"
+                  type="range"
+                  min="-400"
+                  max="400"
+                  step="1"
+              /></label>
+              <label
+                >Top Y <output data-black-hole-output="topY"></output
+                ><input
+                  data-black-hole-property="topY"
+                  type="range"
+                  min="-300"
+                  max="300"
+                  step="1"
+              /></label>
+              <label
+                >Top size <output data-black-hole-output="topScale"></output
+                ><input
+                  data-black-hole-property="topScale"
+                  type="range"
+                  min="0.4"
+                  max="2"
+                  step="0.01"
+              /></label>
+              <label
+                >Arc height <output data-black-hole-output="topHeight"></output
+                ><input
+                  data-black-hole-property="topHeight"
+                  type="range"
+                  min="0.4"
+                  max="2.5"
+                  step="0.01"
+              /></label>
+              <label
+                >Line density
+                <output data-black-hole-output="topDensity"></output
+                ><input
+                  data-black-hole-property="topDensity"
+                  type="range"
+                  min="1"
+                  max="12"
+                  step="1"
+              /></label>
+              <label
+                >Line width <output data-black-hole-output="topWidth"></output
+                ><input
+                  data-black-hole-property="topWidth"
+                  type="range"
+                  min="0.5"
+                  max="14"
+                  step="0.25"
+              /></label>
+              <label
+                >Line opacity
+                <output data-black-hole-output="topOpacity"></output
+                ><input
+                  data-black-hole-property="topOpacity"
+                  type="range"
+                  min="0.02"
+                  max="1"
+                  step="0.01"
+              /></label>
+              <label
+                >Top tint
+                <input
+                  data-black-hole-property="topColor"
+                  type="color"
+                  value="#24211c"
+              /></label>
             </div>
-          </article>
-
-          <article class="project">
-            <div class="project__preview preview--zen" aria-hidden="true"><span class="zen-sun"></span><span class="zen-leaf zen-leaf--one"></span><span class="zen-leaf zen-leaf--two"></span><div class="zen-copy"><small>Feel good at home</small><strong>ZEN</strong><i>cleaning</i></div></div>
-            <div class="project__content">
-              <div class="project__meta"><span>04 · Service website</span><span>HTML · CSS · JavaScript</span></div>
-              <h3>Zen Cleaning</h3><p>A warm, booking-focused service site that turns trust, clarity, and responsive visual storytelling into a stronger customer journey.</p>
-              <div class="project__links"><a href="https://malikahed.github.io/zen/" target="_blank" rel="noreferrer">Live site <span aria-hidden="true">↗</span></a><a href="https://github.com/MalikAhed/zen" target="_blank" rel="noreferrer">Source</a></div>
+            <div
+              id="black-hole-panel-object"
+              class="black-hole-editor__tab-panel"
+              role="tabpanel"
+              aria-labelledby="black-hole-tab-object"
+              data-black-hole-panel="object"
+              hidden
+            >
+              <label
+                >Black-hole opacity
+                <output data-black-hole-output="blackHoleOpacity"></output
+                ><input
+                  data-black-hole-property="blackHoleOpacity"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+              /></label>
             </div>
-          </article>
-
-          <article class="project project--wide">
-            <div class="project__preview preview--learn" aria-hidden="true"><div class="learn-orbit"><span>Learn</span><i></i><i></i><i></i></div><div class="learn-progress"><span>Weekly progress</span><strong>78%</strong><i></i></div></div>
-            <div class="project__content">
-              <div class="project__meta"><span>05 · Full-stack application</span><span>Node.js · Express · MongoDB</span></div>
-              <h3>Learnify</h3><p>A server-rendered learning platform with secure account flows, a focused dashboard, task tracking, and a maintainable full-stack foundation.</p>
-              <div class="project__links"><span class="project__status">Private full-stack build</span></div>
+            <div class="black-hole-editor__actions">
+              <button type="button" data-black-hole-reset>
+                Reset appearance
+              </button>
             </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="about section" id="about">
-        <div class="about__portrait"><img src="./481844501_1828351824621470_1816024061362105617_n.jpg" alt="Malik Abuallatta" width="640" height="640" /><span>Based in Palestine · Working worldwide</span></div>
-        <div class="about__copy">
-          <p class="eyebrow"><span></span> About</p><h2>Resourceful by circumstance. Thoughtful by choice.</h2>
-          <p>I’m Malik, a self-taught full-stack developer who learned to build under difficult conditions. That experience shaped how I work: stay curious, use constraints creatively, and keep going until the product feels genuinely useful.</p>
-          <p>I care about the layer where engineering meets people—clear flows, responsive details, accessible choices, and code that another developer can understand.</p>
-          <div class="capabilities" aria-label="Capabilities"><span>Frontend engineering</span><span>Node.js applications</span><span>Product UI/UX</span><span>Responsive systems</span><span>Accessibility</span><span>Progressive web apps</span></div>
-        </div>
-      </section>
-
-      <section class="contact section" id="contact">
-        <p class="eyebrow"><span></span> Let’s build something useful</p><h2>Have a project, role, or idea in mind?</h2>
-        <p>Tell me what you’re trying to make and where it feels stuck. A short hello is enough to start.</p>
-        <a class="contact__email" href="mailto:malikabuallatta@gmail.com">malikabuallatta@gmail.com <span aria-hidden="true">↗</span></a>
-        <div class="contact__links"><a href="https://github.com/MalikAhed" target="_blank" rel="noreferrer">GitHub</a><a href="https://www.linkedin.com/in/malik-abualatta-a6849a37b/" target="_blank" rel="noreferrer">LinkedIn</a><a href="https://x.com/malikabuallatta" target="_blank" rel="noreferrer">X / Twitter</a></div>
-      </section>
+          </div>
+        </aside>
+        <aside
+          class="about-copy-editor"
+          aria-label="About text position editor"
+        >
+          <button
+            class="about-copy-editor__toggle"
+            type="button"
+            aria-expanded="false"
+          >
+            Position About text
+          </button>
+          <div class="about-copy-editor__panel" hidden>
+            <div class="about-copy-editor__heading">
+              <strong>About text</strong>
+              <button
+                class="about-copy-editor__close"
+                type="button"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <p class="about-copy-editor__status" data-about-copy-status>
+              Changes save to the project automatically.
+            </p>
+            <label
+              >X position <output data-about-copy-output="x"></output
+              ><input
+                data-about-copy-property="x"
+                type="range"
+                min="-800"
+                max="800"
+                step="1"
+            /></label>
+            <label
+              >Y position <output data-about-copy-output="y"></output
+              ><input
+                data-about-copy-property="y"
+                type="range"
+                min="-600"
+                max="800"
+                step="1"
+            /></label>
+            <label
+              >Text width <output data-about-copy-output="width"></output
+              ><input
+                data-about-copy-property="width"
+                type="range"
+                min="240"
+                max="1000"
+                step="1"
+            /></label>
+            <label
+              >Text size <output data-about-copy-output="size"></output
+              ><input
+                data-about-copy-property="size"
+                type="range"
+                min="-8"
+                max="24"
+                step="1"
+            /></label>
+            <label
+              >Bold weight <output data-about-copy-output="weight"></output
+              ><input
+                data-about-copy-property="weight"
+                type="range"
+                min="400"
+                max="800"
+                step="100"
+            /></label>
+            <button class="about-copy-editor__reset" type="button">
+              Reset loaded values
+            </button>
+          </div>
+        </aside>
+      </div>
     </main>
-
-    <footer class="site-footer">
-      <a class="brand" href="#top"><span class="brand__mark" aria-hidden="true">MA</span><span class="brand__name">Malik Abuallatta</span></a>
-      <p>Designed and built with care. <span>© <span data-year></span></span></p><a href="#top">Back to top ↑</a>
-    </footer>
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>
