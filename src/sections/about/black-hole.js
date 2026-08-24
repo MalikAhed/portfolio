@@ -22,6 +22,20 @@ const ORBIT_BASE_DURATIONS = Object.freeze({
    black-hole anchor reaches its authored 50svh resting line. */
 const JOURNEY_SCROLL_RATIO = 1;
 
+/*
+ * About absorption beat (depth-world / transition layer)
+ *
+ * The About composition remains pinned while scroll advances through these
+ * normalized world states. The values intentionally leave a readable pause
+ * after the biography appears before gravity takes ownership of the frame.
+ */
+const ABOUT_SETTLE_END = 0.24;
+const ABOUT_BIO_START = 0.16;
+const ABOUT_BIO_END = 0.38;
+const ABOUT_ABSORPTION_START = 0.44;
+const ABOUT_ABSORPTION_FADE_START = 0.12;
+const ABOUT_ABSORPTION_FADE_END = 0.78;
+
 const DEFAULT_STATE = Object.freeze({
   x: -11,
   y: 126,
@@ -184,6 +198,7 @@ export function initBlackHole() {
   const about = flow?.querySelector(".about");
   const statement = flow?.querySelector(".about__statement");
   const bio = flow?.querySelector("[data-about-bio]");
+  const backdrop = flow?.querySelector(".about__backdrop");
   const title = flow?.querySelector(".hero__identity h1");
   const role = flow?.querySelector(".hero__identity .hero__role");
   const statementWords = Array.from(
@@ -204,6 +219,7 @@ export function initBlackHole() {
     !about ||
     !statement ||
     !bio ||
+    !backdrop ||
     !title ||
     !role ||
     statementWords.length === 0 ||
@@ -273,6 +289,7 @@ export function initBlackHole() {
   let journeyDistance = 1;
   let aboutTop = 0;
   let holdDistance = 1;
+  let gravityGeometry = null;
   const nativeScrollTimeline =
     CSS.supports?.("animation-timeline: scroll()") ?? false;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -461,30 +478,132 @@ export function initBlackHole() {
     stage.classList.toggle("black-hole-stage--orbits-active", active);
   }
 
+  function captureGravityGeometry() {
+    gravityGeometry = new Map(
+      [statement, bio, backdrop].map((element) => {
+        const bounds = element.getBoundingClientRect();
+        return [
+          element,
+          {
+            x: bounds.left + bounds.width / 2,
+            y: bounds.top + bounds.height / 2,
+          },
+        ];
+      }),
+    );
+  }
+
+  function applyGravityPull(element, target, progress) {
+    const origin = gravityGeometry?.get(element);
+    if (!origin || reducedMotion.matches) {
+      element.style.setProperty("--about-gravity-x", "0px");
+      element.style.setProperty("--about-gravity-y", "0px");
+      element.style.setProperty("--about-gravity-scale", "1");
+      element.style.setProperty("--about-gravity-rotation", "0deg");
+      return;
+    }
+
+    const pull = easeInOut(progress);
+    const scale = Math.max(0.025, 1 - pull * 0.975);
+    element.style.setProperty(
+      "--about-gravity-x",
+      `${(target.x - origin.x) * pull}px`,
+    );
+    element.style.setProperty(
+      "--about-gravity-y",
+      `${(target.y - origin.y) * pull}px`,
+    );
+    element.style.setProperty("--about-gravity-scale", String(scale));
+    element.style.setProperty("--about-gravity-rotation", "0deg");
+  }
+
   function renderAboutBeat(progress) {
-    const blackHoleShift = easeInOut(clamp((progress - 0.04) / 0.38, 0, 1));
-    const bioReveal = easeInOut(clamp((progress - 0.34) / 0.34, 0, 1));
-    const shiftDistance = reducedMotion.matches
+    const blackHoleShift = easeInOut(clamp(progress / ABOUT_SETTLE_END, 0, 1));
+    const bioReveal = easeInOut(
+      clamp(
+        (progress - ABOUT_BIO_START) / (ABOUT_BIO_END - ABOUT_BIO_START),
+        0,
+        1,
+      ),
+    );
+    const absorptionRaw = clamp(
+      (progress - ABOUT_ABSORPTION_START) / (1 - ABOUT_ABSORPTION_START),
+      0,
+      1,
+    );
+    const absorption = easeInOut(absorptionRaw);
+    const collapseVisibility =
+      1 -
+      easeInOut(
+        clamp(
+          (absorptionRaw - ABOUT_ABSORPTION_FADE_START) /
+            (ABOUT_ABSORPTION_FADE_END - ABOUT_ABSORPTION_FADE_START),
+          0,
+          1,
+        ),
+      );
+    const restingShift = reducedMotion.matches
       ? 0
       : Math.min(110, window.innerHeight * 0.11) * blackHoleShift;
+    const finalLift = reducedMotion.matches
+      ? 0
+      : Math.min(230, Math.max(125, window.innerHeight * 0.22));
+    const shiftDistance =
+      restingShift * (1 - absorption) - finalLift * absorption;
+    const restingScale = 1 - blackHoleShift * 0.28;
+    const growthScale =
+      window.innerWidth <= 760
+        ? 1.85
+        : window.innerWidth / Math.max(1, window.innerHeight) >= 2
+          ? 2.5
+          : 2.25;
+    const blackHoleScale = reducedMotion.matches
+      ? 1
+      : restingScale + (growthScale - restingScale) * absorption;
     const statementStartOffset = reducedMotion.matches
       ? 0
       : Math.min(44, window.innerHeight * 0.05);
 
+    if (!gravityGeometry && progress >= ABOUT_BIO_END) {
+      captureGravityGeometry();
+    }
+
+    const gravityTarget = {
+      x: window.innerWidth / 2 + state.x,
+      y: window.innerHeight / 2 + state.y - finalLift,
+    };
+
     stage.style.setProperty("--black-hole-settle-y", `${shiftDistance}px`);
     stage.style.setProperty(
       "--black-hole-settle-scale",
-      String(1 - blackHoleShift * 0.28),
+      String(blackHoleScale),
     );
     statement.style.setProperty(
       "--about-statement-settle-y",
       `${statementStartOffset * (1 - blackHoleShift)}px`,
     );
-    bio.style.opacity = String(bioReveal);
+    statement.style.opacity = String(collapseVisibility);
+    bio.style.opacity = String(bioReveal * collapseVisibility);
+    backdrop.style.opacity = String(collapseVisibility);
     bio.style.filter = reducedMotion.matches
       ? "none"
       : `blur(${(1 - bioReveal) * 7}px)`;
     bio.style.translate = `calc(-50% + var(--about-copy-x)) calc(var(--about-copy-y) + ${(1 - bioReveal) * 1.1}rem)`;
+    applyGravityPull(statement, gravityTarget, absorptionRaw);
+    applyGravityPull(bio, gravityTarget, absorptionRaw);
+    applyGravityPull(backdrop, gravityTarget, absorptionRaw);
+    flow.style.setProperty(
+      "--world-gravity-scale",
+      reducedMotion.matches ? "1" : String(1 - absorption * 0.82),
+    );
+    flow.style.setProperty(
+      "--world-gravity-opacity",
+      String(collapseVisibility),
+    );
+    about.classList.toggle(
+      "about--absorbing",
+      absorptionRaw > 0 && absorptionRaw < 1,
+    );
   }
 
   function updateNarrative() {
@@ -532,6 +651,7 @@ export function initBlackHole() {
     journeyDistance = Math.max(1, hero.offsetHeight * JOURNEY_SCROLL_RATIO);
     aboutTop = about.offsetTop;
     holdDistance = Math.max(1, about.offsetHeight - window.innerHeight);
+    gravityGeometry = null;
   }
 
   function handleNarrativeScroll() {
@@ -946,7 +1066,16 @@ export function initBlackHole() {
     stage.style.removeProperty("--black-hole-settle-scale");
     statement.style.removeProperty("--about-statement-settle-y");
     flow.style.removeProperty("--overlay-hold-y");
-    bio.style.removeProperty("opacity");
+    flow.style.removeProperty("--world-gravity-scale");
+    flow.style.removeProperty("--world-gravity-opacity");
+    about.classList.remove("about--absorbing");
+    [statement, bio, backdrop].forEach((element) => {
+      element.style.removeProperty("--about-gravity-x");
+      element.style.removeProperty("--about-gravity-y");
+      element.style.removeProperty("--about-gravity-scale");
+      element.style.removeProperty("--about-gravity-rotation");
+      element.style.removeProperty("opacity");
+    });
     bio.style.removeProperty("filter");
     bio.style.removeProperty("translate");
     orbits.removeEventListener("pointerdown", handleOrbitPointerDown);

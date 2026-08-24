@@ -14,6 +14,8 @@
   --scene-scroll-y: 0px;
   --hero-outro: 0;
   --hero-backdrop-outro: 0;
+  --world-gravity-scale: 1;
+  --world-gravity-opacity: 1;
   position: relative;
   overflow: visible;
   background: var(--color-canvas);
@@ -113,6 +115,16 @@
   display: block;
   inline-size: 100%;
   block-size: 100%;
+}
+
+.two-section-overlay__media {
+  opacity: var(--world-gravity-opacity);
+  transform: scale(var(--world-gravity-scale));
+  /* At the start of About, this document-space point lands at the black
+     hole's sticky viewport center. The window shadow therefore contracts into
+     the same world focal point while the semantic section remains pinned. */
+  transform-origin: 50% 75%;
+  will-change: opacity, transform;
 }
 
 .two-section-overlay__image {

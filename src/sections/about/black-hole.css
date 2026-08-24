@@ -38,7 +38,7 @@
 .black-hole-anchor {
   /* World position: 150svh into the shared Hero/About flow. It moves with the
      section while emerging, reaches the camera center exactly when About pins,
-     then performs the second fixed-time downward settle. */
+     then remains sticky for the settle, hold, and absorption states. */
   position: sticky;
   inset-block-start: 50vh;
   inset-block-start: 50svh;
