@@ -1,3 +1,7 @@
+export async function loadSceneEditorShell() {
+  await import("./sections/about/black-hole-editor.css");
+}
+
 export async function loadSceneEditorModules() {
   const [, originState, aboutEditor, sceneCopy, fluidCursor] =
     await Promise.all([

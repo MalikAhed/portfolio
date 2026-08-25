@@ -9,7 +9,6 @@ const FINAL_CAMERA_Z = 5;
 const INTRO_MINIMUM_MS = 350;
 const INTRO_CAMERA_DURATION_MS = 650;
 const INTRO_FAILSAFE_MS = 1000;
-const INTRO_SESSION_KEY = "portfolio-intro-seen-v1";
 const PORTRAIT_SHADOW_PADDING = 72;
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`;
 const PORTRAIT_TEXTURE_SOURCES = [
@@ -80,6 +79,8 @@ export function initHeroScene() {
       "is-hero-entering",
     );
     document.body.classList.add("is-intro-complete");
+    document.documentElement.classList.remove("is-refresh-restart");
+    if ("scrollRestoration" in history) history.scrollRestoration = "auto";
     app.inert = false;
     return () => {};
   }
@@ -338,12 +339,9 @@ export function initHeroScene() {
       "is-hero-entering",
     );
     document.body.classList.add("is-intro-complete");
+    document.documentElement.classList.remove("is-refresh-restart");
+    if ("scrollRestoration" in history) history.scrollRestoration = "auto";
     app.inert = false;
-    try {
-      sessionStorage.setItem(INTRO_SESSION_KEY, "true");
-    } catch {
-      // Storage can be unavailable in hardened browsing modes.
-    }
     renderer.render(scene, camera);
   }
 
@@ -373,19 +371,14 @@ export function initHeroScene() {
   }
 
   function prepareIntro() {
-    let introSeen = false;
-    try {
-      introSeen = sessionStorage.getItem(INTRO_SESSION_KEY) === "true";
-    } catch {
-      // Treat unavailable storage as a first visit.
-    }
+    const restartingFromRefresh =
+      document.documentElement.classList.contains("is-refresh-restart");
+    if (restartingFromRefresh) window.scrollTo(0, 0);
 
     if (
       reducedMotion.matches ||
-      introSeen ||
       document.body.classList.contains("is-intro-complete") ||
-      window.scrollY > 1 ||
-      window.location.hash
+      (!restartingFromRefresh && (window.scrollY > 1 || window.location.hash))
     ) {
       finishIntro();
       return;

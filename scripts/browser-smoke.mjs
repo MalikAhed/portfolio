@@ -237,11 +237,57 @@ async function runScenario(port, scenario) {
         urls: ["*/src/main.js*", "*assets/index-*.js"],
       });
     }
+    if (scenario.reloadIntro) {
+      await client.send("Page.addScriptToEvaluateOnNewDocument", {
+        source: `(() => {
+          window.__introClassHistory = [];
+          let previousClassName;
+          const captureBodyClass = () => {
+            const className = document.body?.className;
+            if (className === undefined || className === previousClassName) return;
+            previousClassName = className;
+            window.__introClassHistory.push(className);
+          };
+          new MutationObserver(captureBodyClass).observe(document, {
+            attributes: true,
+            attributeFilter: ['class'],
+            childList: true,
+            subtree: true,
+          });
+          captureBodyClass();
+        })();`,
+      });
+    }
 
     await client.send("Page.navigate", {
       url: new URL(`.${scenario.path}`, baseUrl).href,
     });
     await delay(scenario.wait ?? 4500);
+
+    let introClassHistory = null;
+    if (scenario.reloadIntro) {
+      if (scenario.reloadHash || scenario.reloadFromScrollY != null) {
+        await evaluate(
+          client,
+          `(() => {
+            history.replaceState(
+              history.state,
+              '',
+              ${JSON.stringify(scenario.reloadHash ?? "")},
+            );
+            scrollTo(0, ${scenario.reloadFromScrollY ?? 0});
+          })()`,
+        );
+        await delay(100);
+      }
+      await client.send("Page.reload");
+      await delay(scenario.reloadWait ?? 2500);
+      introClassHistory = await evaluate(
+        client,
+        `window.__introClassHistory ?? []`,
+      );
+    }
+
     if (scenario.scrollY != null) {
       await evaluate(client, `scrollTo(0, ${scenario.scrollY})`);
       await delay(250);
@@ -390,6 +436,7 @@ async function runScenario(port, scenario) {
       snapshot,
       interaction,
       scrollMetrics,
+      introClassHistory,
       runtimeErrors,
     };
   } finally {
@@ -411,6 +458,15 @@ function isVisible(value) {
 
 const scenarioDefinitions = [
   { name: "normal", path: "/", wait: 3500 },
+  {
+    name: "intro-refresh",
+    path: "/",
+    wait: 2000,
+    reloadIntro: true,
+    reloadHash: "#skills",
+    reloadFromScrollY: 2200,
+    reloadWait: 3500,
+  },
   { name: "about-deep-link", path: "/#about", wait: 2500 },
   { name: "skills-deep-link", path: "/#skills", wait: 2500 },
   { name: "contact-deep-link", path: "/#contact", wait: 2500 },
@@ -601,6 +657,25 @@ try {
         failures.push(
           "normal: development editor markup shipped to production",
         );
+      }
+    }
+    if (name === "intro-refresh") {
+      const replayedCinematicReveal = result.introClassHistory?.some(
+        (className) =>
+          className.includes("is-intro-exiting") &&
+          className.includes("is-hero-entering"),
+      );
+      if (!replayedCinematicReveal) {
+        failures.push("intro-refresh: cinematic reveal was skipped on reload");
+      }
+      if (snapshot.scrollY > 1 || snapshot.hash) {
+        failures.push("intro-refresh: reload did not restart from the top");
+      }
+      if (
+        snapshot.appInert ||
+        !snapshot.bodyClass.includes("is-intro-complete")
+      ) {
+        failures.push("intro-refresh: intro did not reach its resting state");
       }
     }
     if (name.endsWith("deep-link")) {

@@ -37,6 +37,8 @@ const SCENE_VARIABLES = Object.freeze({
     "--black-hole-top-opacity",
     "--black-hole-top-color",
     "--black-hole-image-opacity",
+    "--black-hole-image-brightness",
+    "--black-hole-image-contrast",
   ]),
   aboutCopy: Object.freeze([
     "--about-copy-x",
@@ -69,6 +71,8 @@ const BLACK_HOLE_VARIABLE_STATE = Object.freeze({
   topOpacity: "--black-hole-top-opacity",
   topColor: "--black-hole-top-color",
   blackHoleOpacity: "--black-hole-image-opacity",
+  blackHoleBrightness: "--black-hole-image-brightness",
+  blackHoleContrast: "--black-hole-image-contrast",
 });
 
 function readStoredValue(key) {

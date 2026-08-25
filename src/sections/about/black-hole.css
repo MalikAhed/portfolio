@@ -22,6 +22,8 @@
   --black-hole-top-opacity: 0.52;
   --black-hole-top-color: #24211c;
   --black-hole-image-opacity: 1;
+  --black-hole-image-brightness: 1;
+  --black-hole-image-contrast: 1;
   --black-hole-world-opacity: 1;
   position: absolute;
   z-index: var(--black-hole-layer);
@@ -92,7 +94,8 @@
 }
 
 .black-hole-image,
-.black-hole-orbits {
+.black-hole-orbits,
+.black-hole-bloom {
   position: absolute;
   inset: 0;
   display: block;
@@ -104,13 +107,29 @@
   z-index: 0;
   object-fit: contain;
   opacity: var(--black-hole-image-opacity);
+  filter: brightness(var(--black-hole-image-brightness))
+    contrast(var(--black-hole-image-contrast));
 }
 
 .black-hole-orbits {
-  z-index: 1;
+  z-index: 2;
   overflow: visible;
   color: var(--black-hole-orbit-color);
   pointer-events: none;
+}
+
+.black-hole-bloom {
+  z-index: 1;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* The SVG remains the authoritative crisp moving-line layer and the no-WebGL
+   fallback. Three.js adds transparent bloom beneath these same trajectories;
+   keeping the core visible prevents the glow from washing the lines into the
+   bright source image. */
+.has-black-hole-bloom .black-hole-orbits {
+  opacity: 0.9;
 }
 
 .black-hole-orbits__motion {

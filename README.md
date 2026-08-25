@@ -14,8 +14,9 @@ npm ci
 npm run dev
 ```
 
-Add `?edit=scene` locally to load the scene-positioning tools. Editor markup,
-styles, Vue code, and experimental WebGL are excluded from production builds.
+The local Vite server shows the scene-positioning tools by default. Add
+`?edit=off` for a clean local presentation. Editor markup, styles, Vue code,
+and experimental WebGL are excluded from production builds.
 
 ## Quality checks
 

@@ -84,8 +84,9 @@ src/
 
 ## Development scene tools
 
-Run `npm run dev` and add `?edit=scene` to expose the local About/black-hole
-tools. They are intentionally absent from production:
+Run `npm run dev` to expose the local About/black-hole tools automatically. Add
+`?edit=off` for a clean local presentation. They are intentionally absent from
+production:
 
 - `vite.config.js` strips the editor HTML block during production builds.
 - `main.js` dynamically imports editor modules only in Vite development mode.

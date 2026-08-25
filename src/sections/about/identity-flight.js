@@ -154,8 +154,10 @@ export function createScrollIdentityFlight({
   /*
    * Depth-world ownership:
    * - The fixed Hero identity supplies the two viewport-space starting points.
-   * - The sticky black-hole anchor supplies the live collision point, so the
-   *   merged dot cannot drift away while the anchor changes into its hold.
+   * - The sticky black-hole anchor supplies the collision coordinate projected
+   *   at DOT_COLLISION_SCROLL. Keeping that endpoint fixed prevents the
+   *   anchor's simultaneous upward scroll from cancelling the dots' downward
+   *   motion halfway through the flight.
    * - Text morph, dot travel, collision, settle, and their reverse are direct
    *   functions of scroll. Only the black-hole expansion/statement reveal use
    *   elapsed time after the collision has actually happened.
@@ -174,14 +176,20 @@ export function createScrollIdentityFlight({
     pathGeometry = {
       starts: metrics.map(({ x, y }) => ({ x, y })),
       sizes: metrics.map(({ width, height }) => ({ width, height })),
+      journeyDistance:
+        anchor.closest(".hero-about-flow")?.querySelector(".hero")
+          ?.offsetHeight || window.innerHeight,
     };
   }
 
   function getCollisionPoint() {
     const bounds = anchor.getBoundingClientRect();
+    const remainingScroll =
+      Math.max(0, DOT_COLLISION_SCROLL - previousScrollProgress) *
+      pathGeometry.journeyDistance;
     return {
       x: bounds.left + bounds.width / 2,
-      y: bounds.top + bounds.height / 2,
+      y: bounds.top + bounds.height / 2 - remainingScroll,
     };
   }
 

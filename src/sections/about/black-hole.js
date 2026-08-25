@@ -54,18 +54,27 @@ const DEFAULT_STATE = Object.freeze({
   orbitHeight: 0.25,
   orbitColor: "#000000",
   orbitSpeed: 0.4,
-  lineDensity: 18,
+  lineDensity: 10,
   lineWidth: 5.25,
   lineOpacity: 1,
+  lineInnerColor: "#fff2cc",
+  lineOuterColor: "#ff6a00",
+  lineMaterialVersion: 2,
+  glowStrength: 1.4,
+  glowRadius: 0.5,
+  glowThreshold: 0,
+  glowExposure: 1,
   topX: -15,
   topY: -50,
   topScale: 0.45,
   topHeight: 2.5,
-  topDensity: 12,
+  topDensity: 6,
   topWidth: 1,
   topOpacity: 0.74,
   topColor: "#000000",
-  blackHoleOpacity: 1,
+  blackHoleOpacity: 0.78,
+  blackHoleBrightness: 0.72,
+  blackHoleContrast: 1.08,
 });
 
 const DEFAULT_EDITOR_LAYOUT = Object.freeze({
@@ -90,6 +99,10 @@ const STATE_LIMITS = Object.freeze({
   lineDensity: [1, 18],
   lineWidth: [0.5, 20],
   lineOpacity: [0.05, 1],
+  glowStrength: [0, 3],
+  glowRadius: [0, 1],
+  glowThreshold: [0, 1],
+  glowExposure: [0.1, 2],
   topX: [-400, 400],
   topY: [-300, 300],
   topScale: [0.4, 2],
@@ -98,6 +111,8 @@ const STATE_LIMITS = Object.freeze({
   topWidth: [0.5, 14],
   topOpacity: [0.02, 1],
   blackHoleOpacity: [0, 1],
+  blackHoleBrightness: [0, 1.5],
+  blackHoleContrast: [0.5, 2],
 });
 
 function clamp(value, minimum, maximum) {
@@ -155,12 +170,19 @@ function loadState() {
     saved = {};
   }
 
+  const predatesImageMaterialControls =
+    !Number.isFinite(Number(saved.blackHoleBrightness)) ||
+    !Number.isFinite(Number(saved.blackHoleContrast));
+  const acceptsSavedLineMaterial = saved.lineMaterialVersion === 2;
   const state = {};
   Object.entries(STATE_LIMITS).forEach(([property, [minimum, maximum]]) => {
     const savedValue = Number(saved[property]);
     const fallback = DEFAULT_STATE[property];
+    const acceptsSavedValue =
+      Number.isFinite(savedValue) &&
+      !(property === "blackHoleOpacity" && predatesImageMaterialControls);
     state[property] = clamp(
-      Number.isFinite(savedValue) ? savedValue : fallback,
+      acceptsSavedValue ? savedValue : fallback,
       minimum,
       maximum,
     );
@@ -171,6 +193,20 @@ function loadState() {
   state.topColor = /^#[0-9a-f]{6}$/i.test(saved.topColor)
     ? saved.topColor
     : DEFAULT_STATE.topColor;
+  if (!acceptsSavedLineMaterial) {
+    state.lineDensity = DEFAULT_STATE.lineDensity;
+    state.topDensity = DEFAULT_STATE.topDensity;
+    state.glowStrength = DEFAULT_STATE.glowStrength;
+  }
+  state.lineInnerColor =
+    acceptsSavedLineMaterial && /^#[0-9a-f]{6}$/i.test(saved.lineInnerColor)
+      ? saved.lineInnerColor
+      : DEFAULT_STATE.lineInnerColor;
+  state.lineOuterColor =
+    acceptsSavedLineMaterial && /^#[0-9a-f]{6}$/i.test(saved.lineOuterColor)
+      ? saved.lineOuterColor
+      : DEFAULT_STATE.lineOuterColor;
+  state.lineMaterialVersion = DEFAULT_STATE.lineMaterialVersion;
   return state;
 }
 
@@ -299,10 +335,15 @@ export function initBlackHole() {
   let orbitScrollIdleTimer = 0;
   let orbitWarmupHandle = 0;
   let orbitWarmupUsesIdleCallback = false;
+  let bloomWarmupHandle = 0;
+  let bloomWarmupUsesIdleCallback = false;
+  let bloomWarmupDelayHandle = 0;
+  let bloomIsWarmed = false;
   let frame = 0;
   let objectReady = false;
   let disposed = false;
   let flightController = null;
+  let bloomController = null;
   let journeyDistance = 1;
   let aboutTop = 0;
   let holdDistance = 1;
@@ -520,6 +561,7 @@ export function initBlackHole() {
       syncOrbitDensity();
       syncTopOrbitDensity();
       syncOrbitSpeed();
+      if (bloomIsWarmed) bloomController?.sync(state);
     }
     const worldIsActive = orbitsInView && blackHoleWorldVisible;
     const active =
@@ -529,6 +571,7 @@ export function initBlackHole() {
       !reducedMotion.matches;
     stage.classList.toggle("black-hole-stage--active", worldIsActive);
     stage.classList.toggle("black-hole-stage--orbits-active", active);
+    bloomController?.setActive(active && bloomIsWarmed);
   }
 
   function captureGravityGeometry() {
@@ -683,6 +726,9 @@ export function initBlackHole() {
 
   function updateNarrative() {
     frame = 0;
+    if (document.documentElement.classList.contains("is-skills-navigation")) {
+      return;
+    }
     const introPending = document.body.classList.contains("is-intro-pending");
     const introExiting = document.body.classList.contains("is-intro-exiting");
     const introStillBlocking =
@@ -730,6 +776,9 @@ export function initBlackHole() {
   }
 
   function handleNarrativeScroll() {
+    if (document.documentElement.classList.contains("is-skills-navigation")) {
+      return;
+    }
     if (orbitsInView && blackHoleWorldVisible) {
       if (!orbitScrollActive) {
         orbitScrollActive = true;
@@ -768,7 +817,7 @@ export function initBlackHole() {
       "--black-hole-orbit-height",
       String(state.orbitHeight),
     );
-    stage.style.setProperty("--black-hole-orbit-color", state.orbitColor);
+    stage.style.setProperty("--black-hole-orbit-color", state.lineOuterColor);
     stage.style.setProperty("--black-hole-line-width", String(state.lineWidth));
     stage.style.setProperty(
       "--black-hole-line-opacity",
@@ -783,11 +832,20 @@ export function initBlackHole() {
       "--black-hole-top-opacity",
       String(state.topOpacity),
     );
-    stage.style.setProperty("--black-hole-top-color", state.topColor);
+    stage.style.setProperty("--black-hole-top-color", state.lineInnerColor);
     stage.style.setProperty(
       "--black-hole-image-opacity",
       String(state.blackHoleOpacity),
     );
+    stage.style.setProperty(
+      "--black-hole-image-brightness",
+      String(state.blackHoleBrightness),
+    );
+    stage.style.setProperty(
+      "--black-hole-image-contrast",
+      String(state.blackHoleContrast),
+    );
+    if (orbitsInView && bloomIsWarmed) bloomController?.sync(state);
     if (editorEnabled) {
       Object.entries(controls).forEach(([property, control]) => {
         control.value = String(state[property]);
@@ -800,6 +858,10 @@ export function initBlackHole() {
       outputs.lineDensity.value = String(Math.round(state.lineDensity));
       outputs.lineWidth.value = `${state.lineWidth.toFixed(2)}px`;
       outputs.lineOpacity.value = `${Math.round(state.lineOpacity * 100)}%`;
+      outputs.glowStrength.value = `${state.glowStrength.toFixed(2)}×`;
+      outputs.glowRadius.value = `${state.glowRadius.toFixed(2)}`;
+      outputs.glowThreshold.value = `${state.glowThreshold.toFixed(2)}`;
+      outputs.glowExposure.value = `${state.glowExposure.toFixed(2)}×`;
       outputs.topX.value = `${Math.round(state.topX)}px`;
       outputs.topY.value = `${Math.round(state.topY)}px`;
       outputs.topScale.value = `${state.topScale.toFixed(2)}×`;
@@ -809,6 +871,12 @@ export function initBlackHole() {
       outputs.topOpacity.value = `${Math.round(state.topOpacity * 100)}%`;
       outputs.blackHoleOpacity.value = `${Math.round(
         state.blackHoleOpacity * 100,
+      )}%`;
+      outputs.blackHoleBrightness.value = `${Math.round(
+        state.blackHoleBrightness * 100,
+      )}%`;
+      outputs.blackHoleContrast.value = `${Math.round(
+        state.blackHoleContrast * 100,
       )}%`;
       Object.entries(fluidControls).forEach(([property, control]) => {
         control.value = String(fluidState[property]);
@@ -1029,7 +1097,10 @@ export function initBlackHole() {
   function handleControlInput(event) {
     const property = event.currentTarget.dataset.blackHoleProperty;
     state[property] =
-      property === "orbitColor" || property === "topColor"
+      property === "orbitColor" ||
+      property === "topColor" ||
+      property === "lineInnerColor" ||
+      property === "lineOuterColor"
         ? event.currentTarget.value
         : Number(event.currentTarget.value);
     render();
@@ -1062,6 +1133,13 @@ export function initBlackHole() {
       lineDensity: DEFAULT_STATE.lineDensity,
       lineWidth: DEFAULT_STATE.lineWidth,
       lineOpacity: DEFAULT_STATE.lineOpacity,
+      lineInnerColor: DEFAULT_STATE.lineInnerColor,
+      lineOuterColor: DEFAULT_STATE.lineOuterColor,
+      lineMaterialVersion: DEFAULT_STATE.lineMaterialVersion,
+      glowStrength: DEFAULT_STATE.glowStrength,
+      glowRadius: DEFAULT_STATE.glowRadius,
+      glowThreshold: DEFAULT_STATE.glowThreshold,
+      glowExposure: DEFAULT_STATE.glowExposure,
       topX: DEFAULT_STATE.topX,
       topY: DEFAULT_STATE.topY,
       topScale: DEFAULT_STATE.topScale,
@@ -1071,6 +1149,8 @@ export function initBlackHole() {
       topOpacity: DEFAULT_STATE.topOpacity,
       topColor: DEFAULT_STATE.topColor,
       blackHoleOpacity: DEFAULT_STATE.blackHoleOpacity,
+      blackHoleBrightness: DEFAULT_STATE.blackHoleBrightness,
+      blackHoleContrast: DEFAULT_STATE.blackHoleContrast,
     };
     fluidState = saveFluidSettings(DEFAULT_FLUID_SETTINGS);
     render();
@@ -1113,6 +1193,10 @@ export function initBlackHole() {
     orbits.addEventListener("pointercancel", handleOrbitPointerUp);
   }
   window.addEventListener("scroll", handleNarrativeScroll, { passive: true });
+  window.addEventListener(
+    "portfolio:section-navigation-settle",
+    requestNarrativeUpdate,
+  );
   function handleViewportResize() {
     if (panel && !panel.hidden) {
       if (editorLayout) applyEditorLayout();
@@ -1136,7 +1220,10 @@ export function initBlackHole() {
 
   document.addEventListener("visibilitychange", handleVisibilityChange);
   reducedMotion.addEventListener("change", handleReducedMotionChange);
-  const introObserver = new MutationObserver(requestNarrativeUpdate);
+  const introObserver = new MutationObserver(() => {
+    requestNarrativeUpdate();
+    scheduleBloomWarmup();
+  });
   introObserver.observe(document.body, {
     attributes: true,
     attributeFilter: ["class"],
@@ -1155,6 +1242,62 @@ export function initBlackHole() {
     syncOrbitSpeed();
   }
 
+  async function warmBloomRenderer() {
+    bloomWarmupHandle = 0;
+    if (disposed || bloomIsWarmed) return;
+    try {
+      const { createBlackHoleBloom } = await import("./black-hole-bloom.js");
+      if (disposed || bloomIsWarmed) return;
+      bloomController = createBlackHoleBloom({
+        object,
+        rimGroup: densityOrbitGroup,
+        crownGroup: topOrbitGroup,
+        reducedMotion,
+      });
+      bloomController.sync(state);
+      bloomIsWarmed = true;
+      updateOrbitActivity();
+    } catch (error) {
+      // The SVG trajectories are the complete transparent fallback, so a
+      // WebGL/post-processing failure must never remove the moving lines.
+      console.warn("Black-hole bloom could not be initialized.", error);
+    }
+  }
+
+  function scheduleBloomWarmup() {
+    if (
+      disposed ||
+      bloomIsWarmed ||
+      bloomWarmupHandle ||
+      bloomWarmupDelayHandle ||
+      !document.body.classList.contains("is-intro-complete")
+    ) {
+      return;
+    }
+    const requestWarmupWhenIdle = () => {
+      bloomWarmupDelayHandle = 0;
+      if (disposed || bloomIsWarmed || bloomWarmupHandle) return;
+      if ("requestIdleCallback" in window) {
+        bloomWarmupUsesIdleCallback = true;
+        // No timeout: shader compilation must never interrupt active scrolling.
+        // The SVG core already supplies the visible moving lines until bloom is
+        // safely ready.
+        bloomWarmupHandle = window.requestIdleCallback(warmBloomRenderer);
+      } else {
+        bloomWarmupUsesIdleCallback = false;
+        bloomWarmupHandle = window.setTimeout(warmBloomRenderer, 500);
+      }
+    };
+
+    // A direct About entry is animating the merged dot into the black hole, so
+    // wait for that reveal before asking the browser for an idle compile slot.
+    if (window.location.hash) {
+      bloomWarmupDelayHandle = window.setTimeout(requestWarmupWhenIdle, 1800);
+    } else {
+      requestWarmupWhenIdle();
+    }
+  }
+
   if ("requestIdleCallback" in window) {
     orbitWarmupUsesIdleCallback = true;
     orbitWarmupHandle = window.requestIdleCallback(warmOrbitGeometry, {
@@ -1164,6 +1307,7 @@ export function initBlackHole() {
     orbitWarmupHandle = window.setTimeout(warmOrbitGeometry, 700);
   }
 
+  scheduleBloomWarmup();
   render();
   function markObjectReady() {
     if (disposed || objectReady) return;
@@ -1188,9 +1332,20 @@ export function initBlackHole() {
         window.clearTimeout(orbitWarmupHandle);
       }
     }
+    if (bloomWarmupHandle) {
+      if (bloomWarmupUsesIdleCallback) {
+        window.cancelIdleCallback(bloomWarmupHandle);
+      } else {
+        window.clearTimeout(bloomWarmupHandle);
+      }
+    }
+    if (bloomWarmupDelayHandle) {
+      window.clearTimeout(bloomWarmupDelayHandle);
+    }
     image.removeEventListener("load", markObjectReady);
     image.removeEventListener("error", markObjectReady);
     flightController?.dispose();
+    bloomController?.dispose();
     stage.style.removeProperty("--black-hole-settle-y");
     stage.style.removeProperty("--black-hole-settle-scale");
     stage.style.removeProperty("--black-hole-world-opacity");
@@ -1233,6 +1388,10 @@ export function initBlackHole() {
       );
     }
     window.removeEventListener("scroll", handleNarrativeScroll);
+    window.removeEventListener(
+      "portfolio:section-navigation-settle",
+      requestNarrativeUpdate,
+    );
     window.removeEventListener("resize", handleViewportResize);
     document.removeEventListener("visibilitychange", handleVisibilityChange);
     reducedMotion.removeEventListener("change", handleReducedMotionChange);

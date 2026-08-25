@@ -66,7 +66,10 @@ function developmentSceneEditors(command) {
     },
     load(id) {
       if (id !== resolvedSceneEditorVirtualId) return null;
-      return "export async function loadSceneEditorModules() { return null; }";
+      return [
+        "export async function loadSceneEditorShell() {}",
+        "export async function loadSceneEditorModules() { return null; }",
+      ].join("\n");
     },
     transformIndexHtml: {
       order: "pre",

@@ -70,6 +70,22 @@
   </head>
   <body id="top">
     <script>
+      const navigationEntry = performance.getEntriesByType("navigation")[0];
+      if (navigationEntry?.type === "reload") {
+        document.documentElement.classList.add("is-refresh-restart");
+        if ("scrollRestoration" in history) {
+          history.scrollRestoration = "manual";
+        }
+        if (window.location.hash) {
+          history.replaceState(
+            history.state,
+            "",
+            `${window.location.pathname}${window.location.search}`,
+          );
+        }
+        window.scrollTo(0, 0);
+      }
+
       document.documentElement.classList.add("has-js");
       document.body.classList.add("is-intro-pending");
       window.setTimeout(() => {
@@ -82,6 +98,10 @@
         }
         document.body.classList.remove("is-intro-pending", "is-intro-exiting");
         document.body.classList.add("is-intro-complete");
+        document.documentElement.classList.remove("is-refresh-restart");
+        if ("scrollRestoration" in history) {
+          history.scrollRestoration = "auto";
+        }
         const app = document.querySelector("#app");
         if (app) app.inert = false;
       }, 4000);
@@ -480,7 +500,7 @@
                 data-black-hole-tab="object"
                 tabindex="-1"
               >
-                Object
+                Image
               </button>
               <button
                 id="black-hole-tab-material"
@@ -578,12 +598,60 @@
                   max="1"
                   step="0.01"
               /></label>
+              <p class="black-hole-editor__section-title">Glow</p>
               <label
-                >Dark line tint
+                >Glow strength
+                <output data-black-hole-output="glowStrength"></output
+                ><input
+                  data-black-hole-property="glowStrength"
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="0.05"
+              /></label>
+              <label
+                >Glow radius
+                <output data-black-hole-output="glowRadius"></output
+                ><input
+                  data-black-hole-property="glowRadius"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+              /></label>
+              <label
+                >Glow threshold
+                <output data-black-hole-output="glowThreshold"></output
+                ><input
+                  data-black-hole-property="glowThreshold"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+              /></label>
+              <label
+                >Glow exposure
+                <output data-black-hole-output="glowExposure"></output
+                ><input
+                  data-black-hole-property="glowExposure"
+                  type="range"
+                  min="0.1"
+                  max="2"
+                  step="0.05"
+              /></label>
+              <label
+                >Inner line color
                 <input
-                  data-black-hole-property="orbitColor"
+                  data-black-hole-property="lineInnerColor"
                   type="color"
-                  value="#353129"
+                  value="#fff2cc"
+              /></label>
+              <label
+                >Outer glow color
+                <input
+                  data-black-hole-property="lineOuterColor"
+                  type="color"
+                  value="#ff6a00"
               /></label>
             </div>
             <div
@@ -663,13 +731,6 @@
                   max="1"
                   step="0.01"
               /></label>
-              <label
-                >Top tint
-                <input
-                  data-black-hole-property="topColor"
-                  type="color"
-                  value="#24211c"
-              /></label>
             </div>
             <div
               id="black-hole-panel-object"
@@ -680,13 +741,33 @@
               hidden
             >
               <label
-                >Black-hole opacity
+                >Image opacity
                 <output data-black-hole-output="blackHoleOpacity"></output
                 ><input
                   data-black-hole-property="blackHoleOpacity"
                   type="range"
                   min="0"
                   max="1"
+                  step="0.01"
+              /></label>
+              <label
+                >Image brightness
+                <output data-black-hole-output="blackHoleBrightness"></output
+                ><input
+                  data-black-hole-property="blackHoleBrightness"
+                  type="range"
+                  min="0"
+                  max="1.5"
+                  step="0.01"
+              /></label>
+              <label
+                >Image contrast
+                <output data-black-hole-output="blackHoleContrast"></output
+                ><input
+                  data-black-hole-property="blackHoleContrast"
+                  type="range"
+                  min="0.5"
+                  max="2"
                   step="0.01"
               /></label>
             </div>
