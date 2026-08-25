@@ -48,6 +48,7 @@ const fragmentShader = /* glsl */ `
   uniform vec2 dashPatternB;
   uniform float dashOffset;
   uniform float lineOpacity;
+  uniform vec2 viewport;
 
   varying float vOrbitDistance;
   varying float vEdgeFade;
@@ -63,16 +64,20 @@ const fragmentShader = /* glsl */ `
     float secondEnd = secondStart + dashPatternA.z;
     float thirdStart = secondEnd + dashPatternA.w;
     float thirdEnd = thirdStart + dashPatternB.x;
-    bool visibleDash = positionInPattern <= firstEnd ||
-      (positionInPattern >= secondStart && positionInPattern <= secondEnd) ||
-      (positionInPattern >= thirdStart && positionInPattern <= thirdEnd);
-
-    if (!visibleDash) discard;
+    float dashDistance = min(
+      min(abs(positionInPattern - firstEnd), abs(positionInPattern - secondStart)),
+      min(abs(positionInPattern - secondEnd), min(abs(positionInPattern - thirdStart), abs(positionInPattern - thirdEnd)))
+    );
+    float dashWindow = step(positionInPattern, firstEnd) +
+      step(secondStart, positionInPattern) * step(positionInPattern, secondEnd) +
+      step(thirdStart, positionInPattern) * step(positionInPattern, thirdEnd);
+    float dashEdge = max(1.0, 2.0 / max(viewport.x, 1.0));
+    float dashAlpha = dashWindow * (1.0 - smoothstep(0.0, dashEdge, dashDistance));
 
     float across = abs(vLineAcross);
     float core = 1.0 - smoothstep(0.0, 0.72, across);
     float lineEdge = 1.0 - smoothstep(0.7, 1.0, across);
-    float alpha = lineOpacity * vEdgeFade * lineEdge;
+    float alpha = lineOpacity * vEdgeFade * lineEdge * dashAlpha;
     vec3 color = mix(outerColor, innerColor, core);
     gl_FragColor = vec4(color, alpha);
   }
@@ -283,6 +288,7 @@ function createOrbitMesh(path, kind, state) {
       dashPatternB: { value: new THREE.Vector2(pattern[4], pattern[5]) },
       dashOffset: { value: readDashPhase(path) },
       lineOpacity: { value: opacity },
+      viewport: { value: new THREE.Vector2(1, 1) },
     },
     vertexShader,
     fragmentShader,
@@ -322,10 +328,10 @@ export function createBlackHoleBloom({
     renderer = new THREE.WebGLRenderer({
       // Bloom softens the ribbon edges itself; multisampling only duplicates
       // work and caused a long shader warmup before the lines appeared.
-      antialias: false,
+      antialias: true,
       alpha: true,
       depth: false,
-      premultipliedAlpha: true,
+      premultipliedAlpha: false,
       powerPreference: "high-performance",
       stencil: false,
     });
@@ -350,7 +356,7 @@ export function createBlackHoleBloom({
   // this world's transparent overlay contract.
   const renderPass = new RenderPass(scene, camera);
   const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(1, 1),
+    new THREE.Vector2(Math.max(1, object.clientWidth), Math.max(1, object.clientHeight)),
     1.5,
     0.4,
     0.85,
@@ -388,6 +394,9 @@ export function createBlackHoleBloom({
     const height = Math.max(1, object.clientHeight);
     renderer.setSize(width, height, false);
     composer.setSize(width, height);
+    orbitMeshes.children.forEach((mesh) => {
+      mesh.material.uniforms.viewport.value.set(width, height);
+    });
     renderFrame();
   }
 
