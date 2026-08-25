@@ -57,9 +57,9 @@ const DEFAULT_STATE = Object.freeze({
   lineDensity: 10,
   lineWidth: 5.25,
   lineOpacity: 1,
-  lineInnerColor: "#fff2cc",
-  lineOuterColor: "#ff6a00",
-  lineMaterialVersion: 2,
+  lineInnerColor: "#000000",
+  lineOuterColor: "#000000",
+  lineMaterialVersion: 3,
   glowStrength: 1.4,
   glowRadius: 0.5,
   glowThreshold: 0,
@@ -173,7 +173,7 @@ function loadState() {
   const predatesImageMaterialControls =
     !Number.isFinite(Number(saved.blackHoleBrightness)) ||
     !Number.isFinite(Number(saved.blackHoleContrast));
-  const acceptsSavedLineMaterial = saved.lineMaterialVersion === 2;
+  const acceptsSavedLineMaterial = saved.lineMaterialVersion === 3;
   const state = {};
   Object.entries(STATE_LIMITS).forEach(([property, [minimum, maximum]]) => {
     const savedValue = Number(saved[property]);
