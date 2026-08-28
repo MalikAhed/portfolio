@@ -99,8 +99,8 @@ export function getWorldVisibilityAtDepth(depth) {
 export const CARD_WORLD_CONFIG = Object.freeze({
   id: "portfolio-cards",
   depthRole: "world",
-  aspectRatio: 2,
-  width: 7,
+  width: 8.8,
+  height: 3.25,
   cornerRadius: 0.12,
   worldUnitsPerCssPixel: 0.005,
   hover: Object.freeze({
@@ -110,10 +110,10 @@ export const CARD_WORLD_CONFIG = Object.freeze({
   }),
   presets: Object.freeze({
     desktop: [
-      { position: [0, 0.06, 7.1], rotation: [0, 0, 0], scale: 1 },
-      { position: [0, -0.05, 12.5], rotation: [0, 0, 0], scale: 1 },
-      { position: [0, -0.03, 17.9], rotation: [0, 0, 0], scale: 1 },
-      { position: [0, 0.04, 23.3], rotation: [0, 0, 0], scale: 1 },
+      { position: [0, 0.06, 7.1], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, -0.05, 12.5], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, -0.03, 17.9], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.04, 23.3], rotation: [0, 0, 0], scale: 1.12 },
     ],
     mobile: [
       { position: [0, 0.12, 7.1], rotation: [0, 0, 0], scale: 0.3 },

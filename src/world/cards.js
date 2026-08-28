@@ -198,10 +198,7 @@ function createProjectCard(project, index, reducedMotion) {
     card.style.blockSize = `${height / CARD_WORLD_CONFIG.worldUnitsPerCssPixel}px`;
   }
 
-  setDimensions(
-    CARD_WORLD_CONFIG.width,
-    CARD_WORLD_CONFIG.width / CARD_WORLD_CONFIG.aspectRatio,
-  );
+  setDimensions(CARD_WORLD_CONFIG.width, CARD_WORLD_CONFIG.height);
   card.style.setProperty(
     "--project-card-radius",
     `${CARD_WORLD_CONFIG.cornerRadius / CARD_WORLD_CONFIG.worldUnitsPerCssPixel}px`,
@@ -432,7 +429,7 @@ export function createPortfolioCards(reducedMotion, container) {
       depth: Number.POSITIVE_INFINITY,
       entryProgress: 0,
       focusDistance: Number.POSITIVE_INFINITY,
-      height: CARD_WORLD_CONFIG.width / CARD_WORLD_CONFIG.aspectRatio,
+      height: CARD_WORLD_CONFIG.height,
       inFront: false,
       rig,
       screenBounds: { bottom: 0, left: 0, right: 0, top: 0 },
@@ -452,7 +449,7 @@ export function createPortfolioCards(reducedMotion, container) {
     rig.rotation.set(...config.rotation);
     anchor.scale.setScalar(config.scale);
     entry.width = CARD_WORLD_CONFIG.width;
-    entry.height = CARD_WORLD_CONFIG.width / CARD_WORLD_CONFIG.aspectRatio;
+    entry.height = CARD_WORLD_CONFIG.height;
     view.setDimensions(entry.width, entry.height);
   }
 
