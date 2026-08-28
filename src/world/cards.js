@@ -285,26 +285,13 @@ function createProjectCard(project, index, reducedMotion) {
   previewPanel.className = "project-card__panel project-card__preview";
   previewPanel.dataset.cardPanel = "preview";
 
-  const previewLoader = document.createElement("div");
-  previewLoader.className = "project-card__preview-loader";
-  previewLoader.setAttribute("role", "status");
-  const previewLoaderMark = document.createElement("span");
-  previewLoaderMark.className = "project-card__preview-loader-mark";
-  previewLoaderMark.setAttribute("aria-hidden", "true");
-  const previewLoaderText = document.createElement("span");
-  previewLoaderText.textContent = `Loading ${project.title}`;
-  previewLoader.append(previewLoaderMark, previewLoaderText);
-
   const preview = document.createElement("iframe");
   preview.className = "project-card__frame";
   preview.title = `${project.title} interactive preview`;
-  preview.setAttribute(
-    "sandbox",
-    project.previewUrl ? "allow-scripts allow-same-origin" : "allow-scripts",
-  );
+  if (!project.previewUrl) preview.setAttribute("sandbox", "allow-scripts");
   preview.setAttribute("loading", "lazy");
   preview.hidden = true;
-  previewPanel.append(previewLoader, preview);
+  previewPanel.append(preview);
 
   const codePanel = document.createElement("div");
   codePanel.className = "project-card__panel project-card__code";
@@ -399,7 +386,6 @@ function createProjectCard(project, index, reducedMotion) {
     if (!previewLoaded) return;
     previewLoaded = false;
     preview.hidden = true;
-    previewLoader.hidden = false;
     preview.removeAttribute("src");
     preview.srcdoc = "";
   }
@@ -410,14 +396,9 @@ function createProjectCard(project, index, reducedMotion) {
     previewLoadTimer = window.setTimeout(() => {
       previewLoadTimer = 0;
       previewLoaded = true;
-      preview.addEventListener(
-        "load",
-        () => {
-          previewLoader.hidden = true;
-          preview.hidden = false;
-        },
-        { once: true },
-      );
+      // StockThink measures its canvas during startup. It must have a real
+      // viewport before its URL is assigned so its own loader can complete.
+      preview.hidden = false;
       preview.src = project.previewUrl;
     }, 700);
   }
@@ -436,7 +417,6 @@ function createProjectCard(project, index, reducedMotion) {
   setMode("preview");
   setFile(fileEntries[0][0]);
   if (!project.previewUrl) {
-    previewLoader.hidden = true;
     preview.hidden = false;
     preview.srcdoc = createProjectPreviewDocument(project);
   }
