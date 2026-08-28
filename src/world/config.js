@@ -323,6 +323,43 @@ export const CUBE_BURGER_INGREDIENT_WORLD_CONFIG = Object.freeze({
 });
 
 /**
+ * Generated Murajaa screens projected around the third project. Each screen
+ * has its own foreground Z, so native camera travel supplies the parallax,
+ * focus blur, and crossing order while the live app remains in the frame.
+ */
+export const MURAJAA_SCREEN_WORLD_CONFIG = Object.freeze({
+  projectPosition: Object.freeze([0, 0.06, 22]),
+  blurPixelsPerWorldUnit: 4.5,
+  maxBlurPixels: 26,
+  screens: Object.freeze([
+    Object.freeze({
+      asset: "assets/murajaa-welcome.png",
+      position: Object.freeze([-3.35, 1.12, 22.7]),
+      height: 1.42,
+      rotation: -9,
+    }),
+    Object.freeze({
+      asset: "assets/murajaa-study-card.png",
+      position: Object.freeze([3.3, 1.08, 23.4]),
+      height: 1.38,
+      rotation: 8,
+    }),
+    Object.freeze({
+      asset: "assets/murajaa-progress.png",
+      position: Object.freeze([-3.45, -1.08, 24.1]),
+      height: 1.34,
+      rotation: 7,
+    }),
+    Object.freeze({
+      asset: "assets/murajaa-answer-card.png",
+      position: Object.freeze([3.4, -1.12, 24.8]),
+      height: 1.42,
+      rotation: -8,
+    }),
+  ]),
+});
+
+/**
  * Preserve the editor's authored scale while fitting the complete frame at
  * its focal depth. Projection is height-based, so using one fixed desktop
  * scale makes the same card overflow at common fullscreen aspect ratios.

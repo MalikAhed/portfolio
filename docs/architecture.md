@@ -27,6 +27,7 @@ src/
 │   ├── cards.js              # World anchors + projected DOM project views
 │   ├── chess-world.js        # Depth-projected StockThink chess-piece sprites
 │   ├── ingredient-world.js   # Depth-projected Cube Burger ingredient crops
+│   ├── murajaa-world.js      # Depth-projected Murajaa generated screens
 │   ├── project-frame-editor.js  # Final-frame position, rotation, and size controls
 │   ├── project-frame-editor.css # Compact fixed Project Frames panel
 │   ├── config.js             # Camera, focus, and responsive world positions
@@ -94,7 +95,7 @@ src/
   presentation range. Fullscreen uses the browser API when permitted and a
   viewport-filling fallback when an embedded browser denies that API.
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
-  supplies the shared z-order for cards and projected chess pieces, so an
+  supplies the shared z-order for cards and projected world pieces, so an
   approaching card crosses in front of every earlier card and piece at the
   correct world depth without removing either surface. Cards enter fully opaque
   but blurred, switch to a true filter-free presentation at their focal depth
@@ -112,30 +113,23 @@ src/
   ingredient sprite sheet around that card. Their projected anchors occupy
   distinct foreground Z positions, so every crop sharpens, blurs, and fades at
   its own camera distance; the following project naturally crosses in front.
-  Its lightweight iframe remains mounted after its first load instead of
-  flashing to a blank surface during scroll, but becomes paint-ineligible while
-  scrolling or outside the preview focus band. Its preview fallback uses the
-  site's own cream. A cream-and-red Cube Burger splash starts the iframe as soon
-  as the card becomes active and clears on the project's first rendered DOM
-  content instead of waiting for every large image. The preview can finish its
-  imagery progressively without remaining visible in off-screen cards.
-  StockThink retains its focused paint lifecycle because its WebGL preview is
-  substantially heavier. While the iframe is paint-ineligible, a lightweight
-  warm branded poster replaces the former black surface; the loading curtain
-  uses the same treatment. Local `srcdoc` project simulations are also created
-  only on first focus instead of at world startup.
-- The StockThink preview uses a staged load. After the portfolio finishes, its
-  document and entry bundles are prefetched at idle priority on capable devices
-  and connections, without creating an iframe or WebGL context. Prefetch waits
-  while the user is actively scrolling. Pausing in StockThink's focus band
-  starts the real iframe behind a matching branded loading curtain. On the
-  deployed same-origin site, that curtain stays until StockThink's own loader
-  reports completion.
-  Once initialized, the iframe keeps its state but is hidden outside Preview
-  focus so it is not painted while the visitor continues through the world.
-  Its iframe retains a full 1440-pixel website viewport and scales that complete
-  viewport into the available preview panel, so the website's full desktop
-  width remains visible instead of collapsing to the card width.
+  Its lightweight iframe remains mounted after its first load. During active
+  scrolling, a static freeze frame composed from the original project's hero
+  background and burger assets replaces iframe painting to prevent stutter.
+  A cream-and-red splash appears for the first load only and clears on the
+  iframe's load event; later focused visits reveal the already-mounted preview
+  immediately. The site can finish its imagery progressively. Local
+  `srcdoc` project simulations are also created only on first focus instead of
+  at world startup.
+- The StockThink preview is one local screenshot captured from the original
+  landing hero after its reveal. It remains the sole preview surface throughout
+  scrolling, with no iframe, loader, poster, or fallback frame. The separate
+  projected chess-piece sprites around the card remain part of the portfolio
+  world.
+- Murajaa replaces the third placeholder with its live Arabic-first Tawjihi
+  flashcard PWA. The lightweight plain-HTML preview stays mounted after its
+  first focus, preserving its local study state while avoiding reloads. Four
+  generated Murajaa screens surround the frame at distinct foreground depths.
 - One fixed focal model is defined in `config.js`. Projects enter fully opaque
   by sliding from alternating sides into their exact authored positions, then
   camera-space distance drives their exit opacity and Gaussian blur; the
@@ -150,9 +144,8 @@ src/
 - Rendering sleeps when the scene is settled or the page is hidden. Native
   scroll events are coalesced into at most one camera, DOM projection, and
   renderer update per animation frame. During active scrolling, large changing
-  Gaussian filters and card shadows are suspended while opacity, projection,
-  and entry motion remain exactly scroll-linked; the authored depth blur returns
-  on the first settled frame. Preview iframes are hidden during that active
+  card shadows are suspended while opacity, projection, entry motion, and
+  Gaussian depth blur remain exactly scroll-linked. Preview iframes are hidden during that active
   interval, and only the visible active card runs its technology-chain
   animation. The WebGL renderer clears once and sleeps completely after the
   Hero portrait leaves view because the remaining Three.js objects are transform

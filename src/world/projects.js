@@ -20,6 +20,14 @@ const CUBE_BURGER_TECHNOLOGIES = Object.freeze([
   Object.freeze({ label: "Playwright", mark: "PW" }),
 ]);
 
+const MURAJAA_TECHNOLOGIES = Object.freeze([
+  Object.freeze({ label: "HTML", mark: "5" }),
+  Object.freeze({ label: "CSS", mark: "#" }),
+  Object.freeze({ label: "JavaScript", mark: "JS" }),
+  Object.freeze({ label: "PWA", mark: "PWA" }),
+  Object.freeze({ label: "SM-2", mark: "S2" }),
+]);
+
 const STOCKTHINK = Object.freeze({
   id: "stockthink",
   title: "StockThink",
@@ -33,9 +41,8 @@ const STOCKTHINK = Object.freeze({
   technologies: STOCKTHINK_TECHNOLOGIES,
   githubUrl: "https://github.com/MalikAhed/stockthink",
   liveUrl: "https://malikahed.github.io/stockthink/",
-  previewUrl: "https://malikahed.github.io/stockthink/frontend/landing/",
-  previewBrand: "STOCKTHINK",
-  previewViewportWidth: 1440,
+  previewImage: "assets/stockthink-original.png",
+  keepPreviewMounted: true,
   sourceRevision: "0e0b4bf",
   files: STOCKTHINK_SOURCE_FILES,
 });
@@ -56,12 +63,14 @@ const CUBE_BURGER = Object.freeze({
   previewUrl: "https://malikahed.github.io/cube-burger-site/",
   previewBrand: "CUBE BURGER",
   previewLoaderTheme: "cube-burger",
-  // Require a brief focus dwell so a fast pass through the card never starts
-  // the live site's image and animation workload mid-scroll.
-  previewLoadDelay: 320,
-  previewReadySelector: "#app > *",
+  previewLoadDelay: 0,
+  previewReadyOnLoad: true,
   previewViewportWidth: 1440,
   keepPreviewMounted: true,
+  freezeFrame: Object.freeze({
+    background: "assets/cube-burger-hero-background.webp",
+    subject: "assets/cube-burger-hero-burger.webp",
+  }),
   sourceRevision: "691d464",
   files: Object.freeze({
     "src/main.js": `const INGREDIENTS = [
@@ -102,6 +111,88 @@ const ingredientLayer = INGREDIENTS.map(
     "onionTop": { "x": 81.1, "y": 23.2, "scale": 0.92, "rotate": 82 },
     "tomatoRight": { "x": 97.3, "y": 84.7, "scale": 1.6, "rotate": -10 }
   }
+}`,
+  }),
+});
+
+const MURAJAA = Object.freeze({
+  id: "murajaa",
+  title: "Murajaa",
+  description: "Arabic-first flashcards for Tawjihi students.",
+  summary:
+    "An offline-ready study companion that turns Arabic Tawjihi material into focused flashcard sessions, schedules reviews with spaced repetition, and keeps every learner's progress private on their device.",
+  highlights: Object.freeze([
+    "107 Arabic mathematics cards with SM-2 scheduling",
+    "Offline PWA with local progress and JSON deck import",
+  ]),
+  technologies: MURAJAA_TECHNOLOGIES,
+  githubUrl: "https://github.com/MalikAhed/Murajaa",
+  liveUrl: "https://malikahed.github.io/Murajaa/",
+  previewUrl: "https://malikahed.github.io/Murajaa/",
+  previewViewportWidth: 1440,
+  keepPreviewMounted: true,
+  sourceRevision: "a0d3e24",
+  files: Object.freeze({
+    "index.html": `<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="application-name" content="مراجعة">
+  <meta name="description" content="تطبيق بطاقات تعليمية لطلاب التوجيهي، يدعم التكرار المتباعد ويعمل دون اتصال.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>مراجعة · بطاقات التوجيهي</title>
+</head>`,
+    "src/spaced-repetition.js": `function sm2(card, quality) {
+  let { interval = 1, repetitions = 0, easeFactor = 2.5 } = card;
+  if (quality < 3) {
+    repetitions = 0;
+    interval = 1;
+  } else {
+    if (repetitions === 0) interval = 1;
+    else if (repetitions === 1) interval = 6;
+    else interval = Math.round(interval * easeFactor);
+    repetitions++;
+  }
+  easeFactor = Math.max(
+    1.3,
+    easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02),
+  );
+  return {
+    interval,
+    repetitions,
+    easeFactor,
+    nextReview: Date.now() + interval * 86400000,
+  };
+}`,
+    "sw.js": `const VERSION = "v7";
+const STATIC_CACHE = \`fc-static-\${VERSION}\`;
+const RUNTIME_CACHE = \`fc-runtime-\${VERSION}\`;
+
+const STATIC_ASSETS = [
+  "./",
+  "./index.html",
+  "./content.json",
+  "./manifest.webmanifest",
+  "./icon192.png",
+  "./icon512.png",
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)),
+  );
+});`,
+    "manifest.webmanifest": `{
+  "name": "مراجعة · Murajaa",
+  "short_name": "مراجعة",
+  "description": "بطاقات تعليمية لطلاب التوجيهي مع تكرار متباعد ودعم للعمل دون اتصال.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0E0E12",
+  "theme_color": "#0E0E12",
+  "lang": "ar",
+  "dir": "rtl"
 }`,
   }),
 });
@@ -221,18 +312,7 @@ document.addEventListener("click", (event) => {
 export const PROJECTS = Object.freeze([
   STOCKTHINK,
   CUBE_BURGER,
-  createCounterProject({
-    id: "capacity-planner",
-    title: "Capacity Planner",
-    description: "A small planning-control prototype.",
-    summary:
-      "A lightweight planning concept that turns an abstract capacity value into something direct, readable, and adjustable.",
-    highlights: ["Readable planning state", "Responsive interaction"],
-    accent: "#c0f58b",
-    initialValue: 24,
-    githubUrl: "https://github.com/MalikAhed/portfolio",
-    liveUrl: "https://malikahed.github.io/portfolio/",
-  }),
+  MURAJAA,
   createCounterProject({
     id: "release-meter",
     title: "Release Meter",

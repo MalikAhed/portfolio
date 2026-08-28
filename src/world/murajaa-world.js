@@ -1,10 +1,11 @@
 import * as THREE from "three";
 import {
   FOCUS_WORLD_CONFIG,
-  STOCKTHINK_CHESS_WORLD_CONFIG,
+  MURAJAA_SCREEN_WORLD_CONFIG,
   getWorldExitVisibilityAtDepth,
 } from "./config.js";
 
+const SCREEN_ASPECT = 3 / 2;
 const projectedCenter = new THREE.Vector3();
 const projectedTop = new THREE.Vector3();
 const projectedBottom = new THREE.Vector3();
@@ -18,39 +19,31 @@ function project(point, camera, width, height) {
   );
 }
 
-function getPieceBlurAtDepth(depth) {
+function getScreenBlurAtDepth(depth) {
   const defocus = Math.max(
     0,
     Math.abs(depth - FOCUS_WORLD_CONFIG.distance) -
       FOCUS_WORLD_CONFIG.sharpBand,
   );
-
   return Math.min(
-    STOCKTHINK_CHESS_WORLD_CONFIG.maxBlurPixels,
-    defocus * STOCKTHINK_CHESS_WORLD_CONFIG.blurPixelsPerWorldUnit,
+    MURAJAA_SCREEN_WORLD_CONFIG.maxBlurPixels,
+    defocus * MURAJAA_SCREEN_WORLD_CONFIG.blurPixelsPerWorldUnit,
   );
 }
 
-export function createStockthinkChessWorld(container, assetUrl) {
+export function createMurajaaScreenWorld(container, assetUrl) {
   const group = new THREE.Group();
-  group.name = "stockthink-chess-world";
+  group.name = "murajaa-screen-world";
 
-  const entries = STOCKTHINK_CHESS_WORLD_CONFIG.pieces.map((config, index) => {
+  const entries = MURAJAA_SCREEN_WORLD_CONFIG.screens.map((config, index) => {
     const anchor = new THREE.Object3D();
-    anchor.name = `stockthink-chess-piece-${index + 1}`;
+    anchor.name = `murajaa-screen-${index + 1}`;
     anchor.position.set(...config.position);
     group.add(anchor);
 
     const image = document.createElement("img");
-    image.className = "stockthink-chess-piece";
+    image.className = "murajaa-world-screen";
     image.src = assetUrl(config.asset);
-    image.addEventListener(
-      "error",
-      () => {
-        if (config.fallbackAsset) image.src = assetUrl(config.fallbackAsset);
-      },
-      { once: true },
-    );
     image.alt = "";
     image.setAttribute("aria-hidden", "true");
     image.decoding = "async";
@@ -61,16 +54,16 @@ export function createStockthinkChessWorld(container, assetUrl) {
 
   function update(camera, width, height) {
     const projectDepth =
-      camera.position.z - STOCKTHINK_CHESS_WORLD_CONFIG.projectPosition[2];
+      camera.position.z - MURAJAA_SCREEN_WORLD_CONFIG.projectPosition[2];
     const sectionEntry = THREE.MathUtils.smoothstep(projectDepth, 0.35, 2.4);
 
     entries.forEach(({ anchor, config, image }) => {
       const depth = camera.position.z - config.position[2];
-      const depthVisibility = getWorldExitVisibilityAtDepth(depth);
+      const opacity = getWorldExitVisibilityAtDepth(depth);
       const visible =
         depth > camera.near &&
         sectionEntry > 0 &&
-        depthVisibility > FOCUS_WORLD_CONFIG.visibilityThreshold;
+        opacity > FOCUS_WORLD_CONFIG.visibilityThreshold;
       if (!visible) {
         image.style.visibility = "hidden";
         return;
@@ -86,17 +79,14 @@ export function createStockthinkChessWorld(container, assetUrl) {
       project(projectedBottom, camera, width, height);
 
       const renderedHeight = Math.abs(projectedBottom.y - projectedTop.y);
-      const renderedWidth = renderedHeight * config.aspect;
-      const opacity = depthVisibility * config.opacity;
-      const blur = getPieceBlurAtDepth(depth);
-      const flip = config.flip ? -1 : 1;
-
-      image.style.visibility = opacity > 0.002 ? "visible" : "hidden";
+      const renderedWidth = renderedHeight * SCREEN_ASPECT;
+      const blur = getScreenBlurAtDepth(depth);
+      image.style.visibility = "visible";
       image.style.inlineSize = `${renderedWidth.toFixed(2)}px`;
       image.style.blockSize = `${renderedHeight.toFixed(2)}px`;
       image.style.opacity = opacity.toFixed(4);
-      image.style.filter = `blur(${blur.toFixed(2)}px)`;
-      image.style.transform = `translate3d(${(projectedCenter.x - renderedWidth / 2).toFixed(2)}px, ${(projectedCenter.y - renderedHeight / 2).toFixed(2)}px, 0) rotate(${config.rotation}deg) scaleX(${flip})`;
+      image.style.filter = blur < 0.05 ? "none" : `blur(${blur.toFixed(2)}px)`;
+      image.style.transform = `translate3d(${(projectedCenter.x - renderedWidth / 2).toFixed(2)}px, ${(projectedCenter.y - renderedHeight / 2).toFixed(2)}px, 0) rotate(${config.rotation}deg)`;
     });
   }
 

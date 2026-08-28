@@ -14,6 +14,7 @@ import {
 import { createPortfolioCards } from "./cards.js";
 import { createStockthinkChessWorld } from "./chess-world.js";
 import { createCubeBurgerIngredientWorld } from "./ingredient-world.js";
+import { createMurajaaScreenWorld } from "./murajaa-world.js";
 
 const BACKGROUND_COLOR = 0xf5f0e8;
 // The portrait texture is 1024px wide, so rendering a larger full-screen
@@ -272,6 +273,7 @@ export function initWorld() {
     cardsStage,
     assetUrl,
   );
+  const murajaaScreenWorld = createMurajaaScreenWorld(cardsStage, assetUrl);
 
   let renderer;
   try {
@@ -356,6 +358,7 @@ export function initWorld() {
     portfolioCards.group,
     stockthinkChessWorld.group,
     cubeBurgerIngredientWorld.group,
+    murajaaScreenWorld.group,
     portraitGroup,
   );
   const textureLoader = new THREE.TextureLoader();
@@ -736,6 +739,12 @@ export function initWorld() {
         stage.clientHeight,
         journeyScrolling,
       );
+      murajaaScreenWorld.update(
+        camera,
+        stage.clientWidth,
+        stage.clientHeight,
+        journeyScrolling,
+      );
     }
     renderWorld();
   }
@@ -895,6 +904,7 @@ export function initWorld() {
       cssHeight,
       journeyScrolling,
     );
+    murajaaScreenWorld.update(camera, cssWidth, cssHeight, journeyScrolling);
     if (!journeyScrolling) renderWorld();
   }
 
@@ -950,6 +960,7 @@ export function initWorld() {
     portfolioCards.dispose();
     stockthinkChessWorld.dispose();
     cubeBurgerIngredientWorld.dispose();
+    murajaaScreenWorld.dispose();
 
     const disposedGeometries = new Set();
     const disposedMaterials = new Set();

@@ -536,6 +536,28 @@ function createProjectCard(project, index) {
   const previewLoader = project.previewBrand
     ? createPreviewLoader(project.previewBrand, project.previewLoaderTheme)
     : null;
+  const freezeFrame = project.freezeFrame
+    ? document.createElement("div")
+    : null;
+  if (freezeFrame) {
+    freezeFrame.className = "project-card__freeze-frame";
+    freezeFrame.hidden = true;
+    freezeFrame.setAttribute("aria-hidden", "true");
+
+    const background = document.createElement("img");
+    background.className = "project-card__freeze-background";
+    background.src = `${import.meta.env.BASE_URL}${project.freezeFrame.background}`;
+    background.alt = "";
+
+    const title = document.createElement("strong");
+    title.innerHTML = "<span>CUBE</span><span>BURGER</span>";
+
+    const subject = document.createElement("img");
+    subject.className = "project-card__freeze-subject";
+    subject.src = `${import.meta.env.BASE_URL}${project.freezeFrame.subject}`;
+    subject.alt = "";
+    freezeFrame.append(background, title, subject);
+  }
 
   const preview = document.createElement("iframe");
   preview.className = "project-card__frame";
@@ -547,8 +569,19 @@ function createProjectCard(project, index) {
   if (!project.previewUrl) preview.setAttribute("sandbox", "allow-scripts");
   preview.setAttribute("loading", "lazy");
   preview.hidden = true;
+  const previewImage = project.previewImage
+    ? document.createElement("img")
+    : null;
+  if (previewImage) {
+    previewImage.className = "project-card__preview-image";
+    previewImage.src = `${import.meta.env.BASE_URL}${project.previewImage}`;
+    previewImage.alt = `${project.title} project screenshot`;
+    previewImage.decoding = "async";
+    previewImage.hidden = true;
+  }
   if (previewLoader) previewPanel.append(previewLoader.element);
-  previewPanel.append(preview);
+  if (freezeFrame) previewPanel.append(freezeFrame);
+  previewPanel.append(previewImage ?? preview);
 
   const codePanel = document.createElement("div");
   codePanel.className = "project-card__panel project-card__code";
@@ -770,12 +803,21 @@ function createProjectCard(project, index) {
       showingPreview &&
       previewLoadStarted &&
       (!previewLoader || previewReady) &&
-      (previewActive || isFullscreen());
-    if (preview.hidden === previewVisible) preview.hidden = !previewVisible;
+      (previewActive ||
+        isFullscreen() ||
+        (previewImage && project.keepPreviewMounted && previewLoadStarted));
+    const previewVisual = previewImage ?? preview;
+    if (previewVisual.hidden === previewVisible) {
+      previewVisual.hidden = !previewVisible;
+    }
     previewPanel.classList.toggle(
       "is-preview-poster-visible",
       showingPreview && !previewVisible,
     );
+    if (freezeFrame) {
+      freezeFrame.hidden =
+        !showingPreview || !previewLoadStarted || previewVisible;
+    }
     if (previewLoader) {
       const loaderVisible = showingPreview && (previewActive || isFullscreen());
       if (previewLoader.element.hidden === loaderVisible) {
@@ -849,6 +891,10 @@ function createProjectCard(project, index) {
 
   function handlePreviewLoad() {
     if (!previewLoadStarted) return;
+    if (project.previewReadyOnLoad) {
+      completePreviewProgress();
+      return;
+    }
     checkPreviewReadiness();
     watchPreviewReadiness();
     syncPreviewVisibility();
@@ -857,6 +903,11 @@ function createProjectCard(project, index) {
   function startPreview() {
     if (previewLoadStarted) return;
     previewLoadStarted = true;
+    if (previewImage) {
+      previewReady = true;
+      syncPreviewVisibility();
+      return;
+    }
     preview.hidden = false;
     if (project.previewUrl) {
       startPreviewProgress();
@@ -898,6 +949,7 @@ function createProjectCard(project, index) {
   setMode("preview");
   setFile(fileEntries[0][0]);
   syncFullscreenButton();
+  if (previewImage) startPreview();
 
   return {
     element: card,
@@ -1215,13 +1267,11 @@ export function createPortfolioCards(container) {
             PROJECT_FRAME_ENTRY_CONFIG.workVerticalOffset
           ).toFixed(2)}px`,
         );
-        if (!scrolling) {
-          const depthBlur = getWorldBlurAtDepth(entry.depth);
-          entry.view.element.style.setProperty(
-            "--card-depth-filter",
-            depthBlur < 0.05 ? "none" : `blur(${depthBlur.toFixed(2)}px)`,
-          );
-        }
+        const depthBlur = getWorldBlurAtDepth(entry.depth);
+        entry.view.element.style.setProperty(
+          "--card-depth-filter",
+          depthBlur < 0.05 ? "none" : `blur(${depthBlur.toFixed(2)}px)`,
+        );
         entry.view.element.style.visibility = "visible";
       } else if (entry.presentation.rendered) {
         entry.view.element.style.opacity = "0";
