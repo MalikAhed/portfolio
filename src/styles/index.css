@@ -1,8 +1,7 @@
 @import "./foundation.css";
 @import "../components/splash/splash.css";
 @import "../sections/hero/hero.css";
-@import "../sections/about/about.css";
-@import "../sections/about/black-hole.css";
-@import "../sections/skills/skills.css";
-@import "../sections/contact/contact.css";
+@import "../world/journey.css";
+@import "../world/project-cards.css";
+@import "../world/card-editor.css";
 @import "../components/site-header/site-header.css";

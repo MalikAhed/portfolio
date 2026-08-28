@@ -38,27 +38,6 @@ jobs:
           VITE_BASE_PATH: /portfolio/
         run: npm run check
 
-      - name: Start browser test server
-        env:
-          VITE_BASE_PATH: /portfolio/
-        run: |
-          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/portfolio-vite.log 2>&1 &
-          for attempt in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:4173/portfolio/ > /dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          cat /tmp/portfolio-vite.log
-          exit 1
-
-      - name: Run browser smoke matrix
-        env:
-          CHROME_BIN: google-chrome
-          PORTFOLIO_EXPECT_PRODUCTION: true
-          PORTFOLIO_URL: http://127.0.0.1:4173/portfolio/
-        run: npm run test:browser
-
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
 

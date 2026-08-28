@@ -9,9 +9,7 @@ export function initMobileNavigation() {
   const navigation = getRequiredElement("#primary-navigation");
   const mobileNavigation = window.matchMedia(MOBILE_NAVIGATION_QUERY);
   const backgroundTargets = Array.from(
-    document.querySelectorAll(
-      ".brand, .contact-link, .hero__identity, #about, #skills, #contact",
-    ),
+    document.querySelectorAll(".brand, .contact-link, .hero__identity"),
   );
   const previousInertState = new Map();
 
@@ -57,33 +55,10 @@ export function initMobileNavigation() {
     else openMenu();
   }
 
-  function focusHashTarget(link) {
-    const hash = new URL(link.href).hash;
-    if (!hash) return;
-    const target = document.getElementById(decodeURIComponent(hash.slice(1)));
-    if (!target) return;
-
-    const hadTabIndex = target.hasAttribute("tabindex");
-    if (!hadTabIndex) target.tabIndex = -1;
-    window.requestAnimationFrame(() => {
-      target.focus({ preventScroll: true });
-      if (!hadTabIndex) {
-        target.addEventListener(
-          "blur",
-          () => target.removeAttribute("tabindex"),
-          {
-            once: true,
-          },
-        );
-      }
-    });
-  }
-
   function handleNavigationClick(event) {
     const link = event.target.closest("a");
     if (!(link instanceof HTMLAnchorElement)) return;
     closeMenu();
-    focusHashTarget(link);
   }
 
   function handleKeydown(event) {

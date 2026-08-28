@@ -1,4 +1,6 @@
 .splash {
+  --splash-ink: #f5f0e8;
+  --splash-swipe-duration: 620ms;
   position: fixed;
   z-index: var(--depth-system);
   inset: 0;
@@ -10,13 +12,12 @@
     max(1.5rem, env(safe-area-inset-right, 0px))
     max(1.5rem, env(safe-area-inset-bottom, 0px))
     max(1.5rem, env(safe-area-inset-left, 0px));
-  color: var(--color-canvas);
+  color: var(--splash-ink);
   background: var(--color-splash);
+  box-shadow: 0 1.75rem 3rem rgb(17 18 16 / 24%);
   overflow: hidden;
   isolation: isolate;
-  animation: splash-failsafe 1ms linear 4s forwards;
-  transform-origin: top center;
-  will-change: opacity, transform;
+  will-change: transform;
 }
 
 .splash::before {
@@ -41,15 +42,15 @@
   z-index: 1;
   display: grid;
   justify-items: center;
-  inline-size: min(21rem, calc(100vw - 3rem));
+  inline-size: min(26rem, calc(100vw - 3rem));
 }
 
 .splash__mark-shell {
   display: grid;
   place-items: center;
-  inline-size: clamp(5rem, min(8vw, 14svh), 7.5rem);
+  inline-size: clamp(11rem, min(22vw, 34svh), 20rem);
   aspect-ratio: 1;
-  overflow: hidden;
+  contain: paint;
 }
 
 .splash__mark {
@@ -57,16 +58,23 @@
   inline-size: 100%;
   block-size: 100%;
   object-fit: contain;
+  clip-path: inset(0 100% 0 0);
   filter: invert(1);
   user-select: none;
+  will-change: clip-path;
 }
 
 .splash__name {
-  margin: 0.35rem 0 0;
-  font-size: clamp(0.72rem, 0.8vw, 0.88rem);
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  margin: -0.15rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.15vw, 3.3rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  opacity: 0;
+  filter: blur(20px);
+  transform: translate3d(0, 1.25rem, 0);
+  will-change: opacity, filter, transform;
 }
 
 .splash__loader {
@@ -105,98 +113,86 @@
   inline-size: 100%;
   block-size: 100%;
   border-radius: inherit;
-  background: var(--color-canvas);
+  background: var(--splash-ink);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 420ms var(--ease-smooth);
   will-change: transform;
 }
 
 .splash__percentage {
   min-inline-size: 3ch;
-  color: var(--color-canvas);
+  color: var(--splash-ink);
   font-variant-numeric: tabular-nums;
   text-align: end;
 }
 
-.is-intro-pending .splash__mark-shell {
-  animation: splash-mark-reveal 900ms var(--ease-emphasized) 100ms both;
+.is-splash-animating .splash {
+  animation: splash-failsafe 1ms linear 5s forwards;
 }
 
-.is-intro-pending .splash__mark {
-  animation: splash-mark-settle 1100ms var(--ease-emphasized) 80ms both;
+.is-splash-animating .splash__mark {
+  animation: splash-mark-wipe 1100ms cubic-bezier(0.45, 0, 0.2, 1) 50ms both;
 }
 
-.is-intro-pending .splash__name,
-.is-intro-pending .splash__loader {
-  animation: splash-copy-in 700ms var(--ease-smooth) 450ms both;
+.is-splash-animating .splash__name {
+  animation: splash-name-blur-reveal 820ms ease-in-out 220ms both;
 }
 
 .is-intro-exiting .splash {
-  animation: splash-exit 850ms var(--ease-emphasized) forwards;
+  animation: splash-exit var(--splash-swipe-duration)
+    cubic-bezier(0.76, 0, 0.24, 1) forwards;
 }
 
 .is-intro-exiting .splash__center {
-  animation: splash-center-exit 780ms var(--ease-emphasized) both;
+  animation: splash-center-exit 480ms var(--ease-smooth) both;
 }
 
 .is-intro-complete .splash {
   display: none;
 }
 
-@keyframes splash-mark-reveal {
+@keyframes splash-mark-wipe {
   from {
-    opacity: 0;
-    clip-path: inset(8% 8% 8% 8%);
+    clip-path: inset(0 100% 0 0);
   }
   to {
-    opacity: 1;
     clip-path: inset(0);
   }
 }
 
-@keyframes splash-mark-settle {
+/* The recovered name treatment uses the same blur-and-rise motion recipe as
+   the earlier large-logo splash while staying in the pre-app system layer. */
+@keyframes splash-name-blur-reveal {
   from {
     opacity: 0;
-    transform: scale(0.92);
+    filter: blur(20px);
+    transform: translate3d(0, 1.25rem, 0);
   }
   to {
     opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes splash-copy-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 0.75rem, 0);
-  }
-  to {
-    opacity: 1;
+    filter: blur(0);
     transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes splash-exit {
-  0% {
-    opacity: 1;
+  from {
     transform: translate3d(0, 0, 0);
   }
-  100% {
-    opacity: 0;
+  to {
     visibility: hidden;
-    transform: translate3d(0, -1.5%, 0);
+    transform: translate3d(0, -101%, 0);
   }
 }
 
 @keyframes splash-center-exit {
   from {
     opacity: 1;
-    transform: scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
   to {
-    opacity: 0.72;
-    transform: scale(1.045);
+    opacity: 0;
+    transform: translate3d(0, -1.5rem, 0) scale(0.985);
   }
 }
 

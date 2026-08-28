@@ -3,16 +3,8 @@
   min-block-size: 100svh;
 }
 
-.hero-about-flow {
-  --overlay-x: 0px;
-  --overlay-y: 0px;
-  --overlay-rotation: 0deg;
-  --overlay-scale: 1;
-  --portrait-tail-size: 5rem;
-  --cutout-offset: 0svh;
-  --scene-scroll-y: 0px;
-  --hero-outro: 0;
-  --hero-backdrop-outro: 0;
+.portfolio-world {
+  --origin-depth-scale: 1;
   position: relative;
   overflow: visible;
   background: var(--color-canvas);
@@ -34,96 +26,29 @@
   pointer-events: none;
 }
 
-.site-header .brand {
-  opacity: calc(1 - var(--hero-outro));
-  translate: calc(var(--hero-outro) * -3.5rem) 0;
-}
-
-.site-header .navigation {
-  opacity: calc(1 - var(--hero-outro));
-  translate: 0 calc(var(--hero-outro) * -2.75rem);
-}
-
-.site-header .contact-link,
-.site-header .menu-toggle {
-  opacity: calc(1 - var(--hero-outro));
-  translate: calc(var(--hero-outro) * min(3.5rem, 3vw)) 0;
-}
-
 .hero__backdrop {
-  opacity: calc(1 - var(--hero-backdrop-outro));
-  translate: 0 calc(var(--hero-backdrop-outro) * 6rem);
+  translate: none;
 }
 
-.two-section-overlay {
-  position: absolute;
+.hero-origin-dom {
+  display: contents;
+}
+
+.has-js .hero-origin-dom {
+  position: fixed;
   z-index: var(--depth-world);
   inset: 0;
-  block-size: 200vh;
-  block-size: 200svh;
-  overflow-x: clip;
-  pointer-events: none;
-  mix-blend-mode: multiply;
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    #000 64%,
-    rgb(0 0 0 / 96%) 70%,
-    rgb(0 0 0 / 72%) 80%,
-    rgb(0 0 0 / 28%) 91%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    #000 64%,
-    rgb(0 0 0 / 96%) 70%,
-    rgb(0 0 0 / 72%) 80%,
-    rgb(0 0 0 / 28%) 91%,
-    transparent 100%
-  );
-}
-
-.two-section-overlay__media,
-.two-section-overlay__image {
   display: block;
-  inline-size: 100%;
-  block-size: 100%;
-}
-
-.two-section-overlay__media {
-  /* The shadow is authored in document space and scrolls past at its original
-     size and position; About's gravity beat never transforms this layer. */
-}
-
-.two-section-overlay__image {
-  object-fit: cover;
-  object-position: center top;
+  transform: scale(var(--origin-depth-scale));
+  transform-origin: 50% 50%;
   pointer-events: none;
-  -webkit-mask-image: radial-gradient(
-    ellipse 82% 94% at 50% 48%,
-    #000 68%,
-    rgb(0 0 0 / 92%) 76%,
-    transparent 100%
-  );
-  mask-image: radial-gradient(
-    ellipse 82% 94% at 50% 48%,
-    #000 68%,
-    rgb(0 0 0 / 92%) 76%,
-    transparent 100%
-  );
-  transform: translate3d(var(--overlay-x), var(--overlay-y), 0)
-    rotate(var(--overlay-rotation)) scale(var(--overlay-scale));
-  transform-origin: center;
-  user-select: none;
 }
 
 .hero {
-  --portrait-point: 100%;
   position: relative;
   /* The hero remains part of the shared world instead of trapping its live
-     copy in a section-local stacking context. World art can now keep its
-     documented depth order: backdrop, live copy, window shadow, portrait. */
+     copy in a section-local stacking context. World art keeps its documented
+     depth order: backdrop, live copy, then the WebGL portrait. */
   z-index: auto;
   inline-size: 100%;
   overflow: visible;
@@ -136,45 +61,37 @@
   position: absolute;
   z-index: var(--depth-subject);
   inset: 0 0 auto;
-  block-size: calc(100vh + var(--cutout-offset) + var(--portrait-tail-size));
-  block-size: calc(100svh + var(--cutout-offset) + var(--portrait-tail-size));
+  block-size: 100vh;
+  block-size: 100svh;
   pointer-events: none;
-  transform: translate3d(0, var(--scene-scroll-y), 0);
-  -webkit-clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100svh + var(--cutout-offset)),
-    50% calc(100svh + var(--cutout-offset) + var(--portrait-tail-size)),
-    0 calc(100svh + var(--cutout-offset))
-  );
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100svh + var(--cutout-offset)),
-    50% calc(100svh + var(--cutout-offset) + var(--portrait-tail-size)),
-    0 calc(100svh + var(--cutout-offset))
-  );
 }
 
-.hero-about-flow.is-hero-scroll-active .scene {
-  will-change: transform;
+.has-js .scene {
+  position: fixed;
 }
 
 .hero__portrait-fallback {
   position: absolute;
   z-index: var(--depth-subject);
-  inset: clamp(5.5rem, 13svh, 8rem) 0 auto;
+  inset: 0 0 auto;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
+  block-size: 100vh;
+  block-size: 100svh;
   pointer-events: none;
-  transition: opacity var(--duration-medium) ease;
+}
+
+.has-js .hero__portrait-fallback {
+  position: fixed;
 }
 
 .hero__portrait-fallback img {
   display: block;
   inline-size: min(46vw, 42rem);
   block-size: auto;
-  filter: drop-shadow(1.75rem 1.2rem 1.2rem rgb(60 55 49 / 18%));
+  margin-block-start: clamp(5.5rem, 13svh, 8rem);
+  filter: drop-shadow(1.1rem 0.55rem 0.85rem rgb(23 21 18 / 28%));
   user-select: none;
 }
 
@@ -231,21 +148,11 @@ html:not(.has-js) .hero__identity {
 .is-hero-entering .brand {
   animation-delay: 260ms;
 }
-.is-hero-entering .navigation a:nth-child(1) {
-  animation-delay: 330ms;
+
+.is-hero-entering .navigation a {
+  animation-delay: 360ms;
 }
-.is-hero-entering .navigation a:nth-child(2) {
-  animation-delay: 380ms;
-}
-.is-hero-entering .navigation a:nth-child(3) {
-  animation-delay: 430ms;
-}
-.is-hero-entering .navigation a:nth-child(4) {
-  animation-delay: 480ms;
-}
-.is-hero-entering .navigation a:nth-child(5) {
-  animation-delay: 530ms;
-}
+
 .is-hero-entering .contact-link,
 .is-hero-entering .menu-toggle {
   animation-delay: 420ms;
@@ -255,90 +162,8 @@ html:not(.has-js) .hero__identity {
   animation: intro-title-in 900ms var(--ease-emphasized) 180ms both;
 }
 
-.hero__role-letter {
-  display: inline-block;
-  white-space: pre;
-}
-
-.hero__role-highlight {
-  position: relative;
-  display: inline-block;
-  isolation: isolate;
-}
-
-.hero__role-highlight::before {
-  position: absolute;
-  z-index: -1;
-  inset: -0.01em -0.3em -0.1em -0.22em;
-  border-radius: 39% 11% 34% 8% / 25% 43% 19% 38%;
-  background:
-    repeating-linear-gradient(
-      176deg,
-      rgb(255 255 255 / 7%) 0 0.035em,
-      transparent 0.035em 0.09em
-    ),
-    linear-gradient(93deg, #484743 0%, #55534f 52%, #464541 100%);
-  box-shadow:
-    0.08em 0.04em 0 rgb(55 54 51 / 24%),
-    -0.04em -0.025em 0 rgb(92 89 84 / 16%);
-  clip-path: polygon(
-    0 27%,
-    4% 9%,
-    13% 15%,
-    24% 7%,
-    38% 13%,
-    51% 5%,
-    64% 12%,
-    79% 4%,
-    91% 11%,
-    100% 21%,
-    98% 79%,
-    89% 91%,
-    76% 85%,
-    63% 95%,
-    49% 88%,
-    34% 96%,
-    21% 87%,
-    9% 94%,
-    2% 86%
-  );
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    #000 0%,
-    #000 48%,
-    transparent 62%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    90deg,
-    #000 0%,
-    #000 48%,
-    transparent 62%,
-    transparent 100%
-  );
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-size: 220% 100%;
-  mask-size: 220% 100%;
-  -webkit-mask-position: 0 0;
-  mask-position: 0 0;
-  content: "";
-  opacity: 0.54;
-  transform: rotate(-1.2deg) scaleX(1);
-  transform-origin: left center;
-}
-
-.is-intro-pending .hero__role-highlight::before {
-  opacity: 0;
-}
-
-.is-hero-entering .hero__role-highlight::before {
-  animation: intro-handmade-highlight 700ms var(--ease-smooth) 900ms both;
-}
-
-.is-hero-entering .hero__role-letter {
-  animation: intro-letter-in 560ms var(--ease-emphasized) both;
-  animation-delay: calc(260ms + var(--letter-index) * 20ms);
+.is-hero-entering .hero__role {
+  animation: intro-role-in 700ms var(--ease-emphasized) 280ms both;
 }
 
 .is-hero-entering .hero__backdrop {
@@ -378,7 +203,7 @@ html:not(.has-js) .hero__identity {
   }
 }
 
-@keyframes intro-letter-in {
+@keyframes intro-role-in {
   from {
     opacity: 0;
     filter: blur(10px);
@@ -405,22 +230,14 @@ html:not(.has-js) .hero__identity {
   }
 }
 
-@keyframes intro-handmade-highlight {
-  from {
-    -webkit-mask-position: 100% 0;
-    mask-position: 100% 0;
-    opacity: 0;
-  }
-  4% {
-    -webkit-mask-position: 100% 0;
-    mask-position: 100% 0;
-    opacity: 0.54;
-  }
-  to {
-    -webkit-mask-position: 0 0;
-    mask-position: 0 0;
-    opacity: 0.54;
-  }
+.has-js .hero__backdrop {
+  position: fixed;
+}
+
+.has-js .site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  inline-size: 100%;
 }
 
 .hero__identity h1 {
@@ -459,12 +276,9 @@ html:not(.has-js) .hero__identity {
 }
 
 @media (max-width: 850px) {
-  .hero__portrait-fallback {
-    inset-block-start: clamp(7rem, 17svh, 10rem);
-  }
-
   .hero__portrait-fallback img {
-    inline-size: min(82vw, 34rem);
+    inline-size: min(92vw, 38rem);
+    margin-block-start: clamp(7rem, 17svh, 10rem);
   }
 
   .hero__identity {
@@ -506,30 +320,11 @@ html:not(.has-js) .hero__identity {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero__portrait-fallback {
-    transition: none;
-  }
   .is-intro-pending:not(.is-hero-entering) .site-header,
   .is-intro-pending:not(.is-hero-entering) .hero__identity h1,
   .is-intro-pending:not(.is-hero-entering) .hero__role,
   .is-intro-pending:not(.is-hero-entering) .hero__backdrop {
     opacity: 1;
     animation: none;
-  }
-
-  .is-hero-entering .hero__role-highlight::before {
-    -webkit-mask-position: 0 0;
-    mask-position: 0 0;
-    animation: none;
-  }
-
-  .site-header .brand,
-  .site-header .navigation,
-  .site-header .contact-link,
-  .site-header .menu-toggle,
-  .hero__identity h1,
-  .hero__identity .hero__role,
-  .hero__backdrop {
-    translate: none;
   }
 }

@@ -1,0 +1,9 @@
+/* The semantic section supplies scroll range only. It owns no background,
+   clipping, containment, or stacking context; all visible 3D art remains in
+   the persistent depth-world canvas. */
+.journey-track {
+  position: relative;
+  min-block-size: 320vh;
+  min-block-size: 320svh;
+  background: transparent;
+}

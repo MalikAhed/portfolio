@@ -14,17 +14,4 @@ export default [
       globals: globals.browser,
     },
   },
-  {
-    ...js.configs.recommended,
-    files: ["scripts/**/*.mjs"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: {
-        ...globals.node,
-        fetch: "readonly",
-        WebSocket: "readonly",
-      },
-    },
-  },
 ];

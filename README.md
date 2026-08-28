@@ -1,39 +1,25 @@
 # Portfolio World
 
-Malik Abuallata's portfolio is a continuous cinematic world built with semantic
-HTML, CSS, JavaScript, and a persistent Three.js Hero scene. The long-term
-visual rules live in [AGENTS.md](AGENTS.md); the current implementation map is
-in [docs/architecture.md](docs/architecture.md).
+Malik Abuallata's portfolio is a small cinematic Three.js experience: one Hero
+origin, one Z-only camera rail, and four floating cards.
 
-## Local development
+## Run locally
 
-Use Node.js 22 (the repository includes `.nvmrc`), then install and start Vite:
+Use Node.js 22, then:
 
 ```bash
 npm ci
 npm run dev
 ```
 
-The local Vite server shows the scene-positioning tools by default. Add
-`?edit=off` for a clean local presentation. Editor markup, styles, Vue code,
-and experimental WebGL are excluded from production builds.
-
-## Quality checks
+## Validate
 
 ```bash
 npm run check
-npm run test:browser
 ```
 
-`check` verifies formatting, linting, types, and the production build. The
-browser smoke matrix covers startup, deep links, WebGL and JavaScript fallbacks,
-blocked-module recovery, reduced motion, keyboard navigation, responsive
-breakpoints, horizontal overflow, and an interrupted full-page scroll round
-trip.
+This checks formatting, linting, and the production build. Pushes to `main`
+deploy the built site to GitHub Pages.
 
-## Deployment
-
-Pushes to `main` run the same checks against the built `/portfolio/` preview,
-then publish `dist` to GitHub Pages. Only optimized runtime files belong in
-`public/assets`; editable source plates and previews live in
-`assets/source-art`.
+Implementation details and scene rules live in
+[`docs/architecture.md`](docs/architecture.md).

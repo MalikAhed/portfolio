@@ -4,7 +4,6 @@
   --color-ink-strong: #101110;
   --color-splash: #111210;
   --color-paper: #f9f5ef;
-  --color-dialog-text: #f8f4ec;
   --font-body: "Manrope", Arial, Helvetica, sans-serif;
   --font-display: "DM Serif Display", Georgia, serif;
   --font-condensed: "Anton", Impact, sans-serif;
@@ -17,8 +16,6 @@
   --depth-far: 10;
   --depth-world: 20;
   --depth-subject: 30;
-  --depth-near: 40;
-  --depth-transition: 50;
   --depth-interface: 100;
   --depth-system: 200;
   color-scheme: light;
@@ -46,10 +43,6 @@ html {
 
 body {
   min-inline-size: 320px;
-}
-
-section[id] {
-  scroll-margin-block-start: 1rem;
 }
 
 body.is-intro-pending:not(.is-intro-exiting) {

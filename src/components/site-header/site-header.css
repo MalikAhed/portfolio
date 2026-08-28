@@ -360,22 +360,6 @@
     opacity: 1;
     transform: translate3d(0, 0, 0);
   }
-
-  .menu-toggle[aria-expanded="true"] + .navigation a:nth-child(2) {
-    transition-delay: 35ms;
-  }
-
-  .menu-toggle[aria-expanded="true"] + .navigation a:nth-child(3) {
-    transition-delay: 70ms;
-  }
-
-  .menu-toggle[aria-expanded="true"] + .navigation a:nth-child(4) {
-    transition-delay: 105ms;
-  }
-
-  .menu-toggle[aria-expanded="true"] + .navigation a:nth-child(5) {
-    transition-delay: 140ms;
-  }
 }
 
 @media (max-width: 960px) {

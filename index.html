@@ -33,9 +33,6 @@
         margin: 0;
         background: #f5f0e8;
       }
-      body.is-intro-pending:not(.is-intro-exiting) {
-        overflow: hidden;
-      }
     </style>
     <noscript>
       <style>
@@ -54,59 +51,41 @@
     <link
       rel="preload"
       as="image"
-      href="/assets/malik-cutout.webp"
+      href="/assets/malik-cutout-v3.webp"
       type="image/webp"
       fetchpriority="high"
-    />
-    <link
-      rel="preload"
-      as="image"
-      href="/assets/malik-cutout-shadow.avif"
-      type="image/avif"
-      fetchpriority="high"
-      crossorigin="anonymous"
     />
     <title>Malik Abuallata — Full-stack developer</title>
   </head>
   <body id="top">
     <script>
-      const navigationEntry = performance.getEntriesByType("navigation")[0];
-      if (navigationEntry?.type === "reload") {
-        document.documentElement.classList.add("is-refresh-restart");
-        if ("scrollRestoration" in history) {
-          history.scrollRestoration = "manual";
-        }
-        if (window.location.hash) {
-          history.replaceState(
-            history.state,
-            "",
-            `${window.location.pathname}${window.location.search}`,
-          );
-        }
-        window.scrollTo(0, 0);
-      }
-
       document.documentElement.classList.add("has-js");
       document.body.classList.add("is-intro-pending");
-      window.setTimeout(() => {
-        if (!document.body.classList.contains("is-intro-pending")) return;
-        if (
-          !document.documentElement.classList.contains("has-cinematic-scene")
-        ) {
-          document.documentElement.classList.remove("has-js");
-          document.documentElement.classList.add("is-static-fallback");
-        }
-        document.body.classList.remove("is-intro-pending", "is-intro-exiting");
+
+      if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+      }
+      if (window.location.hash) {
+        history.replaceState(
+          history.state,
+          "",
+          `${window.location.pathname}${window.location.search}`,
+        );
+      }
+      window.scrollTo(0, 0);
+
+      window.__portfolioSplashFailsafe = window.setTimeout(() => {
+        document.body.classList.remove(
+          "is-intro-pending",
+          "is-intro-exiting",
+          "is-hero-entering",
+          "is-splash-animating",
+        );
         document.body.classList.add("is-intro-complete");
-        document.documentElement.classList.remove("is-refresh-restart");
-        if ("scrollRestoration" in history) {
-          history.scrollRestoration = "auto";
-        }
         const app = document.querySelector("#app");
         if (app) app.inert = false;
-      }, 4000);
+      }, 5000);
     </script>
-    <a class="skip-link" href="#main-content">Skip to content</a>
     <div
       class="splash"
       role="status"
@@ -136,146 +115,86 @@
         </div>
       </div>
     </div>
+    <script>
+      document.body.classList.add("is-splash-animating");
+    </script>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <main id="app">
       <div
         id="main-content"
-        class="world-stage hero-about-flow"
+        class="world-stage portfolio-world"
         data-world-stage
         tabindex="-1"
       >
         <div class="base-world" aria-hidden="true"></div>
-        <canvas
-          class="identity-flight-canvas depth-world__transition"
-          aria-hidden="true"
-        ></canvas>
         <div
           id="scene"
           class="scene depth-world__subject"
           aria-hidden="true"
-          data-hero-subject
         ></div>
-        <div class="two-section-overlay depth-world__near" aria-hidden="true">
-          <picture class="two-section-overlay__media">
-            <source
-              type="image/avif"
-              srcset="/assets/window-shadow-two-section.avif"
-            />
-            <img
-              class="two-section-overlay__image hero__window-shadow"
-              src="/assets/window-shadow-two-section.webp"
-              width="1672"
-              height="1882"
-              alt=""
-              decoding="async"
-              draggable="false"
-            />
-          </picture>
-        </div>
-        <div
-          class="black-hole-stage depth-world__transition"
-          aria-hidden="true"
-        >
-          <div class="black-hole-anchor">
-            <div class="black-hole-object">
-              <img
-                class="black-hole-image"
-                src="/assets/horizontal_black_hole_transparent.webp"
-                srcset="
-                  /assets/horizontal_black_hole_transparent-640.webp   640w,
-                  /assets/horizontal_black_hole_transparent-1024.webp 1024w,
-                  /assets/horizontal_black_hole_transparent.webp      2048w
-                "
-                sizes="(max-width: 1477px) 78vw, 1152px"
-                width="2048"
-                height="1152"
-                alt=""
-                loading="lazy"
-                fetchpriority="low"
-                decoding="async"
-                draggable="false"
-              />
-              <svg
-                class="black-hole-orbits"
-                viewBox="0 0 2048 1152"
-                aria-hidden="true"
-              >
-                <defs>
-                  <linearGradient
-                    id="black-hole-edge-ink"
-                    x1="0"
-                    y1="0"
-                    x2="1"
-                    y2="0"
-                  >
-                    <stop
-                      offset="0"
-                      stop-color="currentColor"
-                      stop-opacity="0"
-                    />
-                    <stop
-                      offset="0.22"
-                      stop-color="currentColor"
-                      stop-opacity="0.72"
-                    />
-                    <stop
-                      offset="0.52"
-                      stop-color="currentColor"
-                      stop-opacity="0.9"
-                    />
-                    <stop
-                      offset="0.78"
-                      stop-color="currentColor"
-                      stop-opacity="0.66"
-                    />
-                    <stop
-                      offset="1"
-                      stop-color="currentColor"
-                      stop-opacity="0"
-                    />
-                  </linearGradient>
-                </defs>
-                <g class="black-hole-orbits__motion">
-                  <g class="black-hole-orbits__shape">
-                    <ellipse
-                      class="black-hole-orbit-line black-hole-orbit-line--clockwise black-hole-orbit-hit"
-                      cx="1024"
-                      cy="576"
-                      rx="748"
-                      ry="211"
-                      pathLength="1000"
-                    />
-                    <path
-                      class="black-hole-orbit-line black-hole-orbit-line--semicircle black-hole-orbit-line--clockwise black-hole-orbit-line--fine black-hole-orbit-hit"
-                      d="M 320 576 A 704 178 0 0 1 1728 576"
-                      pathLength="1000"
-                    />
-                    <ellipse
-                      class="black-hole-orbit-line black-hole-orbit-line--counter black-hole-orbit-hit"
-                      cx="1024"
-                      cy="580"
-                      rx="778"
-                      ry="238"
-                      pathLength="1000"
-                    />
-                    <path
-                      class="black-hole-orbit-line black-hole-orbit-line--semicircle black-hole-orbit-line--counter black-hole-orbit-line--fine black-hole-orbit-hit"
-                      d="M 358 576 A 666 151 0 0 0 1690 576"
-                      pathLength="1000"
-                    />
-                  </g>
-                </g>
-              </svg>
+        <section
+          id="project-cards"
+          class="project-cards-layer"
+          aria-label="Interactive project previews"
+        ></section>
+        <details class="card-editor interface-layer" data-card-editor hidden>
+          <summary>
+            <span>Cards</span>
+            <span class="card-editor__mark" aria-hidden="true">+</span>
+          </summary>
+          <div class="card-editor__body">
+            <label class="card-editor__select" for="card-editor-select">
+              <span>Selected card</span>
+              <select id="card-editor-select" data-card-select>
+                <option value="0">Card 1</option>
+                <option value="1">Card 2</option>
+                <option value="2">Card 3</option>
+                <option value="3">Card 4</option>
+              </select>
+            </label>
+            <fieldset class="card-editor__group">
+              <legend>Position</legend>
+              <div class="card-editor__grid">
+                <label class="card-editor__field">
+                  <span>X</span>
+                  <input type="number" step="0.01" data-card-position="x" />
+                </label>
+                <label class="card-editor__field">
+                  <span>Y</span>
+                  <input type="number" step="0.01" data-card-position="y" />
+                </label>
+                <label class="card-editor__field">
+                  <span>Z</span>
+                  <input type="number" step="0.01" data-card-position="z" />
+                </label>
+              </div>
+            </fieldset>
+            <fieldset class="card-editor__group">
+              <legend>Rotation (degrees)</legend>
+              <div class="card-editor__grid">
+                <label class="card-editor__field">
+                  <span>X</span>
+                  <input type="number" step="1" data-card-rotation="x" />
+                </label>
+                <label class="card-editor__field">
+                  <span>Y</span>
+                  <input type="number" step="1" data-card-rotation="y" />
+                </label>
+                <label class="card-editor__field">
+                  <span>Z</span>
+                  <input type="number" step="1" data-card-rotation="z" />
+                </label>
+              </div>
+            </fieldset>
+            <div class="card-editor__actions">
+              <button type="button" data-card-reset>Reset card</button>
+              <button type="button" data-card-reset-all>Reset all</button>
             </div>
           </div>
-        </div>
-        <section class="hero" aria-labelledby="hero-title" data-hero>
+        </details>
+        <section class="hero" aria-labelledby="hero-title">
           <header class="site-header interface-layer">
-            <a
-              class="brand"
-              href="#top"
-              aria-label="Malik Abuallata, home"
-              data-hero-brand
-            >
+            <a class="brand" href="#top" aria-label="Malik Abuallata, home">
               <img
                 class="brand__mark"
                 src="/assets/malik-monogram-v2.webp"
@@ -303,11 +222,13 @@
               class="navigation"
               aria-label="Primary navigation"
             >
-              <a href="#about">about</a>
-              <a href="#skills">skills</a>
-              <a class="navigation__contact" href="#contact">contact</a>
+              <a
+                class="navigation__contact"
+                href="mailto:hello@malikabuallatta.com"
+                >contact</a
+              >
             </nav>
-            <a class="contact-link" href="#contact" data-hero-cta>
+            <a class="contact-link" href="mailto:hello@malikabuallatta.com">
               <span class="contact-link__material" aria-hidden="true"></span>
               <span class="contact-link__label">contact</span>
               <span class="contact-link__flight" aria-hidden="true">
@@ -323,698 +244,32 @@
               </span>
             </a>
           </header>
-          <picture class="hero__portrait-fallback" aria-hidden="true">
-            <source type="image/webp" srcset="/assets/malik-cutout.webp" />
-            <img
-              src="/assets/malik-cutout.png"
-              width="900"
-              height="1272"
-              alt=""
-              fetchpriority="high"
-              decoding="async"
-              draggable="false"
-            />
-          </picture>
-          <div class="hero__identity">
-            <h1 id="hero-title" data-hero-title>Malik Abuallata</h1>
-            <p class="hero__role">Full-stack developer</p>
-          </div>
-          <p class="hero__backdrop" aria-hidden="true">Portfolio</p>
-        </section>
-        <section
-          id="about"
-          class="about"
-          aria-labelledby="about-title"
-          aria-describedby="about-summary"
-        >
-          <div class="about__composition">
-            <h2 id="about-title" class="about__statement">
-              <span
-                class="about__statement-line about__statement-line--lead"
-                data-about-statement-word
-                >Driven by</span
-              >
-              <span
-                class="about__statement-line about__statement-highlight"
-                data-about-statement-word
-                data-about-highlight
-                >endless creativity</span
-              >
-            </h2>
-            <div id="about-summary" class="about__bio" data-about-bio>
-              <p>
-                I turn ambitious ideas into thoughtful digital experiences.
-                Working across design, interaction, and engineering, I build
-                expressive interfaces with solid systems beneath them.
-              </p>
+          <div class="hero-origin-dom">
+            <picture class="hero__portrait-fallback" aria-hidden="true">
+              <source type="image/webp" srcset="/assets/malik-cutout-v3.webp" />
+              <img
+                src="/assets/malik-cutout-v3.webp"
+                width="1024"
+                height="1536"
+                alt=""
+                fetchpriority="high"
+                decoding="async"
+                draggable="false"
+              />
+            </picture>
+            <div class="hero__identity">
+              <h1 id="hero-title">Malik Abuallata</h1>
+              <p class="hero__role">Full-stack developer</p>
             </div>
-            <p class="about__backdrop" aria-hidden="true">About</p>
+            <p class="hero__backdrop" aria-hidden="true">Portfolio</p>
           </div>
         </section>
-        <section
-          id="skills"
-          class="skills"
-          aria-labelledby="skills-title"
-          aria-describedby="skills-intro"
-        >
-          <div class="skills__composition">
-            <header class="skills__heading" data-skills-heading>
-              <p class="skills__eyebrow">Capabilities in orbit</p>
-              <h2 id="skills-title">Built across the stack</h2>
-              <p id="skills-intro" class="skills__intro">
-                Design thinking, expressive interaction, and dependable
-                engineering—held together as one system.
-              </p>
-            </header>
-            <ul class="skills__list" aria-label="Skills">
-              <li class="skills__node skills__node--interface">
-                Interface engineering
-              </li>
-              <li class="skills__node skills__node--creative">
-                Creative development
-              </li>
-              <li class="skills__node skills__node--frontend">
-                Frontend systems
-              </li>
-              <li class="skills__node skills__node--backend">
-                Backend architecture
-              </li>
-              <li class="skills__node skills__node--api">API design</li>
-              <li class="skills__node skills__node--performance">
-                Performance
-              </li>
-              <li class="skills__node skills__node--accessibility">
-                Accessibility
-              </li>
-              <li class="skills__node skills__node--motion">Motion design</li>
-              <li class="skills__node skills__node--direction">
-                Technical direction
-              </li>
-            </ul>
-            <p class="skills__backdrop" aria-hidden="true">Skills</p>
-          </div>
-        </section>
-        <section id="contact" class="contact" aria-labelledby="contact-title">
-          <div class="contact__composition">
-            <p class="contact__eyebrow">The next orbit</p>
-            <h2 id="contact-title">Let’s make something with gravity.</h2>
-            <p class="contact__intro">
-              Have an ambitious product, interface, or technical problem in
-              mind? Tell me where you want to take it.
-            </p>
-            <a class="contact__action" href="mailto:hello@malikabuallatta.com">
-              <span>Start a conversation</span>
-              <span aria-hidden="true">↗</span>
-            </a>
-            <p class="contact__backdrop" aria-hidden="true">Contact</p>
-          </div>
-        </section>
-        <!-- DEV_SCENE_EDITORS_START -->
-        <aside
-          class="black-hole-editor interface-layer"
-          aria-label="Black hole editor"
-          data-scene-editor
-          hidden
-        >
-          <button
-            class="black-hole-editor__toggle"
-            type="button"
-            aria-expanded="false"
-          >
-            Edit black hole
-          </button>
-          <div class="black-hole-editor__panel" hidden>
-            <div class="black-hole-editor__heading">
-              <button
-                class="black-hole-editor__drag-handle"
-                type="button"
-                aria-label="Move editor. Drag or use the arrow keys."
-              >
-                <span aria-hidden="true">⠿</span>
-                <strong>Black hole</strong>
-              </button>
-              <button
-                class="black-hole-editor__close"
-                type="button"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <p class="black-hole-editor__hint">
-              Drag this title bar to move the editor, resize it from the lower
-              corner, or drag directly on an orbit line.
-            </p>
-            <div
-              class="black-hole-editor__tabs"
-              role="tablist"
-              aria-label="Orbital type"
-            >
-              <button
-                id="black-hole-tab-rim"
-                type="button"
-                role="tab"
-                aria-selected="true"
-                aria-controls="black-hole-panel-rim"
-                data-black-hole-tab="rim"
-              >
-                Rim
-              </button>
-              <button
-                id="black-hole-tab-top"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="black-hole-panel-top"
-                data-black-hole-tab="top"
-                tabindex="-1"
-              >
-                Smart top
-              </button>
-              <button
-                id="black-hole-tab-object"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="black-hole-panel-object"
-                data-black-hole-tab="object"
-                tabindex="-1"
-              >
-                Image
-              </button>
-              <button
-                id="black-hole-tab-material"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="black-hole-panel-material"
-                data-black-hole-tab="material"
-                tabindex="-1"
-              >
-                Cursor fluid
-              </button>
-            </div>
-            <div
-              id="black-hole-panel-rim"
-              class="black-hole-editor__tab-panel"
-              role="tabpanel"
-              aria-labelledby="black-hole-tab-rim"
-              data-black-hole-panel="rim"
-            >
-              <p class="black-hole-editor__section-title">Rim layout</p>
-              <label
-                >All orbit speed
-                <output data-black-hole-output="orbitSpeed"></output
-                ><input
-                  data-black-hole-property="orbitSpeed"
-                  type="range"
-                  min="0.25"
-                  max="2.5"
-                  step="0.05"
-              /></label>
-              <label
-                >Orbit X <output data-black-hole-output="orbitX"></output
-                ><input
-                  data-black-hole-property="orbitX"
-                  type="range"
-                  min="-600"
-                  max="600"
-                  step="1"
-              /></label>
-              <label
-                >Orbit Y <output data-black-hole-output="orbitY"></output
-                ><input
-                  data-black-hole-property="orbitY"
-                  type="range"
-                  min="-400"
-                  max="400"
-                  step="1"
-              /></label>
-              <label
-                >Orbit size <output data-black-hole-output="orbitScale"></output
-                ><input
-                  data-black-hole-property="orbitScale"
-                  type="range"
-                  min="0.35"
-                  max="2.5"
-                  step="0.01"
-              /></label>
-              <label
-                >Oval height
-                <output data-black-hole-output="orbitHeight"></output
-                ><input
-                  data-black-hole-property="orbitHeight"
-                  type="range"
-                  min="0.25"
-                  max="3.8"
-                  step="0.01"
-              /></label>
-              <label
-                >Line density
-                <output data-black-hole-output="lineDensity"></output
-                ><input
-                  data-black-hole-property="lineDensity"
-                  type="range"
-                  min="1"
-                  max="18"
-                  step="1"
-              /></label>
-              <label
-                >Line width <output data-black-hole-output="lineWidth"></output
-                ><input
-                  data-black-hole-property="lineWidth"
-                  type="range"
-                  min="0.5"
-                  max="20"
-                  step="0.25"
-              /></label>
-              <label
-                >Line opacity
-                <output data-black-hole-output="lineOpacity"></output
-                ><input
-                  data-black-hole-property="lineOpacity"
-                  type="range"
-                  min="0.05"
-                  max="1"
-                  step="0.01"
-              /></label>
-              <p class="black-hole-editor__section-title">Glow</p>
-              <label
-                >Glow strength
-                <output data-black-hole-output="glowStrength"></output
-                ><input
-                  data-black-hole-property="glowStrength"
-                  type="range"
-                  min="0"
-                  max="3"
-                  step="0.05"
-              /></label>
-              <label
-                >Glow radius
-                <output data-black-hole-output="glowRadius"></output
-                ><input
-                  data-black-hole-property="glowRadius"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-              /></label>
-              <label
-                >Glow threshold
-                <output data-black-hole-output="glowThreshold"></output
-                ><input
-                  data-black-hole-property="glowThreshold"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-              /></label>
-              <label
-                >Glow exposure
-                <output data-black-hole-output="glowExposure"></output
-                ><input
-                  data-black-hole-property="glowExposure"
-                  type="range"
-                  min="0.1"
-                  max="2"
-                  step="0.05"
-              /></label>
-              <label
-                >Inner line color
-                <input
-                  data-black-hole-property="lineInnerColor"
-                  type="color"
-                  value="#000000"
-              /></label>
-              <label
-                >Outer glow color
-                <input
-                  data-black-hole-property="lineOuterColor"
-                  type="color"
-                  value="#000000"
-              /></label>
-            </div>
-            <div
-              id="black-hole-panel-top"
-              class="black-hole-editor__tab-panel"
-              role="tabpanel"
-              aria-labelledby="black-hole-tab-top"
-              data-black-hole-panel="top"
-              hidden
-            >
-              <p class="black-hole-editor__hint">
-                Upper arcs inherit the rim position and scale, then stay locked
-                to the top half automatically.
-              </p>
-              <label
-                >Top X <output data-black-hole-output="topX"></output
-                ><input
-                  data-black-hole-property="topX"
-                  type="range"
-                  min="-400"
-                  max="400"
-                  step="1"
-              /></label>
-              <label
-                >Top Y <output data-black-hole-output="topY"></output
-                ><input
-                  data-black-hole-property="topY"
-                  type="range"
-                  min="-300"
-                  max="300"
-                  step="1"
-              /></label>
-              <label
-                >Top size <output data-black-hole-output="topScale"></output
-                ><input
-                  data-black-hole-property="topScale"
-                  type="range"
-                  min="0.4"
-                  max="2"
-                  step="0.01"
-              /></label>
-              <label
-                >Arc height <output data-black-hole-output="topHeight"></output
-                ><input
-                  data-black-hole-property="topHeight"
-                  type="range"
-                  min="0.4"
-                  max="2.5"
-                  step="0.01"
-              /></label>
-              <label
-                >Line density
-                <output data-black-hole-output="topDensity"></output
-                ><input
-                  data-black-hole-property="topDensity"
-                  type="range"
-                  min="1"
-                  max="12"
-                  step="1"
-              /></label>
-              <label
-                >Line width <output data-black-hole-output="topWidth"></output
-                ><input
-                  data-black-hole-property="topWidth"
-                  type="range"
-                  min="0.5"
-                  max="14"
-                  step="0.25"
-              /></label>
-              <label
-                >Line opacity
-                <output data-black-hole-output="topOpacity"></output
-                ><input
-                  data-black-hole-property="topOpacity"
-                  type="range"
-                  min="0.02"
-                  max="1"
-                  step="0.01"
-              /></label>
-            </div>
-            <div
-              id="black-hole-panel-object"
-              class="black-hole-editor__tab-panel"
-              role="tabpanel"
-              aria-labelledby="black-hole-tab-object"
-              data-black-hole-panel="object"
-              hidden
-            >
-              <label
-                >Image opacity
-                <output data-black-hole-output="blackHoleOpacity"></output
-                ><input
-                  data-black-hole-property="blackHoleOpacity"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-              /></label>
-              <label
-                >Image brightness
-                <output data-black-hole-output="blackHoleBrightness"></output
-                ><input
-                  data-black-hole-property="blackHoleBrightness"
-                  type="range"
-                  min="0"
-                  max="1.5"
-                  step="0.01"
-              /></label>
-              <label
-                >Image contrast
-                <output data-black-hole-output="blackHoleContrast"></output
-                ><input
-                  data-black-hole-property="blackHoleContrast"
-                  type="range"
-                  min="0.5"
-                  max="2"
-                  step="0.01"
-              /></label>
-            </div>
-            <div
-              id="black-hole-panel-material"
-              class="black-hole-editor__tab-panel"
-              role="tabpanel"
-              aria-labelledby="black-hole-tab-material"
-              data-black-hole-panel="material"
-              hidden
-            >
-              <p class="black-hole-editor__section-title">Cursor fluid</p>
-              <p class="black-hole-editor__hint">
-                Two ambient streams emerge from behind the portrait's base and
-                shoot toward the top-left and top-right corners. There is no
-                cursor interaction.
-              </p>
-              <label
-                >Effect
-                <select data-fluid-property="enabled">
-                  <option value="false">Off</option>
-                  <option value="true">On</option>
-                </select></label
-              >
-              <label
-                >Color mode
-                <select data-fluid-property="colorMode">
-                  <option value="original">Original rainbow</option>
-                  <option value="custom">Custom left / right</option>
-                </select></label
-              >
-              <label
-                >Left color
-                <input data-fluid-property="color" type="color" value="#ff0000"
-              /></label>
-              <label
-                >Right color
-                <input
-                  data-fluid-property="secondaryColor"
-                  type="color"
-                  value="#0000ff"
-              /></label>
-              <label
-                >Color strength
-                <output data-fluid-output="colorStrength"></output
-                ><input
-                  data-fluid-property="colorStrength"
-                  type="range"
-                  min="0.02"
-                  max="0.5"
-                  step="0.01"
-              /></label>
-              <label
-                >Fluid opacity <output data-fluid-output="opacity"></output
-                ><input
-                  data-fluid-property="opacity"
-                  type="range"
-                  min="0.05"
-                  max="1"
-                  step="0.01"
-              /></label>
-              <label
-                >Fade time <output data-fluid-output="fadeTime"></output
-                ><input
-                  data-fluid-property="fadeTime"
-                  type="range"
-                  min="0.15"
-                  max="4"
-                  step="0.05"
-              /></label>
-              <label
-                >Stream size <output data-fluid-output="radius"></output
-                ><input
-                  data-fluid-property="radius"
-                  type="range"
-                  min="0.04"
-                  max="0.4"
-                  step="0.01"
-              /></label>
-              <label
-                >Flow power <output data-fluid-output="force"></output
-                ><input
-                  data-fluid-property="force"
-                  type="range"
-                  min="500"
-                  max="9000"
-                  step="100"
-              /></label>
-              <label
-                >Swirl <output data-fluid-output="curl"></output
-                ><input
-                  data-fluid-property="curl"
-                  type="range"
-                  min="0"
-                  max="12"
-                  step="0.1"
-              /></label>
-              <label
-                >Reach <output data-fluid-output="reach"></output
-                ><input
-                  data-fluid-property="reach"
-                  type="range"
-                  min="0.2"
-                  max="2.5"
-                  step="0.05"
-              /></label>
-              <label
-                >Emission rate <output data-fluid-output="emissionRate"></output
-                ><input
-                  data-fluid-property="emissionRate"
-                  type="range"
-                  min="1"
-                  max="20"
-                  step="0.5"
-              /></label>
-              <label
-                >Horizontal position
-                <output data-fluid-output="originX"></output
-                ><input
-                  data-fluid-property="originX"
-                  type="range"
-                  min="0.1"
-                  max="0.9"
-                  step="0.01"
-              /></label>
-              <label
-                >Source separation
-                <output data-fluid-output="emitterGap"></output
-                ><input
-                  data-fluid-property="emitterGap"
-                  type="range"
-                  min="0.02"
-                  max="0.5"
-                  step="0.01"
-              /></label>
-              <label
-                >Vertical position <output data-fluid-output="emitterY"></output
-                ><input
-                  data-fluid-property="emitterY"
-                  type="range"
-                  min="0.08"
-                  max="0.92"
-                  step="0.01"
-              /></label>
-              <label
-                >Launch angle <output data-fluid-output="emitterSpread"></output
-                ><input
-                  data-fluid-property="emitterSpread"
-                  type="range"
-                  min="0"
-                  max="0.35"
-                  step="0.01"
-              /></label>
-            </div>
-            <div class="black-hole-editor__actions">
-              <button type="button" data-full-scene-copy>
-                Copy full scene state
-              </button>
-              <button type="button" data-black-hole-reset>
-                Reset appearance
-              </button>
-            </div>
-            <p
-              class="scene-state-copy__status"
-              data-scene-state-copy-status
-              aria-live="polite"
-            ></p>
-          </div>
-        </aside>
-        <aside
-          class="about-copy-editor interface-layer"
-          aria-label="About text position editor"
-          data-scene-editor
-          hidden
-        >
-          <button
-            class="about-copy-editor__toggle"
-            type="button"
-            aria-expanded="false"
-          >
-            Position About text
-          </button>
-          <div class="about-copy-editor__panel" hidden>
-            <div class="about-copy-editor__heading">
-              <strong>About text</strong>
-              <button
-                class="about-copy-editor__close"
-                type="button"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <p class="about-copy-editor__status" data-about-copy-status>
-              Changes save to the project automatically.
-            </p>
-            <label
-              >X position <output data-about-copy-output="x"></output
-              ><input
-                data-about-copy-property="x"
-                type="range"
-                min="-800"
-                max="800"
-                step="1"
-            /></label>
-            <label
-              >Y position <output data-about-copy-output="y"></output
-              ><input
-                data-about-copy-property="y"
-                type="range"
-                min="-600"
-                max="800"
-                step="1"
-            /></label>
-            <label
-              >Text width <output data-about-copy-output="width"></output
-              ><input
-                data-about-copy-property="width"
-                type="range"
-                min="240"
-                max="1000"
-                step="1"
-            /></label>
-            <label
-              >Text size <output data-about-copy-output="size"></output
-              ><input
-                data-about-copy-property="size"
-                type="range"
-                min="-8"
-                max="24"
-                step="1"
-            /></label>
-            <label
-              >Bold weight <output data-about-copy-output="weight"></output
-              ><input
-                data-about-copy-property="weight"
-                type="range"
-                min="400"
-                max="800"
-                step="100"
-            /></label>
-            <button class="about-copy-editor__reset" type="button">
-              Reset loaded values
-            </button>
-          </div>
-        </aside>
-        <!-- DEV_SCENE_EDITORS_END -->
+        <div
+          id="work"
+          class="journey-track"
+          data-journey-track
+          aria-hidden="true"
+        ></div>
       </div>
     </main>
     <script type="module" src="/src/main.js"></script>
