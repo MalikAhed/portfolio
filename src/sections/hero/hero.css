@@ -5,6 +5,8 @@
 
 .portfolio-world {
   --origin-depth-scale: 1;
+  --origin-defocus: 0px;
+  --origin-visibility: 1;
   position: relative;
   overflow: visible;
   background: var(--color-canvas);
@@ -41,6 +43,8 @@
   display: block;
   transform: scale(var(--origin-depth-scale));
   transform-origin: 50% 50%;
+  filter: blur(var(--origin-defocus));
+  opacity: var(--origin-visibility);
   pointer-events: none;
 }
 
@@ -103,6 +107,8 @@
   display: block;
   inline-size: 100%;
   block-size: 100%;
+  filter: blur(var(--origin-defocus));
+  opacity: var(--origin-visibility);
 }
 
 .hero__identity {

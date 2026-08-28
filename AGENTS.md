@@ -19,8 +19,8 @@ Malik explicitly asks for them.
 - Keep one warm, fixed base background and one persistent Three.js renderer.
 - The camera moves only on Z, mapped linearly to native scroll. Do not add scrub,
   easing, snapping, pinning, or momentum.
-- Keep the Hero at the zero-scroll origin. The portrait, identity, and backdrop
-  recede together without per-object opacity or blur.
+- Keep the Hero at the zero-scroll origin. The portrait, tied shadow, identity,
+  and backdrop recede, fade, and blur together as one visual group.
 - The v3 portrait uses a firm silhouette plus one soft, right-offset shadow
   mesh for depth. Keep that shadow tied to the portrait's world transform.
 - Keep the four cards fixed at their configured world coordinates unless the

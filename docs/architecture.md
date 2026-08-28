@@ -46,6 +46,9 @@ src/
   mesh with a small Gaussian alpha blur for a soft, controlled depth shadow.
 - Camera X/Y and orientation remain fixed. Native scroll maps directly and
   reversibly from Hero Z to the configured end Z.
+- The Hero origin uses the same camera-space focus model as the cards. Its
+  portrait, tied shadow, identity copy, and backdrop fade and blur together as
+  the camera retreats; the header and contact interface remain crisp.
 - The WebGL renderer draws the Hero directly without post-processing. Every
   card is a conventional DOM interface aligned from its Three.js anchor's
   projected corners, so the same card content remains visible before, during,

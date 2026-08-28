@@ -4,6 +4,8 @@ import {
   FOCUS_WORLD_CONFIG,
   getCardPreset,
   getJourneyPreset,
+  getWorldBlurAtDepth,
+  getWorldVisibilityAtDepth,
 } from "./config.js";
 import { PROJECTS, createProjectPreviewDocument } from "./projects.js";
 
@@ -13,32 +15,6 @@ const projectedTopLeft = new THREE.Vector3();
 const projectedTopRight = new THREE.Vector3();
 const projectedBottomLeft = new THREE.Vector3();
 const projectedBottomRight = new THREE.Vector3();
-
-function getBlurAtDepth(depth) {
-  const defocus = Math.max(
-    0,
-    Math.abs(depth - FOCUS_WORLD_CONFIG.distance) -
-      FOCUS_WORLD_CONFIG.sharpBand,
-  );
-
-  return Math.min(
-    FOCUS_WORLD_CONFIG.maxBlurPixels,
-    defocus * FOCUS_WORLD_CONFIG.blurPixelsPerWorldUnit,
-  );
-}
-
-function getVisibilityAtDepth(depth) {
-  const focusDistance = Math.abs(depth - FOCUS_WORLD_CONFIG.distance);
-
-  return (
-    1 -
-    THREE.MathUtils.smoothstep(
-      focusDistance,
-      FOCUS_WORLD_CONFIG.sharpBand,
-      FOCUS_WORLD_CONFIG.fadeBand,
-    )
-  );
-}
 
 function createButton(label, className) {
   const button = document.createElement("button");
@@ -458,7 +434,7 @@ export function createPortfolioCards(reducedMotion, container) {
       entry.depth = depth;
       entry.focusDistance = focusDistance;
       entry.inFront = inFront;
-      entry.visibility = inFront ? getVisibilityAtDepth(depth) : 0;
+      entry.visibility = inFront ? getWorldVisibilityAtDepth(depth) : 0;
       if (entry.visibility > FOCUS_WORLD_CONFIG.visibilityThreshold) {
         projectEntry(entry, camera, width, height);
       }
@@ -495,7 +471,7 @@ export function createPortfolioCards(reducedMotion, container) {
         entry.view.element.style.opacity = entry.visibility.toFixed(4);
         entry.view.element.style.setProperty(
           "--card-defocus",
-          `${getBlurAtDepth(entry.depth).toFixed(2)}px`,
+          `${getWorldBlurAtDepth(entry.depth).toFixed(2)}px`,
         );
         entry.view.element.style.visibility = "visible";
       } else {

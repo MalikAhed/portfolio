@@ -1,3 +1,5 @@
+import * as THREE from "three";
+
 /**
  * Shared art-direction data for the first reversible journey prototype.
  *
@@ -27,6 +29,32 @@ export const FOCUS_WORLD_CONFIG = Object.freeze({
   interactionBand: 1.15,
   visibilityThreshold: 0.002,
 });
+
+export function getWorldBlurAtDepth(depth) {
+  const defocus = Math.max(
+    0,
+    Math.abs(depth - FOCUS_WORLD_CONFIG.distance) -
+      FOCUS_WORLD_CONFIG.sharpBand,
+  );
+
+  return Math.min(
+    FOCUS_WORLD_CONFIG.maxBlurPixels,
+    defocus * FOCUS_WORLD_CONFIG.blurPixelsPerWorldUnit,
+  );
+}
+
+export function getWorldVisibilityAtDepth(depth) {
+  const focusDistance = Math.abs(depth - FOCUS_WORLD_CONFIG.distance);
+
+  return (
+    1 -
+    THREE.MathUtils.smoothstep(
+      focusDistance,
+      FOCUS_WORLD_CONFIG.sharpBand,
+      FOCUS_WORLD_CONFIG.fadeBand,
+    )
+  );
+}
 
 /**
  * Static card-world setup.

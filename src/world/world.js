@@ -1,7 +1,12 @@
 import * as THREE from "three";
 import { getRequiredElement } from "../lib/dom.js";
 import { initCardEditor } from "./card-editor.js";
-import { HERO_CAMERA_Z, getCameraZAtProgress } from "./config.js";
+import {
+  HERO_CAMERA_Z,
+  getCameraZAtProgress,
+  getWorldBlurAtDepth,
+  getWorldVisibilityAtDepth,
+} from "./config.js";
 import { createPortfolioCards } from "./cards.js";
 
 const BACKGROUND_COLOR = 0xf5f0e8;
@@ -99,6 +104,8 @@ function createJourneyState(progress, reducedMotion) {
   return {
     cameraTargetZ,
     originDepthScale: clamp(HERO_CAMERA_Z / cameraTargetZ, 0.2, 1),
+    originBlur: getWorldBlurAtDepth(cameraTargetZ),
+    originVisibility: getWorldVisibilityAtDepth(cameraTargetZ),
   };
 }
 
@@ -124,6 +131,14 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
     worldStage.style.setProperty(
       "--origin-depth-scale",
       state.originDepthScale.toFixed(5),
+    );
+    worldStage.style.setProperty(
+      "--origin-defocus",
+      `${state.originBlur.toFixed(2)}px`,
+    );
+    worldStage.style.setProperty(
+      "--origin-visibility",
+      state.originVisibility.toFixed(4),
     );
     worldStage.classList.toggle("is-journey-canvas", progress > 0);
     onChange(state);
@@ -153,6 +168,8 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
     reducedMotion.removeEventListener("change", requestUpdate);
     worldStage.classList.remove("is-journey-canvas");
     worldStage.style.removeProperty("--origin-depth-scale");
+    worldStage.style.removeProperty("--origin-defocus");
+    worldStage.style.removeProperty("--origin-visibility");
   };
 }
 
