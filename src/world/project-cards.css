@@ -10,10 +10,10 @@
   position: absolute;
   inset: 0 auto auto 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.28fr) minmax(0, 0.72fr);
   grid-template-areas: "work copy";
   align-items: center;
-  gap: 52px;
+  gap: 26px;
   color: #1d1d1f;
   font-family: var(--font-body);
   pointer-events: none;
@@ -29,13 +29,8 @@
 }
 
 .project-card--work-right {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
   grid-template-areas: "copy work";
-}
-
-[data-project-card="stockthink"].project-card--work-left {
-  grid-template-columns: minmax(0, 1.28fr) minmax(0, 0.72fr);
-  gap: 26px;
 }
 
 .project-card.is-interactive {
@@ -565,9 +560,9 @@ body.has-project-fallback-fullscreen .project-cards-layer {
 .project-card__tree-panel {
   min-inline-size: 0;
   overflow: auto;
-  padding: 10px 8px;
+  padding: 8px;
   border-inline-end: 1px solid #e2e2dd;
-  background: #f7f7f4;
+  background: #f5f5f1;
 }
 
 .project-card__tree,
@@ -576,62 +571,99 @@ body.has-project-fallback-fullscreen .project-cards-layer {
   min-inline-size: 0;
 }
 
+.project-card__tree {
+  color: #62635f;
+}
+
 .project-card__folder-button,
 .project-card__file {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   inline-size: 100%;
   overflow: hidden;
   border: 0 !important;
-  border-radius: 6px;
+  border-radius: 7px;
   text-align: start;
   white-space: nowrap;
 }
 
 .project-card__folder-button {
-  min-block-size: 28px;
-  padding: 4px 6px;
+  min-block-size: 30px;
+  padding: 4px 6px 4px 3px;
+  color: #3d3e3a;
   font-size: 10px;
   font-weight: 700;
+}
+
+.project-card__folder--root > .project-card__folder-button {
+  margin-block-end: 4px;
+  color: #1f201d;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.025em;
 }
 
 .project-card__tree-children {
   position: relative;
   display: grid;
   gap: 2px;
-  margin-inline-start: 11px;
-  padding: 3px 0 0 9px;
+  margin-inline-start: 8px;
+  padding: 1px 0 2px 10px;
 }
 
 .project-card__tree-children::before {
   position: absolute;
-  inset: 0 auto 0 0;
+  inset: 1px auto 3px 0;
   inline-size: 1px;
-  background: #d8d8d2;
+  background: #d4d4ce;
   content: "";
 }
 
 .project-card__file {
-  min-block-size: 28px;
+  min-block-size: 27px;
   padding: 4px 6px;
+  color: #696a66;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 10px;
+  font-size: 9.5px;
 }
 
 .project-card__folder-button:hover,
 .project-card__folder-button:focus-visible,
 .project-card__file:hover,
-.project-card__file:focus-visible,
-.project-card__file.is-active {
+.project-card__file:focus-visible {
   color: #1d1d1f !important;
-  background: #e8e8e3 !important;
+  background: #e7e7e1 !important;
+}
+
+.project-card__file.is-active {
+  color: #fff !important;
+  background: #252622 !important;
+  box-shadow: 0 4px 10px rgb(30 31 28 / 12%);
 }
 
 .project-card__tree-icon {
   flex: 0 0 auto;
-  inline-size: 15px;
-  block-size: 15px;
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.project-card__folder-button .project-card__tree-icon {
+  color: #8a7652;
+}
+
+.project-card__tree-chevron {
+  flex: 0 0 auto;
+  inline-size: 11px;
+  block-size: 11px;
+  color: #969792;
+  transform: rotate(90deg);
+  transition: transform 140ms ease;
+}
+
+.project-card__folder-button[aria-expanded="false"]
+  .project-card__tree-chevron {
+  transform: rotate(0deg);
 }
 
 .project-card__source-panel {
@@ -644,6 +676,8 @@ body.has-project-fallback-fullscreen .project-cards-layer {
 .project-card__source-label {
   display: flex;
   align-items: center;
+  gap: 10px;
+  min-inline-size: 0;
   padding-inline: 12px;
   border-block-end: 1px solid #e2e2dd;
   color: #666763;
@@ -653,6 +687,42 @@ body.has-project-fallback-fullscreen .project-cards-layer {
     SFMono-Regular,
     Consolas,
     monospace;
+}
+
+.project-card__source-breadcrumb {
+  display: flex;
+  min-inline-size: 0;
+  overflow: hidden;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.project-card__source-part {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-card__source-part:last-child {
+  color: #252622;
+  font-weight: 700;
+}
+
+.project-card__source-separator {
+  flex: 0 0 auto;
+  padding-inline: 5px;
+  color: #b0b1ac;
+}
+
+.project-card__source-revision {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  padding: 3px 6px;
+  border: 1px solid #e0e0da;
+  border-radius: 999px;
+  color: #777873;
+  background: #f3f3ef;
+  font-size: 8.5px;
+  letter-spacing: 0.015em;
 }
 
 .project-card__source {

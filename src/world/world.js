@@ -4,8 +4,10 @@ import { initProjectFrameEditor } from "./project-frame-editor.js";
 import {
   FOCUS_WORLD_CONFIG,
   HERO_CAMERA_Z,
+  WORK_TITLE_WORLD_CONFIG,
   WORLD_CAMERA_FOV,
   getCameraZAtProgress,
+  getProjectFrameEntryAtDepth,
   getWorldBlurAtDepth,
   getWorldVisibilityAtDepth,
 } from "./config.js";
@@ -111,6 +113,26 @@ function createJourneyState(progress, reducedMotion) {
     originBlur: getWorldBlurAtDepth(cameraTargetZ),
     originVisibility: getWorldVisibilityAtDepth(cameraTargetZ),
   };
+}
+
+function updateWorkTitle(element, cameraZ) {
+  const depth = cameraZ - WORK_TITLE_WORLD_CONFIG.position[2];
+  const inFront = depth > 0.1;
+  const visibility = inFront ? getWorldVisibilityAtDepth(depth) : 0;
+  const entryProgress = inFront ? getProjectFrameEntryAtDepth(depth) : 0;
+  const opacity = visibility * entryProgress;
+  const scale = inFront
+    ? clamp(FOCUS_WORLD_CONFIG.distance / depth, 0.55, 2.4)
+    : 1;
+
+  element.style.setProperty("--work-title-scale", scale.toFixed(5));
+  element.style.setProperty(
+    "--work-title-defocus",
+    `${getWorldBlurAtDepth(depth).toFixed(2)}px`,
+  );
+  element.style.opacity = opacity.toFixed(4);
+  element.style.visibility =
+    opacity > FOCUS_WORLD_CONFIG.visibilityThreshold ? "visible" : "hidden";
 }
 
 function initJourneyScroll(worldStage, reducedMotion, onChange) {
@@ -232,6 +254,7 @@ export function initWorld() {
   const cardsStage = getRequiredElement("#project-cards");
   const worldStage = stage.closest("[data-world-stage]");
   const hero = worldStage?.querySelector(".hero");
+  const workTitle = getRequiredElement("[data-work-title]");
   const app = getRequiredElement("#app");
   const splashProgressFill = getRequiredElement(".splash__progress-fill");
   const splashPercentage = getRequiredElement(".splash__percentage");
@@ -356,7 +379,7 @@ export function initWorld() {
     layoutPortrait();
     applyCamera();
     compileWorld();
-    renderWorld();
+    if (!journeyScrolling) renderWorld();
     document.documentElement.classList.add("has-hero-webgl");
     resolvePortraitReady();
   }
@@ -647,6 +670,16 @@ export function initWorld() {
       portraitY - viewport.height * 0.008,
       -0.035,
     );
+    worldStage.style.setProperty(
+      "--hero-portrait-width",
+      `${(widthRatio * stage.clientWidth).toFixed(2)}px`,
+    );
+    worldStage.style.setProperty(
+      "--hero-portrait-top",
+      `${((0.5 - portraitTop / viewport.height) * stage.clientHeight).toFixed(
+        2,
+      )}px`,
+    );
   }
 
   function renderScene(time = 0, forceCards = false) {
@@ -664,6 +697,7 @@ export function initWorld() {
     portraitGroup.position.y = pointerCurrent.y * 0.02 + introPortraitOffsetY;
     portraitGroup.visible =
       journeyState.originVisibility > FOCUS_WORLD_CONFIG.visibilityThreshold;
+    updateWorkTitle(workTitle, camera.position.z);
     stockThinkChess.setCameraZ(camera.position.z);
     if (!journeyScrolling) stockThinkChess.update(time, reducedMotion.matches);
     scene.updateMatrixWorld(true);
@@ -676,7 +710,7 @@ export function initWorld() {
         journeyScrolling,
       );
     }
-    if (!journeyScrolling) renderWorld();
+    renderWorld();
   }
 
   function applyCamera() {

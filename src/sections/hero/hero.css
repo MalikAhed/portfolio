@@ -7,6 +7,8 @@
   --origin-depth-scale: 1;
   --origin-defocus: 0px;
   --origin-visibility: 1;
+  --hero-portrait-width: min(46vw, 42rem);
+  --hero-portrait-top: clamp(5.5rem, 13svh, 8rem);
   position: relative;
   overflow: visible;
   background: var(--color-canvas);
@@ -92,9 +94,9 @@
 
 .hero__portrait-fallback img {
   display: block;
-  inline-size: min(46vw, 42rem);
+  inline-size: var(--hero-portrait-width);
   block-size: auto;
-  margin-block-start: clamp(5.5rem, 13svh, 8rem);
+  margin-block-start: var(--hero-portrait-top);
   filter: drop-shadow(1.1rem 0.55rem 0.85rem rgb(23 21 18 / 28%));
   user-select: none;
 }
@@ -127,6 +129,34 @@
 .portfolio-world.is-origin-cleared .scene canvas {
   filter: none;
   opacity: 1;
+}
+
+.work-title {
+  position: fixed;
+  z-index: calc(var(--depth-interface) - 2);
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: max-content;
+  color: var(--color-ink-strong);
+  opacity: 0;
+  visibility: hidden;
+  filter: blur(var(--work-title-defocus, 0px));
+  transform: translate(-50%, -50%) scale(var(--work-title-scale, 1));
+  transform-origin: center;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity, filter;
+}
+
+.work-title h2 {
+  margin: 0;
+  font-family: var(--font-condensed);
+  font-size: clamp(7rem, 24vw, 25rem);
+  font-weight: 400;
+  line-height: 0.78;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .hero__identity {
@@ -300,11 +330,6 @@ html:not(.has-js) .hero__identity {
 }
 
 @media (max-width: 850px) {
-  .hero__portrait-fallback img {
-    inline-size: min(92vw, 38rem);
-    margin-block-start: clamp(7rem, 17svh, 10rem);
-  }
-
   .hero__identity {
     inset-block-start: clamp(6.5rem, 15vh, 8rem);
     inline-size: calc(100% - 2.5rem);

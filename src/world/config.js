@@ -12,8 +12,16 @@ import * as THREE from "three";
  */
 
 export const HERO_CAMERA_Z = 5;
-export const JOURNEY_CAMERA_END_Z = 28.2;
+export const JOURNEY_CAMERA_END_Z = 32.3;
 export const WORLD_CAMERA_FOV = 45;
+
+/**
+ * Typographic world marker between the Hero and the project rail. It stays at
+ * this Z coordinate while the same linear camera journey passes through it.
+ */
+export const WORK_TITLE_WORLD_CONFIG = Object.freeze({
+  position: Object.freeze([0, 0, 6]),
+});
 
 /**
  * One fixed focal region in front of the camera. Every DOM card uses this same
@@ -122,7 +130,7 @@ export const CARD_WORLD_CONFIG = Object.freeze({
       scale: 1,
     }),
     text: Object.freeze({
-      position: Object.freeze({ x: 0, y: 0, z: 0 }),
+      position: Object.freeze({ x: 65, y: 0, z: 0 }),
       rotation: Object.freeze({ x: 0, y: 0, z: 0 }),
       width: 1,
       height: 1,
@@ -130,36 +138,41 @@ export const CARD_WORLD_CONFIG = Object.freeze({
     }),
   }),
   sideTransformOverrides: Object.freeze({
-    stockthink: Object.freeze({
+    "queue-control": Object.freeze({
       text: Object.freeze({
-        position: Object.freeze({ x: 65 }),
+        position: Object.freeze({ x: -65 }),
+      }),
+    }),
+    "release-meter": Object.freeze({
+      text: Object.freeze({
+        position: Object.freeze({ x: -65 }),
       }),
     }),
   }),
   presets: Object.freeze({
     desktop: [
-      { position: [0, 0.06, 7.1], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, -0.05, 12.5], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, -0.03, 17.9], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, 0.04, 23.3], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 11.2], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 16.6], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 22], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 27.4], rotation: [0, 0, 0], scale: 1.12 },
     ],
     mobile: [
-      { position: [0, 0.12, 7.1], rotation: [0, 0, 0], scale: 0.3 },
-      { position: [0, -0.1, 12.5], rotation: [0, 0, 0], scale: 0.3 },
-      { position: [0, -0.06, 17.9], rotation: [0, 0, 0], scale: 0.3 },
-      { position: [0, 0.08, 23.3], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, 0.12, 11.2], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, 0.12, 16.6], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, 0.12, 22], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, 0.12, 27.4], rotation: [0, 0, 0], scale: 0.3 },
     ],
     short: [
-      { position: [0, 0.03, 7.1], rotation: [0, 0, 0], scale: 0.68 },
-      { position: [0, -0.03, 12.5], rotation: [0, 0, 0], scale: 0.68 },
-      { position: [0, -0.02, 17.9], rotation: [0, 0, 0], scale: 0.68 },
-      { position: [0, 0.03, 23.3], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, 0.03, 11.2], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, 0.03, 16.6], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, 0.03, 22], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, 0.03, 27.4], rotation: [0, 0, 0], scale: 0.68 },
     ],
     ultrawide: [
-      { position: [0, 0.06, 7.1], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, -0.05, 12.5], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, -0.03, 17.9], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, 0.04, 23.3], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 11.2], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 16.6], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 22], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 27.4], rotation: [0, 0, 0], scale: 1.12 },
     ],
   }),
 });

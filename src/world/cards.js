@@ -284,56 +284,122 @@ function createTreeIcon(type) {
   return icon;
 }
 
+function createTreeChevron() {
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.classList.add("project-card__tree-chevron");
+  icon.setAttribute("viewBox", "0 0 16 16");
+  icon.setAttribute("aria-hidden", "true");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "m6 3.5 4.5 4.5L6 12.5");
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("stroke-width", "1.6");
+  icon.append(path);
+  return icon;
+}
+
 function createFileTree(project, onSelect) {
   const tree = document.createElement("div");
   tree.className = "project-card__tree";
   tree.setAttribute("role", "tree");
   tree.setAttribute("aria-label", `${project.title} project files`);
 
-  const folder = document.createElement("div");
-  folder.className = "project-card__folder";
-  folder.setAttribute("role", "treeitem");
-  folder.setAttribute("aria-expanded", "true");
+  function createFolderNode(name, path = "") {
+    return { folders: new Map(), files: [], name, path };
+  }
 
-  const folderButton = createButton(project.id, "project-card__folder-button");
-  folderButton.setAttribute("aria-label", `${project.id} folder`);
-  folderButton.prepend(createTreeIcon("folder"));
-
-  const children = document.createElement("div");
-  children.className = "project-card__tree-children";
-  children.setAttribute("role", "group");
-
-  const fileButtons = Object.keys(project.files).map((filename) => {
-    const button = createButton(filename, "project-card__file");
-    button.dataset.projectFile = filename;
-    button.setAttribute("role", "treeitem");
-    button.prepend(createTreeIcon("file"));
-    children.append(button);
-    return button;
+  const root = createFolderNode(project.id);
+  Object.keys(project.files).forEach((filename) => {
+    const segments = filename.split("/");
+    const file = segments.pop();
+    let node = root;
+    segments.forEach((segment) => {
+      if (!node.folders.has(segment)) {
+        const path = node.path ? `${node.path}/${segment}` : segment;
+        node.folders.set(segment, createFolderNode(segment, path));
+      }
+      node = node.folders.get(segment);
+    });
+    node.files.push({ name: file, path: filename });
   });
 
-  function handleFolderClick() {
-    const expanded = folder.getAttribute("aria-expanded") === "true";
-    folder.setAttribute("aria-expanded", String(!expanded));
-    children.hidden = expanded;
+  const folderButtons = [];
+  const fileButtons = [];
+
+  function renderFolder(node, isRoot = false) {
+    const folder = document.createElement("div");
+    folder.className = `project-card__folder${isRoot ? " project-card__folder--root" : ""}`;
+
+    const folderButton = createButton("", "project-card__folder-button");
+    folderButton.setAttribute("role", "treeitem");
+    folderButton.setAttribute("aria-expanded", "true");
+    folderButton.setAttribute(
+      "aria-label",
+      `${isRoot ? "Repository" : "Folder"} ${node.path || node.name}, expanded`,
+    );
+    folderButton.append(
+      createTreeChevron(),
+      createTreeIcon("folder"),
+      document.createTextNode(node.name),
+    );
+
+    const children = document.createElement("div");
+    children.className = "project-card__tree-children";
+    children.setAttribute("role", "group");
+
+    node.folders.forEach((childNode) => {
+      children.append(renderFolder(childNode));
+    });
+    node.files.forEach(({ name, path }) => {
+      const button = createButton(name, "project-card__file");
+      button.dataset.projectFile = path;
+      button.title = path;
+      button.setAttribute("role", "treeitem");
+      button.setAttribute("aria-label", `File ${path}`);
+      button.prepend(createTreeIcon("file"));
+      children.append(button);
+      fileButtons.push(button);
+    });
+
+    function handleFolderClick() {
+      const expanded = folderButton.getAttribute("aria-expanded") === "true";
+      folderButton.setAttribute("aria-expanded", String(!expanded));
+      folderButton.setAttribute(
+        "aria-label",
+        `${isRoot ? "Repository" : "Folder"} ${node.path || node.name}, ${expanded ? "collapsed" : "expanded"}`,
+      );
+      children.hidden = expanded;
+    }
+
+    folderButton.addEventListener("click", handleFolderClick);
+    folderButtons.push({
+      button: folderButton,
+      handleClick: handleFolderClick,
+    });
+    folder.append(folderButton, children);
+    return folder;
   }
 
   function handleFileClick(event) {
     onSelect(event.currentTarget.dataset.projectFile);
   }
 
-  folderButton.addEventListener("click", handleFolderClick);
+  tree.append(renderFolder(root, true));
+
   fileButtons.forEach((button) => {
     button.addEventListener("click", handleFileClick);
   });
-  folder.append(folderButton, children);
-  tree.append(folder);
 
   return {
     element: tree,
     fileButtons,
     dispose() {
-      folderButton.removeEventListener("click", handleFolderClick);
+      folderButtons.forEach(({ button, handleClick }) => {
+        button.removeEventListener("click", handleClick);
+      });
       fileButtons.forEach((button) => {
         button.removeEventListener("click", handleFileClick);
       });
@@ -492,9 +558,27 @@ function createProjectCard(project, index) {
 
   function setFile(filename) {
     code.textContent = project.files[filename] ?? "";
-    sourceLabel.textContent = project.sourceRevision
-      ? `${filename} · GitHub ${project.sourceRevision}`
-      : filename;
+    const breadcrumb = document.createElement("span");
+    breadcrumb.className = "project-card__source-breadcrumb";
+    filename.split("/").forEach((segment, segmentIndex) => {
+      if (segmentIndex > 0) {
+        const separator = document.createElement("span");
+        separator.className = "project-card__source-separator";
+        separator.textContent = "/";
+        breadcrumb.append(separator);
+      }
+      const part = document.createElement("span");
+      part.className = "project-card__source-part";
+      part.textContent = segment;
+      breadcrumb.append(part);
+    });
+    sourceLabel.replaceChildren(breadcrumb);
+    if (project.sourceRevision) {
+      const revision = document.createElement("span");
+      revision.className = "project-card__source-revision";
+      revision.textContent = `GitHub ${project.sourceRevision}`;
+      sourceLabel.append(revision);
+    }
     fileTree.fileButtons.forEach((button) => {
       const selected = button.dataset.projectFile === filename;
       button.classList.toggle("is-active", selected);

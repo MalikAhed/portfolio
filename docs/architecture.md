@@ -6,8 +6,9 @@ three layers:
 1. **Base world** — `.base-world` supplies the fixed warm background.
 2. **Depth world** — one persistent Three.js canvas renders the Hero portrait
    and the procedural chess pieces surrounding StockThink. Four lightweight
-   Three.js anchors hold wide project frames at fixed world coordinates. Each
-   projected DOM frame pairs a large interactive work view with an alternating
+   Three.js anchors hold wide project frames at fixed world coordinates. A
+   large projected “My Work” marker separates the Hero from the project rail.
+   Each projected DOM frame pairs an interactive work view with an alternating
    explainer column.
 3. **Interface** — semantic DOM provides the header, contact action, skip link,
    identity copy, project controls, card-transform controls, and startup
@@ -51,19 +52,25 @@ src/
 - The Hero origin uses the same camera-space focus model as the cards. Its
   portrait, tied shadow, identity copy, and backdrop fade and blur together as
   the camera retreats; the header and contact interface remain crisp.
+- A bold “My Work” world marker appears after the Hero clears and recedes
+  before the first project arrives. Its position lives in `config.js`, and its
+  scale, visibility, and blur use the same camera-depth model as the cards.
 - The fixed header hides while native scroll moves deeper into the project
   world and returns as soon as scroll reverses toward the Hero. It remains
   visible at the Hero origin and while the mobile navigation is open.
 - The WebGL renderer draws the Hero directly without post-processing. Every
   card is a conventional DOM interface aligned from its Three.js anchor's
   projected corners, so the same project frame remains visible before, during,
-  and after focus. Its large 4:3 desktop work surface alternates left and right beside
-  project context, a contained looping technology chain, bulleted highlights,
-  and project links. Frames stay hidden while the camera crosses their
+  and after focus. Every project matches StockThink's large 4:3 desktop work
+  surface, alternating left and right beside project context, a contained
+  looping technology chain, bulleted highlights, and project links. Frames
+  stay hidden while the camera crosses their
   plane, then the work surface slides into place and the explainer resolves
   upward from blur. The Preview/Code control is one pill toggle, and the Code
-  view has an Inspira-style folder tree beside the source pane. Its header also
-  exposes the complete work surface through the browser Fullscreen API. The
+  view has an Inspira-style folder tree beside the source pane. Repository paths
+  render as real nested, collapsible folders, and the source header repeats the
+  active path as a breadcrumb. Its header also exposes the complete work surface
+  through the browser Fullscreen API. The
   Project Frames panel may directly change each base position, XYZ rotation,
   frame width, frame height, and scale, plus independent preview-side and
   text-side position, rotation, width, height, and scale. It can copy either
@@ -71,8 +78,9 @@ src/
   Project surfaces do not tilt on hover, keeping mouse hit targets stable.
   Reset restores the active responsive preset from `config.js`; scrolling moves
   only the camera.
-  StockThink's configured text-side default is offset 65 CSS pixels to the
-  right. Project header controls remain available throughout the card's clear
+  Text sides are offset 65 CSS pixels away from their paired work surface:
+  positive X for left-preview cards and negative X for right-preview cards.
+  Project header controls remain available throughout the card's clear
   presentation range. Fullscreen uses the browser API when permitted and a
   viewport-filling fallback when an embedded browser denies that API.
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
@@ -113,8 +121,9 @@ src/
 - The DOM portrait stays visible until the WebGL portrait texture loads.
 - During active native scrolling, that same DOM portrait temporarily stands in
   for the sleeping WebGL canvas. It inherits the shared Hero depth transform,
-  blur, and fade, so the cutout and its shadow continue to recede without a GPU
-  draw. The canvas returns on the settled frame.
+  blur, fade, and exact responsive portrait geometry, so the cutout and its
+  shadow continue to recede without a GPU draw or a swap-time position jump.
+  The canvas returns on the settled frame.
 - Missing WebGL, texture failure, or blocked modules leave the static Hero
   usable and release the splash.
 - Reduced motion skips large startup travel and disables pointer-driven scene
