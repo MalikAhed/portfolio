@@ -7,6 +7,21 @@
   gap: clamp(1.5rem, 4vw, 5rem);
   padding: clamp(0.8rem, 1.45vw, 1.35rem) clamp(1.25rem, 3.5vw, 4rem);
   line-height: 1;
+  transition:
+    opacity 280ms ease,
+    transform 420ms var(--ease-emphasized),
+    visibility 0s linear;
+}
+
+.is-header-hidden .site-header {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, calc(-100% - 1rem), 0);
+  transition:
+    opacity 280ms ease,
+    transform 420ms var(--ease-emphasized),
+    visibility 0s linear 420ms;
 }
 
 .brand,
@@ -407,6 +422,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .site-header,
   .brand,
   .brand__mark,
   .navigation,

@@ -114,6 +114,7 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
   let startY = 0;
   let endY = 1;
   let animationFrameId = 0;
+  let previousScrollY = window.scrollY;
 
   function measure() {
     const bounds = journeyTrack.getBoundingClientRect();
@@ -127,6 +128,7 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
   function update() {
     animationFrameId = 0;
     const progress = clamp((window.scrollY - startY) / (endY - startY));
+    const scrollDelta = window.scrollY - previousScrollY;
     const state = createJourneyState(progress, reducedMotion.matches);
     worldStage.style.setProperty(
       "--origin-depth-scale",
@@ -141,6 +143,15 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
       state.originVisibility.toFixed(4),
     );
     worldStage.classList.toggle("is-journey-canvas", progress > 0);
+    if (progress <= 0.002 || scrollDelta < -1) {
+      worldStage.classList.remove("is-header-hidden");
+    } else if (
+      scrollDelta > 1 &&
+      !document.body.classList.contains("is-navigation-open")
+    ) {
+      worldStage.classList.add("is-header-hidden");
+    }
+    previousScrollY = window.scrollY;
     onChange(state);
   }
 
@@ -167,6 +178,7 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
     window.removeEventListener("resize", handleResize);
     reducedMotion.removeEventListener("change", requestUpdate);
     worldStage.classList.remove("is-journey-canvas");
+    worldStage.classList.remove("is-header-hidden");
     worldStage.style.removeProperty("--origin-depth-scale");
     worldStage.style.removeProperty("--origin-defocus");
     worldStage.style.removeProperty("--origin-visibility");

@@ -49,6 +49,9 @@ src/
 - The Hero origin uses the same camera-space focus model as the cards. Its
   portrait, tied shadow, identity copy, and backdrop fade and blur together as
   the camera retreats; the header and contact interface remain crisp.
+- The fixed header hides while native scroll moves deeper into the project
+  world and returns as soon as scroll reverses toward the Hero. It remains
+  visible at the Hero origin and while the mobile navigation is open.
 - The WebGL renderer draws the Hero directly without post-processing. Every
   card is a conventional DOM interface aligned from its Three.js anchor's
   projected corners, so the same project frame remains visible before, during,
