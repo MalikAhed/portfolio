@@ -2,8 +2,10 @@ import * as THREE from "three";
 import {
   CARD_WORLD_CONFIG,
   FOCUS_WORLD_CONFIG,
+  PROJECT_FRAME_ENTRY_CONFIG,
   getCardPreset,
   getJourneyPreset,
+  getProjectFrameEntryAtDepth,
   getWorldBlurAtDepth,
   getWorldVisibilityAtDepth,
 } from "./config.js";
@@ -22,6 +24,67 @@ function createButton(label, className) {
   button.className = className;
   button.textContent = label;
   return button;
+}
+
+function createModeIcon(type) {
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.classList.add("project-card__mode-icon");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("aria-hidden", "true");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("stroke-width", "1.8");
+  path.setAttribute(
+    "d",
+    type === "preview"
+      ? "M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z M9.5 12a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0Z"
+      : "m8.5 7-5 5 5 5 M15.5 7l5 5-5 5 M13.5 4l-3 16",
+  );
+  icon.append(path);
+  return icon;
+}
+
+function createTechMark(technology) {
+  const item = document.createElement("span");
+  item.className = "project-card__tech";
+  item.setAttribute("aria-label", technology.label);
+
+  const mark = document.createElement("span");
+  mark.className = "project-card__tech-mark";
+  mark.textContent = technology.mark;
+
+  const label = document.createElement("span");
+  label.className = "project-card__tech-label";
+  label.textContent = technology.label;
+  item.append(mark, label);
+  return item;
+}
+
+function createTechMarquee(project) {
+  const marquee = document.createElement("div");
+  marquee.className = "project-card__tech-marquee";
+  marquee.setAttribute(
+    "aria-label",
+    `Technologies used: ${project.technologies.map(({ label }) => label).join(", ")}`,
+  );
+
+  const track = document.createElement("div");
+  track.className = "project-card__tech-track";
+  [false, true].forEach((duplicate) => {
+    const group = document.createElement("div");
+    group.className = "project-card__tech-group";
+    if (duplicate) group.setAttribute("aria-hidden", "true");
+    project.technologies.forEach((technology) =>
+      group.append(createTechMark(technology)),
+    );
+    track.append(group);
+  });
+  marquee.append(track);
+  return marquee;
 }
 
 function createTreeIcon(type) {
@@ -123,6 +186,8 @@ function createProjectCard(project, index, reducedMotion) {
   const explainer = document.createElement("aside");
   explainer.className = "project-card__explainer";
 
+  const techMarquee = createTechMarquee(project);
+
   const projectNumber = document.createElement("p");
   projectNumber.className = "project-card__number";
   projectNumber.textContent = String(index + 1).padStart(2, "0");
@@ -149,14 +214,33 @@ function createProjectCard(project, index, reducedMotion) {
   const stack = document.createElement("p");
   stack.className = "project-card__stack";
   stack.textContent = project.stack.join(" · ");
+
+  const actions = document.createElement("div");
+  actions.className = "project-card__actions";
+  const githubLink = document.createElement("a");
+  githubLink.href = project.githubUrl;
+  githubLink.target = "_blank";
+  githubLink.rel = "noreferrer";
+  githubLink.textContent = "View on GitHub";
+  const liveLink = document.createElement("a");
+  liveLink.href = project.liveUrl;
+  liveLink.target = "_blank";
+  liveLink.rel = "noreferrer";
+  liveLink.textContent = "View live";
+  actions.append(githubLink, liveLink);
   explainer.append(
+    techMarquee,
     projectNumber,
     explainerLabel,
     explainerTitle,
     explainerSummary,
     highlights,
     stack,
+    actions,
   );
+  [...explainer.children].forEach((child, childIndex) => {
+    child.style.setProperty("--reveal-order", String(childIndex));
+  });
 
   const header = document.createElement("header");
   header.className = "project-card__header";
@@ -178,6 +262,8 @@ function createProjectCard(project, index, reducedMotion) {
 
   const previewButton = createButton("Preview", "project-card__mode");
   const codeButton = createButton("Code", "project-card__mode");
+  previewButton.prepend(createModeIcon("preview"));
+  codeButton.prepend(createModeIcon("code"));
   previewButton.dataset.cardMode = "preview";
   codeButton.dataset.cardMode = "code";
   modeControls.append(previewButton, codeButton);
@@ -331,6 +417,7 @@ export function createPortfolioCards(reducedMotion, container) {
     return {
       anchor,
       depth: Number.POSITIVE_INFINITY,
+      entryProgress: 0,
       focusDistance: Number.POSITIVE_INFINITY,
       inFront: false,
       rig,
@@ -473,6 +560,7 @@ export function createPortfolioCards(reducedMotion, container) {
       entry.focusDistance = focusDistance;
       entry.inFront = inFront;
       entry.visibility = inFront ? getWorldVisibilityAtDepth(depth) : 0;
+      entry.entryProgress = inFront ? getProjectFrameEntryAtDepth(depth) : 0;
       if (entry.visibility > FOCUS_WORLD_CONFIG.visibilityThreshold) {
         projectEntry(entry, camera, width, height);
       }
@@ -506,7 +594,29 @@ export function createPortfolioCards(reducedMotion, container) {
 
       if (rendered) {
         positionView(entry, camera, width, height);
-        entry.view.element.style.opacity = entry.visibility.toFixed(4);
+        entry.view.element.style.opacity = (
+          entry.visibility * entry.entryProgress
+        ).toFixed(4);
+        entry.view.element.style.setProperty(
+          "--frame-entry",
+          entry.entryProgress.toFixed(4),
+        );
+        const direction = entries.indexOf(entry) % 2 === 0 ? -1 : 1;
+        entry.view.element.style.setProperty(
+          "--frame-work-entry-x",
+          `${(
+            (1 - entry.entryProgress) *
+            PROJECT_FRAME_ENTRY_CONFIG.workHorizontalOffset *
+            direction
+          ).toFixed(2)}px`,
+        );
+        entry.view.element.style.setProperty(
+          "--frame-work-entry-y",
+          `${(
+            (1 - entry.entryProgress) *
+            PROJECT_FRAME_ENTRY_CONFIG.workVerticalOffset
+          ).toFixed(2)}px`,
+        );
         entry.view.element.style.setProperty(
           "--card-defocus",
           `${getWorldBlurAtDepth(entry.depth).toFixed(2)}px`,

@@ -1,3 +1,10 @@
+const PLACEHOLDER_TECHNOLOGIES = Object.freeze([
+  Object.freeze({ label: "HTML", mark: "5" }),
+  Object.freeze({ label: "CSS", mark: "#" }),
+  Object.freeze({ label: "JavaScript", mark: "JS" }),
+  Object.freeze({ label: "Three.js", mark: "3" }),
+]);
+
 function createCounterProject({
   accent,
   description,
@@ -5,9 +12,11 @@ function createCounterProject({
   highlights,
   id,
   initialValue,
+  liveUrl,
   stack,
   summary,
   title,
+  githubUrl,
 }) {
   const files = {
     "index.html": `<main class="counter-app">
@@ -98,8 +107,11 @@ document.addEventListener("click", (event) => {
     files: Object.freeze(files),
     highlights: Object.freeze(highlights),
     id,
+    githubUrl,
+    liveUrl,
     stack: Object.freeze(stack),
     summary,
+    technologies: PLACEHOLDER_TECHNOLOGIES,
     title,
   });
 }
@@ -121,6 +133,8 @@ export const PROJECTS = Object.freeze([
     stack: ["HTML", "CSS", "JavaScript"],
     accent: "#ffca66",
     initialValue: 3,
+    githubUrl: "https://github.com/MalikAhed/portfolio",
+    liveUrl: "https://malikahed.github.io/portfolio/",
   }),
   createCounterProject({
     id: "queue-control",
@@ -133,6 +147,8 @@ export const PROJECTS = Object.freeze([
     stack: ["HTML", "CSS", "JavaScript"],
     accent: "#85d7ff",
     initialValue: 12,
+    githubUrl: "https://github.com/MalikAhed/portfolio",
+    liveUrl: "https://malikahed.github.io/portfolio/",
   }),
   createCounterProject({
     id: "capacity-planner",
@@ -145,6 +161,8 @@ export const PROJECTS = Object.freeze([
     stack: ["HTML", "CSS", "JavaScript"],
     accent: "#c0f58b",
     initialValue: 24,
+    githubUrl: "https://github.com/MalikAhed/portfolio",
+    liveUrl: "https://malikahed.github.io/portfolio/",
   }),
   createCounterProject({
     id: "release-meter",
@@ -157,6 +175,8 @@ export const PROJECTS = Object.freeze([
     stack: ["HTML", "CSS", "JavaScript"],
     accent: "#f7a8d8",
     initialValue: 84,
+    githubUrl: "https://github.com/MalikAhed/portfolio",
+    liveUrl: "https://malikahed.github.io/portfolio/",
   }),
 ]);
 

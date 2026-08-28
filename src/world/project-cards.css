@@ -48,7 +48,11 @@
   border-radius: var(--project-card-radius, 34px);
   background: #fff;
   box-shadow: 0 26px 60px rgb(28 28 26 / 16%);
-  transform: rotateX(var(--card-tilt-x)) rotateY(var(--card-tilt-y));
+  transform: translate(
+      var(--frame-work-entry-x, 0),
+      var(--frame-work-entry-y, 0)
+    )
+    rotateX(var(--card-tilt-x)) rotateY(var(--card-tilt-y));
   transform-style: preserve-3d;
   transition: transform 180ms ease;
   backface-visibility: hidden;
@@ -61,6 +65,73 @@
   color: var(--color-ink-strong);
 }
 
+.project-card__explainer > * {
+  --reveal-delay: calc(var(--reveal-order, 0) * 0.055);
+  --reveal-progress: clamp(
+    0,
+    calc((var(--frame-entry, 0) - var(--reveal-delay)) * 1.7),
+    1
+  );
+  filter: blur(calc((1 - var(--reveal-progress)) * 18px));
+  opacity: var(--reveal-progress);
+  transform: translateY(calc((1 - var(--reveal-progress)) * 46px));
+}
+
+.project-card__tech-marquee {
+  overflow: hidden;
+  inline-size: 100%;
+  margin-block-end: 28px;
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 14%,
+    #000 86%,
+    transparent
+  );
+}
+
+.project-card__tech-track,
+.project-card__tech-group {
+  display: flex;
+  align-items: center;
+}
+
+.project-card__tech-track {
+  inline-size: max-content;
+  animation: project-tech-chain 18s linear infinite;
+}
+
+.project-card__tech-group {
+  gap: 10px;
+  padding-inline-end: 10px;
+}
+
+.project-card__tech {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 48px;
+  block-size: 48px;
+  border: 1px solid rgb(28 27 25 / 12%);
+  border-radius: 15px;
+  background: rgb(255 255 255 / 62%);
+}
+
+.project-card__tech-mark {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.project-card__tech-label {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .project-card__number,
 .project-card__eyebrow,
 .project-card__explainer h3,
@@ -70,7 +141,7 @@
 }
 
 .project-card__number {
-  margin-block-end: 34px;
+  margin-block-end: 24px;
   color: rgb(28 27 25 / 35%);
   font-size: 13px;
   font-weight: 700;
@@ -135,6 +206,38 @@
   text-transform: uppercase;
 }
 
+.project-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 24px;
+}
+
+.project-card__actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 36px;
+  padding: 8px 13px;
+  border: 1px solid rgb(28 27 25 / 16%);
+  border-radius: 999px;
+  color: inherit;
+  background: rgb(255 255 255 / 48%);
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.project-card__actions a:last-child {
+  color: #fff;
+  background: var(--color-ink-strong);
+}
+
+.project-card__actions a:hover,
+.project-card__actions a:focus-visible {
+  transform: translateY(-2px);
+}
+
 .project-card__header {
   display: flex;
   align-items: center;
@@ -168,7 +271,10 @@
 
 .project-card__modes {
   display: flex;
-  gap: 5px;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 999px;
+  background: #e8e8e5;
 }
 
 .project-card button {
@@ -187,11 +293,30 @@
 }
 
 .project-card__mode {
-  min-block-size: 36px;
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 34px;
+  padding: 6px 11px;
+  border: 0 !important;
   border-radius: 999px;
+  color: #686966;
+  background: transparent !important;
   font-size: 12px;
   font-weight: 700;
+}
+
+.project-card__mode:hover,
+.project-card__mode:focus-visible,
+.project-card__mode.is-active {
+  color: #1d1d1f !important;
+  background: #fff !important;
+  box-shadow: 0 1px 4px rgb(28 28 26 / 12%);
+}
+
+.project-card__mode-icon {
+  inline-size: 15px;
+  block-size: 15px;
 }
 
 .project-card__viewport,
@@ -332,5 +457,25 @@
   .project-card,
   .project-card__surface {
     transition: none;
+  }
+
+  .project-card__surface {
+    transform: rotateX(var(--card-tilt-x)) rotateY(var(--card-tilt-y));
+  }
+
+  .project-card__explainer > * {
+    filter: none;
+    opacity: var(--frame-entry, 0);
+    transform: none;
+  }
+
+  .project-card__tech-track {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes project-tech-chain {
+  to {
+    transform: translateX(-50%);
   }
 }

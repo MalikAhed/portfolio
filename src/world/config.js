@@ -30,6 +30,21 @@ export const FOCUS_WORLD_CONFIG = Object.freeze({
   visibilityThreshold: 0.002,
 });
 
+export const PROJECT_FRAME_ENTRY_CONFIG = Object.freeze({
+  startDepth: 3.25,
+  settleDepth: 4.55,
+  workHorizontalOffset: 420,
+  workVerticalOffset: 220,
+});
+
+export function getProjectFrameEntryAtDepth(depth) {
+  return THREE.MathUtils.smoothstep(
+    depth,
+    PROJECT_FRAME_ENTRY_CONFIG.startDepth,
+    PROJECT_FRAME_ENTRY_CONFIG.settleDepth,
+  );
+}
+
 export function getWorldBlurAtDepth(depth) {
   const defocus = Math.max(
     0,
@@ -63,9 +78,11 @@ export function getWorldVisibilityAtDepth(depth) {
  * Depth role: world
  * Shape: wide project frame containing an interactive 16:9 work surface and
  * an alternating explainer column
- * Entrance/motion: fixed in world space while scrolling; each card becomes
- * viewable only when the camera retreats past its fixed Z position. Pointer
- * hover adds a temporary local CSS tilt without changing the base transform.
+ * Entrance/motion: fixed in world space while scrolling; each frame stays
+ * hidden as the camera crosses its fixed Z plane, then its work surface slides
+ * in and its explainer resolves upward from blur before the shared focal
+ * distance. Pointer hover adds a temporary local CSS tilt without changing the
+ * base transform.
  * Editor: position, Euler XYZ rotation, and scalar size may be changed
  * directly; reset restores the active responsive preset below
  * Rendering: a lightweight Three.js anchor supplies the world transform. Its
