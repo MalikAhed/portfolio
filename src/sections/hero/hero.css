@@ -134,7 +134,15 @@
   transform-origin: center;
   pointer-events: none;
   user-select: none;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
+}
+
+/* Keep native scrolling on the compositor path. Exact depth blur returns as
+   soon as scrolling settles, while scale and opacity remain scroll-linked. */
+.portfolio-world.is-journey-scrolling .hero-origin-dom,
+.portfolio-world.is-journey-scrolling .scene canvas,
+.portfolio-world.is-journey-scrolling .work-title {
+  filter: none;
 }
 
 .work-title h2 {

@@ -59,7 +59,7 @@ export function createStockthinkChessWorld(container, assetUrl) {
     return { anchor, config, image };
   });
 
-  function update(camera, width, height) {
+  function update(camera, width, height, scrolling = false) {
     const projectDepth =
       camera.position.z - STOCKTHINK_CHESS_WORLD_CONFIG.projectPosition[2];
     const sectionEntry = THREE.MathUtils.smoothstep(projectDepth, 0.35, 2.4);
@@ -95,7 +95,7 @@ export function createStockthinkChessWorld(container, assetUrl) {
       image.style.inlineSize = `${renderedWidth.toFixed(2)}px`;
       image.style.blockSize = `${renderedHeight.toFixed(2)}px`;
       image.style.opacity = opacity.toFixed(4);
-      image.style.filter = `blur(${blur.toFixed(2)}px)`;
+      if (!scrolling) image.style.filter = `blur(${blur.toFixed(2)}px)`;
       image.style.transform = `translate3d(${(projectedCenter.x - renderedWidth / 2).toFixed(2)}px, ${(projectedCenter.y - renderedHeight / 2).toFixed(2)}px, 0) rotate(${config.rotation}deg) scaleX(${flip})`;
     });
   }

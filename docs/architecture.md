@@ -50,6 +50,8 @@ src/
   interaction, resize handling, and disposal.
 - The v3 Hero uses a firm alpha silhouette and one portrait-relative offset
   mesh with a small Gaussian alpha blur for a soft, controlled depth shadow.
+  The shadow texture is generated once at portrait load, so its mesh needs one
+  texture sample per pixel instead of running a multi-sample blur every frame.
 - Camera X/Y and orientation remain fixed. Native scroll maps directly and
   reversibly from Hero Z to the configured end Z.
 - The Hero origin uses the same camera-space focus model as the cards. Its
@@ -111,18 +113,24 @@ src/
   distinct foreground Z positions, so every crop sharpens, blurs, and fades at
   its own camera distance; the following project naturally crosses in front.
   Its lightweight iframe remains mounted after its first load instead of
-  flashing to a blank surface during scroll, while its preview fallback uses
-  the site's own cream. A cream-and-red Cube Burger splash starts the iframe as
-  soon as the card becomes active and clears on the project's first rendered
-  DOM content instead of waiting for every large image. The preview remains
-  mounted and can finish its imagery progressively. StockThink retains its dark
-  loading curtain and focused paint lifecycle because its WebGL preview is
-  substantially heavier.
+  flashing to a blank surface during scroll, but becomes paint-ineligible while
+  scrolling or outside the preview focus band. Its preview fallback uses the
+  site's own cream. A cream-and-red Cube Burger splash starts the iframe as soon
+  as the card becomes active and clears on the project's first rendered DOM
+  content instead of waiting for every large image. The preview can finish its
+  imagery progressively without remaining visible in off-screen cards.
+  StockThink retains its focused paint lifecycle because its WebGL preview is
+  substantially heavier. While the iframe is paint-ineligible, a lightweight
+  warm branded poster replaces the former black surface; the loading curtain
+  uses the same treatment. Local `srcdoc` project simulations are also created
+  only on first focus instead of at world startup.
 - The StockThink preview uses a staged load. After the portfolio finishes, its
-  document and entry bundles are prefetched at idle priority without creating
-  an iframe or WebGL context. Pausing in StockThink's focus band starts the real
-  iframe behind a matching branded loading curtain. On the deployed same-origin
-  site, that curtain stays until StockThink's own loader reports completion.
+  document and entry bundles are prefetched at idle priority on capable devices
+  and connections, without creating an iframe or WebGL context. Prefetch waits
+  while the user is actively scrolling. Pausing in StockThink's focus band
+  starts the real iframe behind a matching branded loading curtain. On the
+  deployed same-origin site, that curtain stays until StockThink's own loader
+  reports completion.
   Once initialized, the iframe keeps its state but is hidden outside Preview
   focus so it is not painted while the visitor continues through the world.
   Its iframe retains a full 1440-pixel website viewport and scales that complete
@@ -139,12 +147,18 @@ src/
   complete left/right composition visible. Very wide, short windows use a 3:2
   work surface instead of 4:3 to preserve that vertical fit. Resizing within
   one preset updates the fit without resetting editor changes.
-- Rendering sleeps when the scene is settled or the page is hidden. During
-  active native scrolling, the camera, DOM projection state, and WebGL portrait
-  update together so the cutout and its tied shadow retain one continuous
-  transform; the StockThink iframe remains hidden until scrolling settles.
-  Resize, pointer motion, or editor changes otherwise render the required
-  output. WebGL pixel count is capped.
+- Rendering sleeps when the scene is settled or the page is hidden. Native
+  scroll events are coalesced into at most one camera, DOM projection, and
+  renderer update per animation frame. During active scrolling, large changing
+  Gaussian filters and card shadows are suspended while opacity, projection,
+  and entry motion remain exactly scroll-linked; the authored depth blur returns
+  on the first settled frame. Preview iframes are hidden during that active
+  interval, and only the visible active card runs its technology-chain
+  animation. The WebGL renderer clears once and sleeps completely after the
+  Hero portrait leaves view because the remaining Three.js objects are transform
+  anchors only. Resize work is frame-coalesced as well. WebGL pixel count,
+  device pixel ratio, and texture anisotropy use a smaller capability-based
+  budget on memory-, processor-, or data-constrained devices.
   Only cards with a meaningful on-screen opacity are painted, and just one
   card's main content is interactive. Project cards do not run hover animation
   frames.

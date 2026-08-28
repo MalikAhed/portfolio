@@ -56,7 +56,7 @@ export function createCubeBurgerIngredientWorld(container, assetUrl) {
     return { anchor, config, element };
   });
 
-  function update(camera, width, height) {
+  function update(camera, width, height, scrolling = false) {
     const projectDepth =
       camera.position.z -
       CUBE_BURGER_INGREDIENT_WORLD_CONFIG.projectPosition[2];
@@ -91,8 +91,10 @@ export function createCubeBurgerIngredientWorld(container, assetUrl) {
       element.style.inlineSize = `${renderedWidth.toFixed(2)}px`;
       element.style.blockSize = `${renderedHeight.toFixed(2)}px`;
       element.style.opacity = opacity.toFixed(4);
-      element.style.filter =
-        blur < 0.05 ? "none" : `blur(${blur.toFixed(2)}px)`;
+      if (!scrolling) {
+        element.style.filter =
+          blur < 0.05 ? "none" : `blur(${blur.toFixed(2)}px)`;
+      }
       element.style.transform = `translate3d(${(projectedCenter.x - renderedWidth / 2).toFixed(2)}px, ${(projectedCenter.y - renderedHeight / 2).toFixed(2)}px, 0) rotate(${config.rotation}deg)`;
     });
   }

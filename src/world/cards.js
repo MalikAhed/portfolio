@@ -184,9 +184,13 @@ function createPreviewLoader(brand, theme) {
 function schedulePreviewPrefetch(url) {
   if (!url) return () => {};
   const connection = navigator.connection;
+  const deviceMemory = Number(navigator.deviceMemory) || Infinity;
+  const processorCount = navigator.hardwareConcurrency || Infinity;
   if (
     connection?.saveData ||
-    /(^|-)2g$/.test(connection?.effectiveType ?? "")
+    /(^|-)2g$/.test(connection?.effectiveType ?? "") ||
+    deviceMemory <= 4 ||
+    processorCount <= 4
   ) {
     return () => {};
   }
@@ -197,6 +201,15 @@ function schedulePreviewPrefetch(url) {
   const prefetchLinks = [];
 
   async function prefetch() {
+    if (
+      document
+        .querySelector("[data-world-stage]")
+        ?.classList.contains("is-journey-scrolling")
+    ) {
+      timeoutId = window.setTimeout(prefetch, 1000);
+      return;
+    }
+
     prefetchController = new AbortController();
     try {
       const response = await fetch(url, {
@@ -752,14 +765,23 @@ function createProjectCard(project, index) {
   }
 
   function syncPreviewVisibility() {
-    if (!project.previewUrl) return;
     const showingPreview = currentMode === "preview";
-    preview.hidden = !(
+    const previewVisible =
       showingPreview &&
-      isPreviewAvailable() &&
-      previewLoadStarted
+      previewLoadStarted &&
+      (!previewLoader || previewReady) &&
+      (previewActive || isFullscreen());
+    if (preview.hidden === previewVisible) preview.hidden = !previewVisible;
+    previewPanel.classList.toggle(
+      "is-preview-poster-visible",
+      showingPreview && !previewVisible,
     );
-    if (previewLoader) previewLoader.element.hidden = !showingPreview;
+    if (previewLoader) {
+      const loaderVisible = showingPreview && (previewActive || isFullscreen());
+      if (previewLoader.element.hidden === loaderVisible) {
+        previewLoader.element.hidden = !loaderVisible;
+      }
+    }
   }
 
   function startPreviewProgress() {
@@ -791,6 +813,7 @@ function createProjectCard(project, index) {
       "aria-label",
       `${project.previewBrand} preview ready`,
     );
+    syncPreviewVisibility();
     previewLoaderDoneTimer = window.setTimeout(() => {
       previewLoaderDoneTimer = 0;
       previewLoader.element.classList.add("is-complete");
@@ -820,7 +843,7 @@ function createProjectCard(project, index) {
     previewReadyPollTimer = window.setInterval(checkPreviewReadiness, 100);
     previewReadyFallbackTimer = window.setTimeout(
       completePreviewProgress,
-      11000,
+      30000,
     );
   }
 
@@ -832,16 +855,20 @@ function createProjectCard(project, index) {
   }
 
   function startPreview() {
-    if (!project.previewUrl || previewLoadStarted) return;
+    if (previewLoadStarted) return;
     previewLoadStarted = true;
     preview.hidden = false;
-    startPreviewProgress();
-    preview.src = project.previewUrl;
-    watchPreviewReadiness();
+    if (project.previewUrl) {
+      startPreviewProgress();
+      preview.src = project.previewUrl;
+      watchPreviewReadiness();
+    } else {
+      preview.srcdoc = createProjectPreviewDocument(project);
+    }
   }
 
   function schedulePreview() {
-    if (!project.previewUrl || previewLoadStarted) {
+    if (previewLoadStarted) {
       syncPreviewVisibility();
       return;
     }
@@ -855,7 +882,7 @@ function createProjectCard(project, index) {
   }
 
   function updatePreviewActivity(active) {
-    if (!project.previewUrl) return;
+    if (previewActive === active) return;
     previewActive = active;
     if (isPreviewAvailable() && currentMode === "preview") schedulePreview();
     else clearPreviewLoadTimer();
@@ -871,10 +898,6 @@ function createProjectCard(project, index) {
   setMode("preview");
   setFile(fileEntries[0][0]);
   syncFullscreenButton();
-  if (!project.previewUrl) {
-    preview.hidden = false;
-    preview.srcdoc = createProjectPreviewDocument(project);
-  }
 
   return {
     element: card,
@@ -937,8 +960,15 @@ export function createPortfolioCards(container) {
       height: CARD_WORLD_CONFIG.height,
       inFront: false,
       projectId: project.id,
+      presentation: {
+        active: false,
+        controlsInteractive: false,
+        interactive: false,
+        rendered: false,
+      },
       rig,
       screenBounds: { bottom: 0, left: 0, right: 0, top: 0 },
+      screenTransform: { a: 1, b: 0, c: 0, d: 1, x: 0, y: 0 },
       sideTransforms: {
         preview: cloneSideTransform(project.id, "preview"),
         text: cloneSideTransform(project.id, "text"),
@@ -1072,18 +1102,24 @@ export function createPortfolioCards(container) {
       projectedBottomLeft.y,
       projectedBottomRight.y,
     );
-  }
-
-  function positionView(entry, camera, width, height) {
-    projectEntry(entry, camera, width, height);
 
     const cssWidth = entry.width / CARD_WORLD_CONFIG.worldUnitsPerCssPixel;
     const cssHeight = entry.height / CARD_WORLD_CONFIG.worldUnitsPerCssPixel;
-    const a = (projectedTopRight.x - projectedTopLeft.x) / cssWidth;
-    const b = (projectedTopRight.y - projectedTopLeft.y) / cssWidth;
-    const c = (projectedBottomLeft.x - projectedTopLeft.x) / cssHeight;
-    const d = (projectedBottomLeft.y - projectedTopLeft.y) / cssHeight;
-    entry.view.element.style.transform = `matrix(${a.toFixed(6)}, ${b.toFixed(6)}, ${c.toFixed(6)}, ${d.toFixed(6)}, ${projectedTopLeft.x.toFixed(2)}, ${projectedTopLeft.y.toFixed(2)})`;
+    entry.screenTransform.a =
+      (projectedTopRight.x - projectedTopLeft.x) / cssWidth;
+    entry.screenTransform.b =
+      (projectedTopRight.y - projectedTopLeft.y) / cssWidth;
+    entry.screenTransform.c =
+      (projectedBottomLeft.x - projectedTopLeft.x) / cssHeight;
+    entry.screenTransform.d =
+      (projectedBottomLeft.y - projectedTopLeft.y) / cssHeight;
+    entry.screenTransform.x = projectedTopLeft.x;
+    entry.screenTransform.y = projectedTopLeft.y;
+  }
+
+  function positionView(entry) {
+    const { a, b, c, d, x, y } = entry.screenTransform;
+    entry.view.element.style.transform = `matrix(${a.toFixed(6)}, ${b.toFixed(6)}, ${c.toFixed(6)}, ${d.toFixed(6)}, ${x.toFixed(2)}, ${y.toFixed(2)})`;
   }
 
   function isOnScreen(bounds, width, height) {
@@ -1129,10 +1165,6 @@ export function createPortfolioCards(container) {
     });
 
     entries.forEach((entry) => {
-      entry.view.element.style.zIndex = String(Math.round(entry.worldZ * 100));
-    });
-
-    entries.forEach((entry) => {
       const fullscreen = entry.view.isFullscreen();
       const active = entry === activeEntry;
       const rendered =
@@ -1155,9 +1187,13 @@ export function createPortfolioCards(container) {
         active &&
         activeDistance <= FOCUS_WORLD_CONFIG.previewBand &&
         rendered;
+      const zIndex = String(Math.round(entry.worldZ * 100));
+      if (entry.view.element.style.zIndex !== zIndex) {
+        entry.view.element.style.zIndex = zIndex;
+      }
 
       if (rendered) {
-        positionView(entry, camera, width, height);
+        positionView(entry);
         entry.view.element.style.opacity = entry.visibility.toFixed(4);
         entry.view.element.style.setProperty(
           "--frame-entry",
@@ -1179,25 +1215,38 @@ export function createPortfolioCards(container) {
             PROJECT_FRAME_ENTRY_CONFIG.workVerticalOffset
           ).toFixed(2)}px`,
         );
-        const depthBlur = getWorldBlurAtDepth(entry.depth);
-        entry.view.element.style.setProperty(
-          "--card-depth-filter",
-          depthBlur < 0.05 ? "none" : `blur(${depthBlur.toFixed(2)}px)`,
-        );
+        if (!scrolling) {
+          const depthBlur = getWorldBlurAtDepth(entry.depth);
+          entry.view.element.style.setProperty(
+            "--card-depth-filter",
+            depthBlur < 0.05 ? "none" : `blur(${depthBlur.toFixed(2)}px)`,
+          );
+        }
         entry.view.element.style.visibility = "visible";
-      } else {
+      } else if (entry.presentation.rendered) {
         entry.view.element.style.opacity = "0";
         entry.view.element.style.visibility = "hidden";
       }
 
-      entry.view.element.style.pointerEvents = interactive ? "auto" : "none";
-      entry.view.element.inert = !controlsInteractive;
-      entry.view.element.classList.toggle("is-active", active && rendered);
-      entry.view.element.classList.toggle(
-        "is-controls-interactive",
-        controlsInteractive,
-      );
-      entry.view.element.classList.toggle("is-interactive", interactive);
+      if (entry.presentation.interactive !== interactive) {
+        entry.presentation.interactive = interactive;
+        entry.view.element.style.pointerEvents = interactive ? "auto" : "none";
+        entry.view.element.classList.toggle("is-interactive", interactive);
+      }
+      if (entry.presentation.controlsInteractive !== controlsInteractive) {
+        entry.presentation.controlsInteractive = controlsInteractive;
+        entry.view.element.inert = !controlsInteractive;
+        entry.view.element.classList.toggle(
+          "is-controls-interactive",
+          controlsInteractive,
+        );
+      }
+      const visiblyActive = active && rendered;
+      if (entry.presentation.active !== visiblyActive) {
+        entry.presentation.active = visiblyActive;
+        entry.view.element.classList.toggle("is-active", visiblyActive);
+      }
+      entry.presentation.rendered = rendered;
       entry.view.updatePreviewActivity(previewActive);
     });
   }

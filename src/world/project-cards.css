@@ -14,7 +14,7 @@
   object-fit: contain;
   pointer-events: none;
   transform-origin: center;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
 }
 
 .cube-burger-ingredient {
@@ -24,7 +24,7 @@
   overflow: hidden;
   pointer-events: none;
   transform-origin: center;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
 }
 
 .cube-burger-ingredient > span {
@@ -170,6 +170,11 @@
 .project-card__tech-track {
   inline-size: max-content;
   animation: project-tech-chain 18s linear infinite;
+  animation-play-state: paused;
+}
+
+.project-card.is-active .project-card__tech-track {
+  animation-play-state: running;
 }
 
 .project-card__tech-group {
@@ -507,6 +512,10 @@ body.has-project-fallback-fullscreen .project-cards-layer {
   background: #fff;
 }
 
+.project-card__frame[hidden] {
+  display: none;
+}
+
 .project-card__frame--fitted-website {
   position: absolute;
   inset-block-start: 0;
@@ -522,7 +531,77 @@ body.has-project-fallback-fullscreen .project-cards-layer {
 
 [data-project-card="stockthink"] .project-card__preview,
 [data-project-card="stockthink"] .project-card__frame {
-  background: #0a0a0a;
+  background: #f2f0ea;
+}
+
+[data-project-card="stockthink"] .project-card__preview::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #171816;
+  background:
+    radial-gradient(circle at 72% 26%, rgb(183 232 139 / 48%), transparent 24%),
+    linear-gradient(135deg, #f8f7f3, #e9e7df);
+  font-family:
+    "Bricolage Grotesque Variable", "Bricolage Grotesque", sans-serif;
+  font-size: clamp(42px, 7vw, 108px);
+  font-weight: 800;
+  letter-spacing: -0.065em;
+  opacity: 0;
+  visibility: hidden;
+  content: "STOCKTHINK";
+}
+
+[data-project-card="stockthink"] .project-card__preview::after {
+  position: absolute;
+  z-index: 1;
+  inset-block-end: 8%;
+  inset-inline-start: 50%;
+  color: rgb(23 24 22 / 62%);
+  font-size: clamp(11px, 1.1vw, 16px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  content: "Private chess analysis · in your browser";
+  transform: translateX(-50%);
+}
+
+[data-project-card="stockthink"]
+  .project-card__preview.is-preview-poster-visible::before,
+[data-project-card="stockthink"]
+  .project-card__preview.is-preview-poster-visible::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+[data-project-card="stockthink"] .project-card__preview-loader {
+  color: #171816;
+  background:
+    radial-gradient(circle at 72% 26%, rgb(183 232 139 / 48%), transparent 24%),
+    linear-gradient(135deg, #f8f7f3, #e9e7df);
+}
+
+[data-project-card="stockthink"] .project-card__preview-loader-track {
+  background: rgb(23 24 22 / 15%);
+}
+
+[data-project-card="stockthink"] .project-card__preview-loader-track i {
+  background: #171816;
+}
+
+[data-project-card="stockthink"] .project-card__preview-loader-percentage {
+  color: rgb(23 24 22 / 56%);
+}
+
+[data-project-card="stockthink"]
+  .project-card__preview-loader-word
+  span.is-lit {
+  text-shadow: 0 0 22px rgb(131 190 80 / 42%);
 }
 
 [data-project-card="cube-burger"] .project-card__preview,
@@ -823,6 +902,24 @@ body.has-project-fallback-fullscreen .project-cards-layer {
   tab-size: 2;
   white-space: pre;
   user-select: text;
+}
+
+/* Native scroll owns the motion. While it is active, avoid repainting large
+   transformed surfaces through changing Gaussian filters. The exact depth
+   blur is restored on the first settled frame. */
+.portfolio-world.is-journey-scrolling .project-card,
+.portfolio-world.is-journey-scrolling .project-card__explainer > *,
+.portfolio-world.is-journey-scrolling .stockthink-chess-piece,
+.portfolio-world.is-journey-scrolling .cube-burger-ingredient {
+  filter: none !important;
+}
+
+.portfolio-world.is-journey-scrolling .project-card__surface {
+  box-shadow: none;
+}
+
+.portfolio-world.is-journey-scrolling .project-card__tech-track {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

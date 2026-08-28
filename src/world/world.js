@@ -18,83 +18,82 @@ import { createCubeBurgerIngredientWorld } from "./ingredient-world.js";
 const BACKGROUND_COLOR = 0xf5f0e8;
 // The portrait texture is 1024px wide, so rendering a larger full-screen
 // framebuffer adds GPU work without adding visible portrait detail.
-const MAX_PIXEL_COUNT = 1920 * 1080;
+const DEFAULT_RENDER_BUDGET = Object.freeze({
+  maxAnisotropy: 8,
+  maxPixelCount: 1920 * 1080,
+  maxPixelRatio: 1.75,
+});
+const CONSTRAINED_RENDER_BUDGET = Object.freeze({
+  maxAnisotropy: 4,
+  maxPixelCount: 1280 * 720,
+  maxPixelRatio: 1.4,
+});
 const INTRO_MINIMUM_MS = 1200;
 const INTRO_CAMERA_DURATION_MS = 2000;
 const INTRO_FAILSAFE_MS = 1000;
 const SPLASH_REVEAL_FAILSAFE_MS = 1400;
-const SCROLL_RENDER_SETTLE_MS = 140;
+// Leave enough headroom for a temporarily missed frame. A short debounce can
+// otherwise re-enable expensive settled-state paint work in the middle of a
+// fast scroll and create a self-reinforcing jank loop on slower devices.
+const SCROLL_RENDER_SETTLE_MS = 320;
 const PORTRAIT_ALPHA_CUTOFF = 0.45;
 const PORTRAIT_SHADOW_OPACITY = 0.28;
 const PORTRAIT_SHADOW_BLUR_TEXELS = 10;
 const PORTRAIT_SHADOW_OFFSET_X = 0.04;
+const PORTRAIT_SHADOW_TEXTURE_WIDTH = 512;
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`;
 const PORTRAIT_TEXTURE_URL = assetUrl("assets/malik-cutout-v3.webp");
 
+function getRenderBudget() {
+  const deviceMemory = Number(navigator.deviceMemory) || Infinity;
+  const processorCount = navigator.hardwareConcurrency || Infinity;
+  const constrainedDevice =
+    navigator.connection?.saveData || deviceMemory <= 4 || processorCount <= 4;
+
+  return constrainedDevice ? CONSTRAINED_RENDER_BUDGET : DEFAULT_RENDER_BUDGET;
+}
+
 function createPortraitShadowMaterial(portraitTexture) {
-  return new THREE.ShaderMaterial({
+  const source = portraitTexture.image;
+  const scale = Math.min(1, PORTRAIT_SHADOW_TEXTURE_WIDTH / source.width);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(source.width * scale));
+  canvas.height = Math.max(1, Math.round(source.height * scale));
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return new THREE.MeshBasicMaterial({
+      color: 0x171512,
+      map: portraitTexture,
+      opacity: PORTRAIT_SHADOW_OPACITY,
+      transparent: true,
+      alphaTest: 0.35,
+      depthTest: true,
+      depthWrite: false,
+      toneMapped: false,
+    });
+  }
+
+  context.filter = `blur(${PORTRAIT_SHADOW_BLUR_TEXELS * scale}px)`;
+  context.drawImage(source, 0, 0, canvas.width, canvas.height);
+  context.filter = "none";
+  context.globalCompositeOperation = "source-in";
+  context.fillStyle = "#171512";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const shadowTexture = new THREE.CanvasTexture(canvas);
+  shadowTexture.colorSpace = THREE.SRGBColorSpace;
+  shadowTexture.generateMipmaps = false;
+  shadowTexture.minFilter = THREE.LinearFilter;
+  shadowTexture.magFilter = THREE.LinearFilter;
+
+  return new THREE.MeshBasicMaterial({
+    map: shadowTexture,
+    opacity: PORTRAIT_SHADOW_OPACITY,
     transparent: true,
     depthTest: true,
     depthWrite: false,
     toneMapped: false,
-    uniforms: {
-      portraitMap: { value: portraitTexture },
-      texelSize: {
-        value: new THREE.Vector2(
-          PORTRAIT_SHADOW_BLUR_TEXELS / portraitTexture.image.width,
-          PORTRAIT_SHADOW_BLUR_TEXELS / portraitTexture.image.height,
-        ),
-      },
-      shadowColor: { value: new THREE.Color(0x171512) },
-      shadowOpacity: { value: PORTRAIT_SHADOW_OPACITY },
-    },
-    vertexShader: `
-      varying vec2 vUv;
-
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform sampler2D portraitMap;
-      uniform vec2 texelSize;
-      uniform vec3 shadowColor;
-      uniform float shadowOpacity;
-      varying vec2 vUv;
-
-      float sampleMask(vec2 uv) {
-        vec2 lowerBound = step(vec2(0.0), uv);
-        vec2 upperBound = step(uv, vec2(1.0));
-        float insideTexture =
-          lowerBound.x * lowerBound.y * upperBound.x * upperBound.y;
-        float sourceAlpha = texture2D(portraitMap, clamp(uv, 0.0, 1.0)).a;
-        return smoothstep(0.38, 0.52, sourceAlpha) * insideTexture;
-      }
-
-      float gaussianWeight(float position) {
-        float distanceFromCenter = abs(position);
-        if (distanceFromCenter < 0.5) return 6.0;
-        if (distanceFromCenter < 1.5) return 4.0;
-        return 1.0;
-      }
-
-      void main() {
-        float blurredAlpha = 0.0;
-
-        for (int y = -2; y <= 2; y++) {
-          for (int x = -2; x <= 2; x++) {
-            vec2 sampleOffset = vec2(float(x), float(y)) * texelSize;
-            float sampleWeight =
-              gaussianWeight(float(x)) * gaussianWeight(float(y));
-            blurredAlpha += sampleMask(vUv + sampleOffset) * sampleWeight;
-          }
-        }
-
-        blurredAlpha /= 256.0;
-        gl_FragColor = vec4(shadowColor, blurredAlpha * shadowOpacity);
-      }
-    `,
   });
 }
 
@@ -144,7 +143,6 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
   let previousScrollY = window.scrollY;
   let scrollSettleTimer = 0;
   let scrolling = false;
-  let latestState = createJourneyState(0, reducedMotion.matches);
 
   function measure() {
     const bounds = journeyTrack.getBoundingClientRect();
@@ -160,7 +158,6 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
     const progress = clamp((window.scrollY - startY) / (endY - startY));
     const scrollDelta = window.scrollY - previousScrollY;
     const state = createJourneyState(progress, reducedMotion.matches);
-    latestState = state;
     worldStage.style.setProperty(
       "--origin-depth-scale",
       state.originDepthScale.toFixed(5),
@@ -198,12 +195,11 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
 
   function handleScroll() {
     scrolling = true;
-    onChange(latestState, true);
     if (scrollSettleTimer) window.clearTimeout(scrollSettleTimer);
     scrollSettleTimer = window.setTimeout(() => {
       scrollSettleTimer = 0;
       scrolling = false;
-      update();
+      requestUpdate();
     }, SCROLL_RENDER_SETTLE_MS);
     requestUpdate();
   }
@@ -269,6 +265,7 @@ export function initWorld() {
   const camera = new THREE.PerspectiveCamera(WORLD_CAMERA_FOV, 1, 0.1, 120);
   camera.position.set(0, 0, HERO_CAMERA_Z);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const renderBudget = getRenderBudget();
   const portfolioCards = createPortfolioCards(cardsStage);
   const stockthinkChessWorld = createStockthinkChessWorld(cardsStage, assetUrl);
   const cubeBurgerIngredientWorld = createCubeBurgerIngredientWorld(
@@ -299,10 +296,21 @@ export function initWorld() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   stage.append(renderer.domElement);
   let journeyScrolling = false;
+  let webglFrameVisible = false;
 
   function renderWorld() {
+    const shouldRenderPortrait = Boolean(portraitMesh && portraitGroup.visible);
+    if (!shouldRenderPortrait) {
+      if (webglFrameVisible) renderer.clear(true, true, true);
+      renderer.domElement.style.display = "none";
+      webglFrameVisible = false;
+      return;
+    }
+
+    renderer.domElement.style.display = "block";
     renderer.clear(true, true, true);
     renderer.render(scene, camera);
+    webglFrameVisible = true;
   }
 
   function compileWorld() {
@@ -336,6 +344,7 @@ export function initWorld() {
   let loadingAnimationFrameId = 0;
   let previousFrameTime = 0;
   let animationFrameId = 0;
+  let resizeAnimationFrameId = 0;
   let renderedCardsCameraZ = Number.NaN;
   let portraitMesh;
   let portraitShadow;
@@ -359,7 +368,7 @@ export function initWorld() {
     portraitTexture.minFilter = THREE.LinearFilter;
     portraitTexture.magFilter = THREE.LinearFilter;
     portraitTexture.anisotropy = Math.min(
-      8,
+      renderBudget.maxAnisotropy,
       renderer.capabilities.getMaxAnisotropy(),
     );
 
@@ -719,11 +728,13 @@ export function initWorld() {
         camera,
         stage.clientWidth,
         stage.clientHeight,
+        journeyScrolling,
       );
       cubeBurgerIngredientWorld.update(
         camera,
         stage.clientWidth,
         stage.clientHeight,
+        journeyScrolling,
       );
     }
     renderWorld();
@@ -850,12 +861,15 @@ export function initWorld() {
     const cssWidth = Math.max(1, stage.clientWidth);
     const cssHeight = Math.max(1, stage.clientHeight);
     const heroHeight = Math.max(1, hero.clientHeight);
-    const requestedRatio = Math.min(window.devicePixelRatio || 1, 1.75);
+    const requestedRatio = Math.min(
+      window.devicePixelRatio || 1,
+      renderBudget.maxPixelRatio,
+    );
     const requestedPixels =
       cssWidth * requestedRatio * cssHeight * requestedRatio;
     const pixelScale =
-      requestedPixels > MAX_PIXEL_COUNT
-        ? Math.sqrt(MAX_PIXEL_COUNT / requestedPixels)
+      requestedPixels > renderBudget.maxPixelCount
+        ? Math.sqrt(renderBudget.maxPixelCount / requestedPixels)
         : 1;
 
     renderer.setPixelRatio(requestedRatio * pixelScale);
@@ -874,12 +888,25 @@ export function initWorld() {
     layoutPortrait();
     scene.updateMatrixWorld(true);
     portfolioCards.update(camera, cssWidth, cssHeight, journeyScrolling);
-    stockthinkChessWorld.update(camera, cssWidth, cssHeight);
-    cubeBurgerIngredientWorld.update(camera, cssWidth, cssHeight);
+    stockthinkChessWorld.update(camera, cssWidth, cssHeight, journeyScrolling);
+    cubeBurgerIngredientWorld.update(
+      camera,
+      cssWidth,
+      cssHeight,
+      journeyScrolling,
+    );
     if (!journeyScrolling) renderWorld();
   }
 
-  const resizeObserver = new ResizeObserver(resizeScene);
+  function requestResize() {
+    if (resizeAnimationFrameId) return;
+    resizeAnimationFrameId = window.requestAnimationFrame(() => {
+      resizeAnimationFrameId = 0;
+      resizeScene();
+    });
+  }
+
+  const resizeObserver = new ResizeObserver(requestResize);
   resizeObserver.observe(stage);
   resizeScene();
   disposeJourney = initJourneyScroll(
@@ -897,6 +924,9 @@ export function initWorld() {
 
   function dispose() {
     resizeObserver.disconnect();
+    if (resizeAnimationFrameId) {
+      window.cancelAnimationFrame(resizeAnimationFrameId);
+    }
     if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
     if (loadingAnimationFrameId) {
       window.cancelAnimationFrame(loadingAnimationFrameId);

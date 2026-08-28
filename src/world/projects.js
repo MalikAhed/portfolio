@@ -56,7 +56,9 @@ const CUBE_BURGER = Object.freeze({
   previewUrl: "https://malikahed.github.io/cube-burger-site/",
   previewBrand: "CUBE BURGER",
   previewLoaderTheme: "cube-burger",
-  previewLoadDelay: 0,
+  // Require a brief focus dwell so a fast pass through the card never starts
+  // the live site's image and animation workload mid-scroll.
+  previewLoadDelay: 320,
   previewReadySelector: "#app > *",
   previewViewportWidth: 1440,
   keepPreviewMounted: true,
