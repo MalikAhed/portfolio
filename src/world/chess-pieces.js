@@ -7,7 +7,7 @@ function createLathePiece(profile, material) {
   const points = profile.map(
     ([radius, height]) => new THREE.Vector2(radius, height),
   );
-  const mesh = new THREE.Mesh(new THREE.LatheGeometry(points, 28), material);
+  const mesh = new THREE.Mesh(new THREE.LatheGeometry(points, 18), material);
   mesh.castShadow = false;
   mesh.receiveShadow = false;
   return mesh;
@@ -98,9 +98,9 @@ export function createStockThinkChessPieces() {
     roughness: 0.42,
   });
   const charcoal = new THREE.MeshStandardMaterial({
-    color: 0x242320,
+    color: 0x82796d,
     metalness: 0.08,
-    roughness: 0.34,
+    roughness: 0.48,
   });
   const pieces = [
     { mesh: createRook(charcoal), position: [-5.1, 1.15, 0.12], scale: 0.72 },
@@ -126,8 +126,8 @@ export function createStockThinkChessPieces() {
     group.add(mesh);
   });
 
-  const ambient = new THREE.HemisphereLight(0xfff8eb, 0x6f665b, 2.2);
-  const key = new THREE.DirectionalLight(0xffffff, 2.8);
+  const ambient = new THREE.HemisphereLight(0xfff8eb, 0xb6a999, 2.4);
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
   key.position.set(-2, 4, 4);
   group.add(ambient, key);
 

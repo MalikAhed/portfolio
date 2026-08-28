@@ -26,46 +26,8 @@ const STOCKTHINK = Object.freeze({
   technologies: STOCKTHINK_TECHNOLOGIES,
   githubUrl: "https://github.com/MalikAhed/stockthink",
   liveUrl: "https://malikahed.github.io/stockthink/",
-  previewUrl: "https://malikahed.github.io/stockthink/",
-  files: Object.freeze({
-    "main.ts": `import { Chessground } from "chessground";
-import { Chess, normalizeMove } from "chessops/chess";
-import { analysisQueue } from "@backend/chesscom/queue";
-
-async function startAnalysis(pgn: string) {
-  const job = {
-    id: crypto.randomUUID(),
-    pgn,
-    tier: "standard",
-    label: "Pasted game",
-  };
-
-  const report = await analysisQueue.runNow(job, updateProgress);
-  openReport(report);
-}`,
-    "analysis.ts": `export async function analyzeGame(pgn: string) {
-  const positions = parseGame(pgn);
-  const engine = await createStockfishWorker();
-
-  return analyzePositions(engine, positions, {
-    multiPv: 3,
-    onPosition: classifyMove,
-    explain: composeVerifiedExplanation,
-  });
-}`,
-    "package.json": `{
-  "name": "stockthink",
-  "scripts": {
-    "build": "tsc --noEmit && vite build",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "chessground": "^9.1.1",
-    "chessops": "^0.14.2",
-    "three": "^0.160.1"
-  }
-}`,
-  }),
+  previewUrl: "https://malikahed.github.io/stockthink/app.html",
+  files: STOCKTHINK_SOURCE_FILES,
 });
 
 function createCounterProject({
@@ -242,3 +204,4 @@ export function createProjectPreviewDocument(project) {
   </body>
 </html>`;
 }
+import { STOCKTHINK_SOURCE_FILES } from "./stockthink-source.js";

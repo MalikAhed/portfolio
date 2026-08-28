@@ -331,6 +331,15 @@
   background: #fff;
 }
 
+/* StockThink's application shell is taller than the portfolio viewport. Give
+   the iframe a larger layout viewport, then fit it back into the same frame. */
+[data-project-card="stockthink"] .project-card__frame {
+  width: 116.28%;
+  height: 116.28%;
+  transform: scale(0.86);
+  transform-origin: left top;
+}
+
 .project-card__code {
   display: grid;
   grid-template-columns: 142px minmax(0, 1fr);
