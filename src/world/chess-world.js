@@ -44,6 +44,13 @@ export function createStockthinkChessWorld(container, assetUrl) {
     const image = document.createElement("img");
     image.className = "stockthink-chess-piece";
     image.src = assetUrl(config.asset);
+    image.addEventListener(
+      "error",
+      () => {
+        if (config.fallbackAsset) image.src = assetUrl(config.fallbackAsset);
+      },
+      { once: true },
+    );
     image.alt = "";
     image.setAttribute("aria-hidden", "true");
     image.decoding = "async";

@@ -163,7 +163,7 @@ export const CARD_WORLD_CONFIG = Object.freeze({
     }),
   }),
   sideTransformOverrides: Object.freeze({
-    "queue-control": Object.freeze({
+    "cube-burger": Object.freeze({
       text: Object.freeze({
         position: Object.freeze({ x: -65 }),
       }),
@@ -213,7 +213,8 @@ export const STOCKTHINK_CHESS_WORLD_CONFIG = Object.freeze({
   maxBlurPixels: 26,
   pieces: Object.freeze([
     Object.freeze({
-      asset: "assets/rook.png",
+      asset: "assets/rook.webp",
+      fallbackAsset: "assets/rook.png",
       aspect: 1216 / 1294,
       position: Object.freeze([-4.05, -1.5, 12.05]),
       height: 2.05,
@@ -222,7 +223,8 @@ export const STOCKTHINK_CHESS_WORLD_CONFIG = Object.freeze({
       opacity: 1,
     }),
     Object.freeze({
-      asset: "assets/bishiop.png",
+      asset: "assets/bishiop.webp",
+      fallbackAsset: "assets/bishiop.png",
       aspect: 1022 / 1538,
       position: Object.freeze([1.2, 1.48, 12.3]),
       height: 1.58,
@@ -231,13 +233,91 @@ export const STOCKTHINK_CHESS_WORLD_CONFIG = Object.freeze({
       opacity: 1,
     }),
     Object.freeze({
-      asset: "assets/kight.png",
+      asset: "assets/kight.webp",
+      fallbackAsset: "assets/kight.png",
       aspect: 1024 / 1536,
       position: Object.freeze([3.82, -0.08, 12.55]),
       height: 2.05,
       rotation: 7,
       flip: true,
       opacity: 1,
+    }),
+  ]),
+});
+
+/**
+ * Original ingredient-sprite crops surrounding the Cube Burger card. Each
+ * crop owns a distinct foreground Z so camera distance controls its blur and
+ * the following project naturally crosses in front of the complete scene.
+ */
+export const CUBE_BURGER_INGREDIENT_WORLD_CONFIG = Object.freeze({
+  asset: "assets/cube-burger-ingredients.png",
+  projectPosition: Object.freeze([0, 0.06, 16.6]),
+  blurPixelsPerWorldUnit: 4.5,
+  maxBlurPixels: 26,
+  pieces: Object.freeze([
+    Object.freeze({
+      name: "lettuce-top",
+      aspect: 380 / 330,
+      backgroundSize: "404% 310%",
+      backgroundPosition: "1.7% 2.9%",
+      position: Object.freeze([-3.9, 1.55, 17.3]),
+      height: 1.55,
+      rotation: -18,
+    }),
+    Object.freeze({
+      name: "tomato-left",
+      aspect: 310 / 250,
+      backgroundSize: "495% 410%",
+      backgroundPosition: "0 45.2%",
+      position: Object.freeze([-5, -0.18, 17.65]),
+      height: 1.25,
+      rotation: 10,
+    }),
+    Object.freeze({
+      name: "lettuce-bottom",
+      aspect: 340 / 230,
+      backgroundSize: "452% 445%",
+      backgroundPosition: "1.7% 75.6%",
+      position: Object.freeze([-3.65, -1.65, 18.05]),
+      height: 1.15,
+      rotation: 8,
+    }),
+    Object.freeze({
+      name: "onion-top",
+      aspect: 330 / 310,
+      backgroundSize: "465% 330%",
+      backgroundPosition: "86.2% 12.6%",
+      position: Object.freeze([3.45, 1.6, 17.45]),
+      height: 1.35,
+      rotation: 82,
+    }),
+    Object.freeze({
+      name: "lettuce-right",
+      aspect: 256 / 270,
+      backgroundSize: "600% 379%",
+      backgroundPosition: "100% 39.8%",
+      position: Object.freeze([5.05, 0.12, 17.85]),
+      height: 1.18,
+      rotation: 12,
+    }),
+    Object.freeze({
+      name: "tomato-right",
+      aspect: 330 / 260,
+      backgroundSize: "465% 394%",
+      backgroundPosition: "95.3% 68.1%",
+      position: Object.freeze([4.8, -1.45, 18.15]),
+      height: 1.35,
+      rotation: -10,
+    }),
+    Object.freeze({
+      name: "onion-bottom",
+      aspect: 330 / 264,
+      backgroundSize: "465% 388%",
+      backgroundPosition: "70.5% 100%",
+      position: Object.freeze([2.65, -1.7, 17.62]),
+      height: 1.15,
+      rotation: 16,
     }),
   ]),
 });

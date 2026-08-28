@@ -139,9 +139,12 @@ function createTechMarquee(project) {
   return marquee;
 }
 
-function createPreviewLoader(brand) {
+function createPreviewLoader(brand, theme) {
   const element = document.createElement("div");
   element.className = "project-card__preview-loader";
+  if (theme) {
+    element.classList.add(`project-card__preview-loader--${theme}`);
+  }
   element.setAttribute("aria-live", "polite");
   element.setAttribute("aria-label", `${brand} preview waiting to load`);
 
@@ -518,7 +521,7 @@ function createProjectCard(project, index) {
   previewPanel.dataset.cardPanel = "preview";
 
   const previewLoader = project.previewBrand
-    ? createPreviewLoader(project.previewBrand)
+    ? createPreviewLoader(project.previewBrand, project.previewLoaderTheme)
     : null;
 
   const preview = document.createElement("iframe");
@@ -741,7 +744,11 @@ function createProjectCard(project, index) {
   }
 
   function isPreviewAvailable() {
-    return previewActive || isFullscreen();
+    return (
+      previewActive ||
+      isFullscreen() ||
+      (project.keepPreviewMounted && previewLoadStarted)
+    );
   }
 
   function syncPreviewVisibility() {
@@ -795,6 +802,8 @@ function createProjectCard(project, index) {
       const previewDocument = preview.contentDocument;
       const nativeLoader = previewDocument?.getElementById("load");
       if (
+        (project.previewReadySelector &&
+          previewDocument?.querySelector(project.previewReadySelector)) ||
         nativeLoader?.classList.contains("done") ||
         (!nativeLoader && previewDocument?.readyState === "complete")
       ) {
@@ -806,16 +815,19 @@ function createProjectCard(project, index) {
     }
   }
 
+  function watchPreviewReadiness() {
+    if (!previewLoader || previewReady || previewReadyPollTimer) return;
+    previewReadyPollTimer = window.setInterval(checkPreviewReadiness, 100);
+    previewReadyFallbackTimer = window.setTimeout(
+      completePreviewProgress,
+      11000,
+    );
+  }
+
   function handlePreviewLoad() {
     if (!previewLoadStarted) return;
     checkPreviewReadiness();
-    if (!previewReady && !previewReadyPollTimer) {
-      previewReadyPollTimer = window.setInterval(checkPreviewReadiness, 250);
-      previewReadyFallbackTimer = window.setTimeout(
-        completePreviewProgress,
-        11000,
-      );
-    }
+    watchPreviewReadiness();
     syncPreviewVisibility();
   }
 
@@ -825,6 +837,7 @@ function createProjectCard(project, index) {
     preview.hidden = false;
     startPreviewProgress();
     preview.src = project.previewUrl;
+    watchPreviewReadiness();
   }
 
   function schedulePreview() {
@@ -838,7 +851,7 @@ function createProjectCard(project, index) {
       // StockThink measures its canvas during startup. It must have a real
       // viewport before its URL is assigned so its own loader can complete.
       startPreview();
-    }, 550);
+    }, project.previewLoadDelay ?? 550);
   }
 
   function updatePreviewActivity(active) {

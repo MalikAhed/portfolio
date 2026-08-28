@@ -13,6 +13,7 @@ import {
 } from "./config.js";
 import { createPortfolioCards } from "./cards.js";
 import { createStockthinkChessWorld } from "./chess-world.js";
+import { createCubeBurgerIngredientWorld } from "./ingredient-world.js";
 
 const BACKGROUND_COLOR = 0xf5f0e8;
 // The portrait texture is 1024px wide, so rendering a larger full-screen
@@ -270,6 +271,10 @@ export function initWorld() {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const portfolioCards = createPortfolioCards(cardsStage);
   const stockthinkChessWorld = createStockthinkChessWorld(cardsStage, assetUrl);
+  const cubeBurgerIngredientWorld = createCubeBurgerIngredientWorld(
+    cardsStage,
+    assetUrl,
+  );
 
   let renderer;
   try {
@@ -338,7 +343,12 @@ export function initWorld() {
   let projectFrameEditor = null;
   let disposeJourney = () => {};
 
-  scene.add(portfolioCards.group, stockthinkChessWorld.group, portraitGroup);
+  scene.add(
+    portfolioCards.group,
+    stockthinkChessWorld.group,
+    cubeBurgerIngredientWorld.group,
+    portraitGroup,
+  );
   const textureLoader = new THREE.TextureLoader();
 
   function handlePortraitTexture(portraitTexture) {
@@ -710,6 +720,11 @@ export function initWorld() {
         stage.clientWidth,
         stage.clientHeight,
       );
+      cubeBurgerIngredientWorld.update(
+        camera,
+        stage.clientWidth,
+        stage.clientHeight,
+      );
     }
     renderWorld();
   }
@@ -860,6 +875,7 @@ export function initWorld() {
     scene.updateMatrixWorld(true);
     portfolioCards.update(camera, cssWidth, cssHeight, journeyScrolling);
     stockthinkChessWorld.update(camera, cssWidth, cssHeight);
+    cubeBurgerIngredientWorld.update(camera, cssWidth, cssHeight);
     if (!journeyScrolling) renderWorld();
   }
 
@@ -903,6 +919,7 @@ export function initWorld() {
     projectFrameEditor?.dispose();
     portfolioCards.dispose();
     stockthinkChessWorld.dispose();
+    cubeBurgerIngredientWorld.dispose();
 
     const disposedGeometries = new Set();
     const disposedMaterials = new Set();

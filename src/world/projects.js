@@ -13,6 +13,13 @@ const STOCKTHINK_TECHNOLOGIES = Object.freeze([
   Object.freeze({ label: "Chessops", mark: "C" }),
 ]);
 
+const CUBE_BURGER_TECHNOLOGIES = Object.freeze([
+  Object.freeze({ label: "JavaScript", mark: "JS" }),
+  Object.freeze({ label: "Vite", mark: "V" }),
+  Object.freeze({ label: "CSS", mark: "#" }),
+  Object.freeze({ label: "Playwright", mark: "PW" }),
+]);
+
 const STOCKTHINK = Object.freeze({
   id: "stockthink",
   title: "StockThink",
@@ -31,6 +38,70 @@ const STOCKTHINK = Object.freeze({
   previewViewportWidth: 1440,
   sourceRevision: "0e0b4bf",
   files: STOCKTHINK_SOURCE_FILES,
+});
+
+const CUBE_BURGER = Object.freeze({
+  id: "cube-burger",
+  title: "Cube Burger",
+  description: "A bold, art-directed restaurant experience.",
+  summary:
+    "A responsive restaurant landing page built around oversized food photography, playful ingredient motion, and a tactile visual system that makes the brand feel immediate and memorable.",
+  highlights: Object.freeze([
+    "Art-directed ingredient composition across breakpoints",
+    "Responsive food rotator and interaction system",
+  ]),
+  technologies: CUBE_BURGER_TECHNOLOGIES,
+  githubUrl: "https://github.com/MalikAhed/cube-burger-site",
+  liveUrl: "https://malikahed.github.io/cube-burger-site/",
+  previewUrl: "https://malikahed.github.io/cube-burger-site/",
+  previewBrand: "CUBE BURGER",
+  previewLoaderTheme: "cube-burger",
+  previewLoadDelay: 0,
+  previewReadySelector: "#app > *",
+  previewViewportWidth: 1440,
+  keepPreviewMounted: true,
+  sourceRevision: "691d464",
+  files: Object.freeze({
+    "src/main.js": `const INGREDIENTS = [
+  ["lettuceTop", "Top lettuce"],
+  ["tomatoLeft", "Left tomato"],
+  ["lettuceBottom", "Lower lettuce"],
+  ["onionTop", "Top onion"],
+  ["lettuceRight", "Right lettuce"],
+  ["tomatoRight", "Right tomato"],
+  ["onionBottom", "Lower onion"],
+];
+
+const ingredientLayer = INGREDIENTS.map(
+  ([name, label]) =>
+    \`<div class="ingredient-piece ingredient-piece--\${name}" aria-label="\${label}"><span></span></div>\`,
+).join("");`,
+    "src/styles.css": `.ingredient-piece > span {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-image: var(--ingredients-image);
+  background-repeat: no-repeat;
+}
+
+.ingredient-piece--lettuceTop > span {
+  background-size: 404% 310%;
+  background-position: 1.7% 2.9%;
+}
+
+.ingredient-piece--tomatoLeft > span {
+  background-size: 495% 410%;
+  background-position: 0 45.2%;
+}`,
+    "src/ingredient-layout.json": `{
+  "desktop": {
+    "lettuceTop": { "x": 26.1, "y": 22.2, "scale": 1, "rotate": -18 },
+    "tomatoLeft": { "x": 12.4, "y": 44.9, "scale": 0.87, "rotate": 10 },
+    "onionTop": { "x": 81.1, "y": 23.2, "scale": 0.92, "rotate": 82 },
+    "tomatoRight": { "x": 97.3, "y": 84.7, "scale": 1.6, "rotate": -10 }
+  }
+}`,
+  }),
 });
 
 function createCounterProject({
@@ -147,18 +218,7 @@ document.addEventListener("click", (event) => {
  */
 export const PROJECTS = Object.freeze([
   STOCKTHINK,
-  createCounterProject({
-    id: "queue-control",
-    title: "Queue Control",
-    description: "A compact simulation of queue controls.",
-    summary:
-      "A compact control surface designed to make changing workload visible without burying the operator in interface chrome.",
-    highlights: ["Fast operational feedback", "Low-friction controls"],
-    accent: "#85d7ff",
-    initialValue: 12,
-    githubUrl: "https://github.com/MalikAhed/portfolio",
-    liveUrl: "https://malikahed.github.io/portfolio/",
-  }),
+  CUBE_BURGER,
   createCounterProject({
     id: "capacity-planner",
     title: "Capacity Planner",

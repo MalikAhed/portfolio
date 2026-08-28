@@ -26,6 +26,7 @@ src/
 ├── world/
 │   ├── cards.js              # World anchors + projected DOM project views
 │   ├── chess-world.js        # Depth-projected StockThink chess-piece sprites
+│   ├── ingredient-world.js   # Depth-projected Cube Burger ingredient crops
 │   ├── project-frame-editor.js  # Final-frame position, rotation, and size controls
 │   ├── project-frame-editor.css # Compact fixed Project Frames panel
 │   ├── config.js             # Camera, focus, and responsive world positions
@@ -104,6 +105,19 @@ src/
   then blurs and fades after receding. Piece sprites use a stronger blur range
   than cards so the effect remains legible on their large silhouettes. They
   remain pointer-inert and introduce no independent motion under reduced motion.
+- Cube Burger replaces the second placeholder with its live full-width site
+  preview. Seven lettuce, tomato, and onion crops reuse the original project's
+  ingredient sprite sheet around that card. Their projected anchors occupy
+  distinct foreground Z positions, so every crop sharpens, blurs, and fades at
+  its own camera distance; the following project naturally crosses in front.
+  Its lightweight iframe remains mounted after its first load instead of
+  flashing to a blank surface during scroll, while its preview fallback uses
+  the site's own cream. A cream-and-red Cube Burger splash starts the iframe as
+  soon as the card becomes active and clears on the project's first rendered
+  DOM content instead of waiting for every large image. The preview remains
+  mounted and can finish its imagery progressively. StockThink retains its dark
+  loading curtain and focused paint lifecycle because its WebGL preview is
+  substantially heavier.
 - The StockThink preview uses a staged load. After the portfolio finishes, its
   document and entry bundles are prefetched at idle priority without creating
   an iframe or WebGL context. Pausing in StockThink's focus band starts the real
@@ -152,6 +166,12 @@ src/
 Only files referenced by the live page belong in `public/assets`. The runtime
 dependencies are Three.js and the three local font packages. Vite is the build
 tool; no framework or parallel editor runtime is present.
+The Hero portrait and foreground chess cutouts use full-resolution, high-quality
+WebP with preserved alpha. Chess images retain their original PNGs as runtime
+fallbacks for preview environments that fail to resolve the optimized files.
+Cube Burger keeps its compact indexed-PNG ingredient sprite because a WebP
+replacement is larger; its photographic site assets use high-quality WebP in
+the source project.
 
 ## Validation
 
