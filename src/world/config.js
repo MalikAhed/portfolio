@@ -100,7 +100,7 @@ export const CARD_WORLD_CONFIG = Object.freeze({
   id: "portfolio-cards",
   depthRole: "world",
   aspectRatio: 2,
-  width: 6.2,
+  width: 7,
   cornerRadius: 0.12,
   worldUnitsPerCssPixel: 0.005,
   hover: Object.freeze({
