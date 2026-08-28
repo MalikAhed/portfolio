@@ -120,6 +120,28 @@
   color: rgb(249 245 239 / 65%);
 }
 
+.project-frame-editor__side-editor {
+  display: grid;
+  gap: 0.55rem;
+  padding-block-start: 0.8rem;
+  border-block-start: 1px solid rgb(255 255 255 / 12%);
+}
+
+.project-frame-editor__side-editor legend {
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  color: var(--color-paper);
+  background: rgb(255 255 255 / 10%);
+  font-weight: 700;
+}
+
+.project-frame-editor__side-heading {
+  color: rgb(249 245 239 / 56%);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .project-frame-editor__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -153,7 +175,8 @@
   gap: 0.5rem;
 }
 
-.project-frame-editor__actions button {
+.project-frame-editor__actions button,
+.project-frame-editor__side-actions button {
   min-block-size: 2.1rem;
   padding: 0.45rem 0.65rem;
   border: 1px solid rgb(255 255 255 / 18%);
@@ -164,12 +187,22 @@
   cursor: pointer;
 }
 
-.project-frame-editor__actions [data-project-frame-copy-size] {
+.project-frame-editor__side-actions {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.5rem;
+}
+
+.project-frame-editor__actions [data-project-frame-copy-settings] {
   grid-column: 1 / -1;
+  border-color: rgb(255 255 255 / 34%);
+  background: rgb(255 255 255 / 9%);
 }
 
 .project-frame-editor__actions button:hover,
-.project-frame-editor__actions button:focus-visible {
+.project-frame-editor__actions button:focus-visible,
+.project-frame-editor__side-actions button:hover,
+.project-frame-editor__side-actions button:focus-visible {
   background: rgb(255 255 255 / 12%);
 }
 

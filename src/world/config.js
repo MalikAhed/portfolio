@@ -113,6 +113,22 @@ export const CARD_WORLD_CONFIG = Object.freeze({
     viewportWidthFraction: 0.94,
     wideSurfaceAspect: 3 / 2,
   }),
+  sideTransforms: Object.freeze({
+    preview: Object.freeze({
+      position: Object.freeze({ x: 0, y: 0, z: 0 }),
+      rotation: Object.freeze({ x: 0, y: 0, z: 0 }),
+      width: 1,
+      height: 1,
+      scale: 1,
+    }),
+    text: Object.freeze({
+      position: Object.freeze({ x: 0, y: 0, z: 0 }),
+      rotation: Object.freeze({ x: 0, y: 0, z: 0 }),
+      width: 1,
+      height: 1,
+      scale: 1,
+    }),
+  }),
   hover: Object.freeze({
     maxTilt: Math.PI / 18,
     scale: 1.035,

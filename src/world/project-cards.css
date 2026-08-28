@@ -24,6 +24,8 @@
   filter: blur(var(--card-defocus, 0px));
   transform-origin: 0 0;
   will-change: transform;
+  perspective: 1600px;
+  transform-style: preserve-3d;
 }
 
 .project-card--work-right {
@@ -40,12 +42,36 @@
   pointer-events: auto;
 }
 
+.project-card__work-transform {
+  display: flex;
+  align-self: center;
+  grid-area: work;
+  align-items: center;
+  inline-size: 100%;
+  transform: translate(
+      var(--frame-work-entry-x, 0),
+      var(--frame-work-entry-y, 0)
+    )
+    translate3d(
+      var(--side-position-x, 0),
+      var(--side-position-y, 0),
+      var(--side-position-z, 0)
+    )
+    rotateX(var(--side-rotation-x, 0deg)) rotateY(var(--side-rotation-y, 0deg))
+    rotateZ(var(--side-rotation-z, 0deg))
+    scale3d(
+      var(--side-scale-x, 1),
+      var(--side-scale-y, 1),
+      var(--side-scale-z, 1)
+    );
+  transform-style: preserve-3d;
+  transform-origin: center;
+}
+
 .project-card__surface {
   --card-tilt-x: 0deg;
   --card-tilt-y: 0deg;
   display: grid;
-  align-self: center;
-  grid-area: work;
   grid-template-rows: auto minmax(0, 1fr);
   inline-size: 100%;
   block-size: auto;
@@ -55,11 +81,7 @@
   border-radius: var(--project-card-radius, 34px);
   background: #fff;
   box-shadow: 0 26px 60px rgb(28 28 26 / 16%);
-  transform: translate(
-      var(--frame-work-entry-x, 0),
-      var(--frame-work-entry-y, 0)
-    )
-    rotateX(var(--card-tilt-x)) rotateY(var(--card-tilt-y));
+  transform: rotateX(var(--card-tilt-x)) rotateY(var(--card-tilt-y));
   transform-style: preserve-3d;
   transition: transform 180ms ease;
   backface-visibility: hidden;
@@ -76,6 +98,20 @@
   block-size: 100%;
   padding-block: 24px 54px;
   color: var(--color-ink-strong);
+  transform: translate3d(
+      var(--side-position-x, 0),
+      var(--side-position-y, 0),
+      var(--side-position-z, 0)
+    )
+    rotateX(var(--side-rotation-x, 0deg)) rotateY(var(--side-rotation-y, 0deg))
+    rotateZ(var(--side-rotation-z, 0deg))
+    scale3d(
+      var(--side-scale-x, 1),
+      var(--side-scale-y, 1),
+      var(--side-scale-z, 1)
+    );
+  transform-style: preserve-3d;
+  transform-origin: center;
 }
 
 .project-card__explainer > * {
@@ -242,6 +278,13 @@
   background: #fff;
 }
 
+.project-card__header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
 .project-card__identity {
   min-inline-size: 0;
 }
@@ -320,6 +363,53 @@
 .project-card__mode-icon {
   inline-size: 15px;
   block-size: 15px;
+}
+
+.project-card__fullscreen {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-block-size: 40px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  color: #4f504d;
+  background: #f5f5f2;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.project-card__fullscreen:hover,
+.project-card__fullscreen:focus-visible {
+  color: #fff;
+  background: #1d1d1f;
+  box-shadow: 0 7px 18px rgb(28 28 26 / 16%);
+  transform: translateY(-2px);
+}
+
+.project-card__fullscreen.is-active {
+  color: #fff;
+  background: #1d1d1f;
+}
+
+.project-card__fullscreen-icon {
+  inline-size: 17px;
+  block-size: 17px;
+}
+
+.project-card__surface:fullscreen {
+  inline-size: 100vw;
+  block-size: 100vh;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+  transform: none;
 }
 
 .project-card__viewport,
@@ -552,6 +642,22 @@
 
   .project-card__surface {
     transform: rotateX(var(--card-tilt-x)) rotateY(var(--card-tilt-y));
+  }
+
+  .project-card__work-transform {
+    transform: translate3d(
+        var(--side-position-x, 0),
+        var(--side-position-y, 0),
+        var(--side-position-z, 0)
+      )
+      rotateX(var(--side-rotation-x, 0deg))
+      rotateY(var(--side-rotation-y, 0deg))
+      rotateZ(var(--side-rotation-z, 0deg))
+      scale3d(
+        var(--side-scale-x, 1),
+        var(--side-scale-y, 1),
+        var(--side-scale-z, 1)
+      );
   }
 
   .project-card__explainer > * {

@@ -62,12 +62,14 @@ src/
   and project links. Frames stay hidden while the camera crosses their
   plane, then the work surface slides into place and the explainer resolves
   upward from blur. The Preview/Code control is one pill toggle, and the Code
-  view has an Inspira-style folder tree beside the source pane. The Project
-  Frames panel may directly change each base position, XYZ rotation, frame
-  width, frame height, and scale. It can copy the selected dimensions for
-  permanent configuration, while pointer hover changes only the focused work
-  surface. Reset restores the active responsive preset from `config.js`;
-  scrolling moves only the camera.
+  view has an Inspira-style folder tree beside the source pane. Its header also
+  exposes the complete work surface through the browser Fullscreen API. The
+  Project Frames panel may directly change each base position, XYZ rotation,
+  frame width, frame height, and scale, plus independent preview-side and
+  text-side position, rotation, width, height, and scale. It can copy either
+  side or the complete selected project settings for permanent configuration,
+  while pointer hover changes only the focused work surface. Reset restores the
+  active responsive preset from `config.js`; scrolling moves only the camera.
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
   supplies their internal z-order, so an approaching card crosses in front of
   the preceding card without removing either surface.
@@ -88,11 +90,14 @@ src/
   complete left/right composition visible. Very wide, short windows use a 3:2
   work surface instead of 4:3 to preserve that vertical fit. Resizing within
   one preset updates the fit without resetting editor changes.
-- Rendering sleeps when the scene is settled or the page is hidden. Native
-  scroll, resize, pointer motion, or editor changes render the required output.
-  WebGL pixel count is capped. Only cards with a meaningful on-screen opacity
-  are painted, just one card is interactive, and pointer tilt reads layout once
-  on entry before batching style updates to animation frames.
+- Rendering sleeps when the scene is settled or the page is hidden. During
+  active native scrolling, camera and DOM projection state update without a
+  WebGL draw, chess animation, or visible StockThink iframe; one settled frame
+  resumes them after scrolling stops. Resize, pointer motion, or editor changes
+  otherwise render the required output. WebGL pixel count is capped. Only cards
+  with a meaningful on-screen opacity are painted, just one card is interactive,
+  and pointer tilt reads layout once on entry before batching style updates to
+  animation frames.
 
 ## Progressive enhancement
 

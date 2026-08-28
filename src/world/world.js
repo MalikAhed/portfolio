@@ -19,6 +19,7 @@ const INTRO_MINIMUM_MS = 1200;
 const INTRO_CAMERA_DURATION_MS = 650;
 const INTRO_FAILSAFE_MS = 1000;
 const SPLASH_REVEAL_FAILSAFE_MS = 1400;
+const SCROLL_RENDER_SETTLE_MS = 140;
 const PORTRAIT_ALPHA_CUTOFF = 0.45;
 const PORTRAIT_SHADOW_OPACITY = 0.28;
 const PORTRAIT_SHADOW_BLUR_TEXELS = 10;
@@ -117,6 +118,9 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
   let endY = 1;
   let animationFrameId = 0;
   let previousScrollY = window.scrollY;
+  let scrollSettleTimer = 0;
+  let scrolling = false;
+  let latestState = createJourneyState(0, reducedMotion.matches);
 
   function measure() {
     const bounds = journeyTrack.getBoundingClientRect();
@@ -132,6 +136,7 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
     const progress = clamp((window.scrollY - startY) / (endY - startY));
     const scrollDelta = window.scrollY - previousScrollY;
     const state = createJourneyState(progress, reducedMotion.matches);
+    latestState = state;
     worldStage.style.setProperty(
       "--origin-depth-scale",
       state.originDepthScale.toFixed(5),
@@ -154,7 +159,7 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
       worldStage.classList.add("is-header-hidden");
     }
     previousScrollY = window.scrollY;
-    onChange(state);
+    onChange(state, scrolling);
   }
 
   function requestUpdate() {
@@ -163,12 +168,24 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
     }
   }
 
+  function handleScroll() {
+    scrolling = true;
+    onChange(latestState, true);
+    if (scrollSettleTimer) window.clearTimeout(scrollSettleTimer);
+    scrollSettleTimer = window.setTimeout(() => {
+      scrollSettleTimer = 0;
+      scrolling = false;
+      update();
+    }, SCROLL_RENDER_SETTLE_MS);
+    requestUpdate();
+  }
+
   function handleResize() {
     measure();
     requestUpdate();
   }
 
-  window.addEventListener("scroll", requestUpdate, { passive: true });
+  window.addEventListener("scroll", handleScroll, { passive: true });
   window.addEventListener("resize", handleResize, { passive: true });
   reducedMotion.addEventListener("change", requestUpdate);
   measure();
@@ -176,7 +193,8 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
 
   return () => {
     if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
-    window.removeEventListener("scroll", requestUpdate);
+    if (scrollSettleTimer) window.clearTimeout(scrollSettleTimer);
+    window.removeEventListener("scroll", handleScroll);
     window.removeEventListener("resize", handleResize);
     reducedMotion.removeEventListener("change", requestUpdate);
     worldStage.classList.remove("is-journey-canvas");
@@ -245,8 +263,10 @@ export function initWorld() {
   renderer.autoClear = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   stage.append(renderer.domElement);
+  let journeyScrolling = false;
 
   function renderWorld() {
+    if (journeyScrolling) return;
     renderer.clear(true, true, true);
     renderer.render(scene, camera);
   }
@@ -635,13 +655,18 @@ export function initWorld() {
     portraitGroup.rotation.x = -pointerCurrent.y * 0.016;
     portraitGroup.position.x = pointerCurrent.x * 0.038;
     portraitGroup.position.y = pointerCurrent.y * 0.02 + introPortraitOffsetY;
-    stockThinkChess.update(time, reducedMotion.matches);
+    if (!journeyScrolling) stockThinkChess.update(time, reducedMotion.matches);
     scene.updateMatrixWorld(true);
     if (forceCards || camera.position.z !== renderedCardsCameraZ) {
       renderedCardsCameraZ = camera.position.z;
-      portfolioCards.update(camera, stage.clientWidth, stage.clientHeight);
+      portfolioCards.update(
+        camera,
+        stage.clientWidth,
+        stage.clientHeight,
+        journeyScrolling,
+      );
     }
-    renderWorld();
+    if (!journeyScrolling) renderWorld();
   }
 
   function applyCamera() {
@@ -683,7 +708,9 @@ export function initWorld() {
   }
 
   function sceneNeedsAnotherFrame() {
-    if (reducedMotion.matches || document.hidden) return false;
+    if (journeyScrolling || reducedMotion.matches || document.hidden) {
+      return false;
+    }
 
     const pointerIsSettling =
       pointerCurrent.distanceToSquared(pointerTarget) > 0.000001;
@@ -739,10 +766,11 @@ export function initWorld() {
     requestSceneFrame();
   }
 
-  function handleJourneyState(nextState) {
+  function handleJourneyState(nextState, scrolling) {
     journeyState = nextState;
+    journeyScrolling = scrolling;
     previousFrameTime = 0;
-    renderScene(performance.now());
+    renderScene(performance.now(), true);
     if (sceneNeedsAnotherFrame()) requestSceneFrame();
     else previousFrameTime = 0;
   }
@@ -785,8 +813,8 @@ export function initWorld() {
     applyCamera();
     layoutPortrait();
     scene.updateMatrixWorld(true);
-    portfolioCards.update(camera, cssWidth, cssHeight);
-    renderWorld();
+    portfolioCards.update(camera, cssWidth, cssHeight, journeyScrolling);
+    if (!journeyScrolling) renderWorld();
   }
 
   const resizeObserver = new ResizeObserver(resizeScene);

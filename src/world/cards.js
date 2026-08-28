@@ -18,6 +18,18 @@ const projectedTopLeft = new THREE.Vector3();
 const projectedTopRight = new THREE.Vector3();
 const projectedBottomLeft = new THREE.Vector3();
 const projectedBottomRight = new THREE.Vector3();
+const PROJECT_SIDE_NAMES = Object.freeze(["preview", "text"]);
+
+function cloneSideTransform(side) {
+  const defaults = CARD_WORLD_CONFIG.sideTransforms[side];
+  return {
+    position: { ...defaults.position },
+    rotation: { ...defaults.rotation },
+    width: defaults.width,
+    height: defaults.height,
+    scale: defaults.scale,
+  };
+}
 
 function createButton(label, className) {
   const button = document.createElement("button");
@@ -47,6 +59,22 @@ function createModeIcon(type) {
   );
   icon.append(path);
   return icon;
+}
+
+function createFullscreenIcon() {
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.classList.add("project-card__fullscreen-icon");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("aria-hidden", "true");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("stroke-width", "1.8");
+  icon.append(path);
+  return { element: icon, path };
 }
 
 function createActionIcon(type) {
@@ -331,6 +359,9 @@ function createProjectCard(project, index, reducedMotion) {
   const surface = document.createElement("div");
   surface.className = "project-card__surface";
 
+  const workTransform = document.createElement("div");
+  workTransform.className = "project-card__work-transform";
+
   const explainer = document.createElement("aside");
   explainer.className = "project-card__explainer";
 
@@ -400,7 +431,20 @@ function createProjectCard(project, index, reducedMotion) {
   previewButton.dataset.cardMode = "preview";
   codeButton.dataset.cardMode = "code";
   modeControls.append(previewButton, codeButton);
-  header.append(identity, modeControls);
+
+  const fullscreenIcon = createFullscreenIcon();
+  const fullscreenButton = createButton("", "project-card__fullscreen");
+  const fullscreenLabel = document.createElement("span");
+  fullscreenLabel.textContent = "Full screen";
+  fullscreenButton.append(fullscreenIcon.element, fullscreenLabel);
+  fullscreenButton.hidden =
+    !document.fullscreenEnabled ||
+    typeof surface.requestFullscreen !== "function";
+
+  const headerActions = document.createElement("div");
+  headerActions.className = "project-card__header-actions";
+  headerActions.append(modeControls, fullscreenButton);
+  header.append(identity, headerActions);
 
   const viewport = document.createElement("div");
   viewport.className = "project-card__viewport";
@@ -416,6 +460,7 @@ function createProjectCard(project, index, reducedMotion) {
   const preview = document.createElement("iframe");
   preview.className = "project-card__frame";
   preview.title = `${project.title} interactive preview`;
+  preview.allow = "fullscreen";
   if (!project.previewUrl) preview.setAttribute("sandbox", "allow-scripts");
   preview.setAttribute("loading", "lazy");
   preview.hidden = true;
@@ -441,7 +486,8 @@ function createProjectCard(project, index, reducedMotion) {
   codePanel.append(treePanel, sourcePanel);
   viewport.append(previewPanel, codePanel);
   surface.append(header, viewport);
-  card.append(surface, explainer);
+  workTransform.append(surface);
+  card.append(workTransform, explainer);
 
   const fileEntries = Object.entries(project.files);
   let fileTree;
@@ -472,13 +518,47 @@ function createProjectCard(project, index, reducedMotion) {
     codeButton.classList.toggle("is-active", !showPreview);
     previewButton.setAttribute("aria-pressed", String(showPreview));
     codeButton.setAttribute("aria-pressed", String(!showPreview));
-    if (showPreview && previewActive) schedulePreview();
+    if (showPreview && isPreviewAvailable()) schedulePreview();
     else if (!showPreview && !previewLoadStarted) clearPreviewLoadTimer();
     syncPreviewVisibility();
   }
 
   function handleModeClick(event) {
     setMode(event.currentTarget.dataset.cardMode);
+  }
+
+  function syncFullscreenButton() {
+    const fullscreen = document.fullscreenElement === surface;
+    fullscreenButton.classList.toggle("is-active", fullscreen);
+    fullscreenButton.setAttribute("aria-pressed", String(fullscreen));
+    fullscreenButton.setAttribute(
+      "aria-label",
+      `${fullscreen ? "Exit" : "Enter"} ${project.title} full screen`,
+    );
+    fullscreenLabel.textContent = fullscreen
+      ? "Exit full screen"
+      : "Full screen";
+    fullscreenIcon.path.setAttribute(
+      "d",
+      fullscreen
+        ? "M9 4v5H4 M15 4v5h5 M9 20v-5H4 M15 20v-5h5"
+        : "M9 4H4v5 M15 4h5v5 M9 20H4v-5 M15 20h5v-5",
+    );
+    if (fullscreen && currentMode === "preview") schedulePreview();
+    syncPreviewVisibility();
+  }
+
+  async function handleFullscreenClick() {
+    try {
+      if (document.fullscreenElement === surface) {
+        await document.exitFullscreen();
+      } else {
+        resetTilt();
+        await surface.requestFullscreen({ navigationUI: "hide" });
+      }
+    } catch (error) {
+      console.warn("Could not change the project fullscreen state.", error);
+    }
   }
 
   let pointerBounds = null;
@@ -525,16 +605,44 @@ function createProjectCard(project, index, reducedMotion) {
     surface.style.removeProperty("--card-tilt-y");
   }
 
+  function setSideTransform(side, transform) {
+    if (!PROJECT_SIDE_NAMES.includes(side)) return;
+    const target = side === "preview" ? workTransform : explainer;
+    target.style.setProperty("--side-position-x", `${transform.position.x}px`);
+    target.style.setProperty("--side-position-y", `${transform.position.y}px`);
+    target.style.setProperty("--side-position-z", `${transform.position.z}px`);
+    target.style.setProperty("--side-rotation-x", `${transform.rotation.x}rad`);
+    target.style.setProperty("--side-rotation-y", `${transform.rotation.y}rad`);
+    target.style.setProperty("--side-rotation-z", `${transform.rotation.z}rad`);
+    target.style.setProperty(
+      "--side-scale-x",
+      String(transform.scale * transform.width),
+    );
+    target.style.setProperty(
+      "--side-scale-y",
+      String(transform.scale * transform.height),
+    );
+    target.style.setProperty("--side-scale-z", String(transform.scale));
+  }
+
   function clearPreviewLoadTimer() {
     if (!previewLoadTimer) return;
     window.clearTimeout(previewLoadTimer);
     previewLoadTimer = 0;
   }
 
+  function isPreviewAvailable() {
+    return previewActive || document.fullscreenElement === surface;
+  }
+
   function syncPreviewVisibility() {
     if (!project.previewUrl) return;
     const showingPreview = currentMode === "preview";
-    preview.hidden = !(showingPreview && previewActive && previewLoadStarted);
+    preview.hidden = !(
+      showingPreview &&
+      isPreviewAvailable() &&
+      previewLoadStarted
+    );
     if (previewLoader) previewLoader.element.hidden = !showingPreview;
   }
 
@@ -627,7 +735,7 @@ function createProjectCard(project, index, reducedMotion) {
   function updatePreviewActivity(active) {
     if (!project.previewUrl) return;
     previewActive = active;
-    if (active && currentMode === "preview") schedulePreview();
+    if (isPreviewAvailable() && currentMode === "preview") schedulePreview();
     else clearPreviewLoadTimer();
     syncPreviewVisibility();
   }
@@ -635,11 +743,14 @@ function createProjectCard(project, index, reducedMotion) {
   preview.addEventListener("load", handlePreviewLoad);
   previewButton.addEventListener("click", handleModeClick);
   codeButton.addEventListener("click", handleModeClick);
+  fullscreenButton.addEventListener("click", handleFullscreenClick);
+  document.addEventListener("fullscreenchange", syncFullscreenButton);
   card.addEventListener("pointerenter", handlePointerEnter);
   card.addEventListener("pointermove", handlePointerMove);
   card.addEventListener("pointerleave", resetTilt);
   setMode("preview");
   setFile(fileEntries[0][0]);
+  syncFullscreenButton();
   if (!project.previewUrl) {
     preview.hidden = false;
     preview.srcdoc = createProjectPreviewDocument(project);
@@ -648,10 +759,13 @@ function createProjectCard(project, index, reducedMotion) {
   return {
     element: card,
     setDimensions,
+    setSideTransform,
     updatePreviewActivity,
     dispose() {
       previewButton.removeEventListener("click", handleModeClick);
       codeButton.removeEventListener("click", handleModeClick);
+      fullscreenButton.removeEventListener("click", handleFullscreenClick);
+      document.removeEventListener("fullscreenchange", syncFullscreenButton);
       fileTree.dispose();
       card.removeEventListener("pointerenter", handlePointerEnter);
       card.removeEventListener("pointermove", handlePointerMove);
@@ -706,6 +820,10 @@ export function createPortfolioCards(reducedMotion, container) {
       inFront: false,
       rig,
       screenBounds: { bottom: 0, left: 0, right: 0, top: 0 },
+      sideTransforms: {
+        preview: cloneSideTransform("preview"),
+        text: cloneSideTransform("text"),
+      },
       visibility: 0,
       view,
       width: CARD_WORLD_CONFIG.width,
@@ -727,6 +845,10 @@ export function createPortfolioCards(reducedMotion, container) {
     );
   }
 
+  function applySideTransform(entry, side) {
+    entry.view.setSideTransform(side, entry.sideTransforms[side]);
+  }
+
   function applyPreset(index) {
     const config = getCardPreset(preset)[index];
     const entry = entries[index];
@@ -736,6 +858,10 @@ export function createPortfolioCards(reducedMotion, container) {
     entry.baseScale = config.scale;
     entry.width = CARD_WORLD_CONFIG.width;
     entry.height = CARD_WORLD_CONFIG.height;
+    PROJECT_SIDE_NAMES.forEach((side) => {
+      entry.sideTransforms[side] = cloneSideTransform(side);
+      applySideTransform(entry, side);
+    });
     view.setDimensions(entry.width, entry.height);
     applyResponsiveScale(entry);
   }
@@ -851,7 +977,7 @@ export function createPortfolioCards(reducedMotion, container) {
     );
   }
 
-  function update(camera, width, height) {
+  function update(camera, width, height, scrolling = false) {
     let activeEntry = null;
     let activeDistance = Number.POSITIVE_INFINITY;
 
@@ -899,7 +1025,10 @@ export function createPortfolioCards(reducedMotion, container) {
         activeDistance <= FOCUS_WORLD_CONFIG.interactionBand &&
         rendered;
       const previewActive =
-        active && activeDistance <= FOCUS_WORLD_CONFIG.previewBand && rendered;
+        !scrolling &&
+        active &&
+        activeDistance <= FOCUS_WORLD_CONFIG.previewBand &&
+        rendered;
 
       if (rendered) {
         positionView(entry, camera, width, height);
@@ -966,6 +1095,22 @@ export function createPortfolioCards(reducedMotion, container) {
     };
   }
 
+  function getSideTransform(index, side) {
+    const entry = entries[index];
+    if (!entry) throw new RangeError(`Unknown portfolio card: ${index}`);
+    if (!PROJECT_SIDE_NAMES.includes(side)) {
+      throw new RangeError(`Unknown portfolio card side: ${side}`);
+    }
+    const transform = entry.sideTransforms[side];
+    return {
+      position: { ...transform.position },
+      rotation: { ...transform.rotation },
+      width: transform.width,
+      height: transform.height,
+      scale: transform.scale,
+    };
+  }
+
   function setTransformComponent(index, type, axis, value) {
     const entry = entries[index];
     if (!entry) throw new RangeError(`Unknown portfolio card: ${index}`);
@@ -990,6 +1135,32 @@ export function createPortfolioCards(reducedMotion, container) {
     applyResponsiveScale(entry);
   }
 
+  function setSideTransformComponent(index, side, type, axis, value) {
+    const entry = entries[index];
+    if (!entry) throw new RangeError(`Unknown portfolio card: ${index}`);
+    if (!PROJECT_SIDE_NAMES.includes(side)) return;
+    const transform = entry.sideTransforms[side];
+
+    if (type === "position" || type === "rotation") {
+      if (!Object.hasOwn(transform[type], axis)) return;
+      transform[type][axis] = value;
+    } else if (type === "width" || type === "height" || type === "scale") {
+      transform[type] = value;
+    } else {
+      return;
+    }
+
+    applySideTransform(entry, side);
+  }
+
+  function resetSideTransform(index, side) {
+    const entry = entries[index];
+    if (!entry) throw new RangeError(`Unknown portfolio card: ${index}`);
+    if (!PROJECT_SIDE_NAMES.includes(side)) return;
+    entry.sideTransforms[side] = cloneSideTransform(side);
+    applySideTransform(entry, side);
+  }
+
   function resetCard(index) {
     if (entries[index]) applyPreset(index);
   }
@@ -1000,12 +1171,15 @@ export function createPortfolioCards(reducedMotion, container) {
 
   return {
     group,
+    getSideTransform,
     getTransform,
     resetAllCards,
     resetCard,
+    resetSideTransform,
     resize,
     setFrameDimension,
     setSize,
+    setSideTransformComponent,
     setTransformComponent,
     update,
     dispose() {
