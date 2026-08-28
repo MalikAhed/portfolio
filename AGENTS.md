@@ -6,8 +6,9 @@ for the current implementation.
 ## Current scope
 
 This repository is intentionally small: one persistent Three.js world with a
-Hero portrait and four blank floating cards. A lightweight DOM shell provides
-the splash, identity, contact action, accessible navigation, and card-transform
+Hero portrait and four floating project frames. Each frame pairs an interactive
+work surface with alternating explainer copy. A lightweight DOM shell provides
+the splash, identity, contact action, accessible navigation, and frame-transform
 controls.
 
 Do not restore retired About, Skills, Contact-section, black-hole, fluid-cursor,
@@ -23,9 +24,10 @@ Malik explicitly asks for them.
   and backdrop recede, fade, and blur together as one visual group.
 - The v3 portrait uses a firm silhouette plus one soft, right-offset shadow
   mesh for depth. Keep that shadow tied to the portrait's world transform.
-- Keep the four cards fixed at their configured world coordinates unless the
-  Card editor changes a base position or rotation. Scroll moves the camera, not
-  the cards. Pointer hover may tilt, scale, and move card glare independently.
+- Keep the four project frames fixed at their configured world coordinates
+  unless the Project Frames editor changes a base position, rotation, or size.
+  Scroll moves the camera, not the frames. Pointer hover may tilt the work
+  surface independently.
 - Render the world directly with Three.js. Do not add post-processing or a
   scene-effects editor unless Malik explicitly asks for one.
 - Keep interface controls in semantic DOM above the world canvas.

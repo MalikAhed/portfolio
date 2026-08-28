@@ -1,18 +1,18 @@
-.card-editor {
+.project-frame-editor {
   position: fixed;
   z-index: var(--depth-interface);
   inset: auto clamp(0.75rem, 2vw, 1.5rem) clamp(0.75rem, 2vw, 1.5rem) auto;
-  inline-size: min(21rem, calc(100vw - 1.5rem));
+  inline-size: min(22rem, calc(100vw - 1.5rem));
   color: var(--color-paper);
   font-size: 0.75rem;
 }
 
-.card-editor summary {
+.project-frame-editor summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   inline-size: max-content;
-  min-inline-size: 6.25rem;
+  min-inline-size: 9rem;
   margin-inline-start: auto;
   padding: 0.75rem 1rem;
   border: 1px solid rgb(255 255 255 / 12%);
@@ -23,11 +23,13 @@
   list-style: none;
 }
 
-.card-editor summary::-webkit-details-marker {
+.project-frame-editor summary::-webkit-details-marker {
   display: none;
 }
 
-.card-editor[open] {
+.project-frame-editor[open] {
+  max-block-size: calc(100svh - 1.5rem);
+  overflow: auto;
   padding: 0.75rem;
   border: 1px solid rgb(255 255 255 / 13%);
   border-radius: 1.1rem;
@@ -35,7 +37,7 @@
   box-shadow: 0 1rem 3rem rgb(20 18 15 / 24%);
 }
 
-.card-editor[open] summary {
+.project-frame-editor[open] summary {
   inline-size: 100%;
   margin: 0 0 0.8rem;
   padding: 0.2rem 0.15rem 0.7rem;
@@ -45,75 +47,68 @@
   box-shadow: none;
 }
 
-.card-editor__mark {
+.project-frame-editor__mark {
   font-size: 1rem;
   transition: transform var(--duration-fast) ease;
 }
 
-.card-editor[open] .card-editor__mark {
+.project-frame-editor[open] .project-frame-editor__mark {
   transform: rotate(45deg);
 }
 
-.card-editor__body {
+.project-frame-editor__body,
+.project-frame-editor__select,
+.project-frame-editor__field {
   display: grid;
+  gap: 0.4rem;
+}
+
+.project-frame-editor__body {
   gap: 0.85rem;
 }
 
-.card-editor__select,
-.card-editor__field {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.card-editor__select select,
-.card-editor__field input {
+.project-frame-editor select,
+.project-frame-editor input {
   inline-size: 100%;
   min-block-size: 2.1rem;
+  padding: 0.45rem 0.55rem;
   border: 1px solid rgb(255 255 255 / 18%);
   border-radius: 0.55rem;
   color: inherit;
   background: rgb(255 255 255 / 8%);
   font: inherit;
-}
-
-.card-editor__select select {
-  padding-inline: 0.65rem;
-}
-
-.card-editor__field input {
-  padding: 0.45rem 0.55rem;
   font-variant-numeric: tabular-nums;
 }
 
-.card-editor__group {
+.project-frame-editor__group {
   margin: 0;
   padding: 0;
   border: 0;
 }
 
-.card-editor__group legend {
+.project-frame-editor__group legend {
   margin-block-end: 0.45rem;
   color: rgb(249 245 239 / 65%);
 }
 
-.card-editor__grid {
+.project-frame-editor__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
-.card-editor__field span {
+.project-frame-editor__field span {
   color: rgb(249 245 239 / 68%);
   text-transform: uppercase;
 }
 
-.card-editor__actions {
+.project-frame-editor__actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
 }
 
-.card-editor__actions button {
+.project-frame-editor__actions button {
   min-block-size: 2.1rem;
   padding: 0.45rem 0.65rem;
   border: 1px solid rgb(255 255 255 / 18%);
@@ -124,13 +119,13 @@
   cursor: pointer;
 }
 
-.card-editor__actions button:hover,
-.card-editor__actions button:focus-visible {
+.project-frame-editor__actions button:hover,
+.project-frame-editor__actions button:focus-visible {
   background: rgb(255 255 255 / 12%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card-editor__mark {
+  .project-frame-editor__mark {
     transition: none;
   }
 }

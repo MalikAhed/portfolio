@@ -61,12 +61,13 @@ export function getWorldVisibilityAtDepth(depth) {
  *
  * Owner: depth world
  * Depth role: world
- * Shape: interactive 16:9 HTML project simulation
+ * Shape: wide project frame containing an interactive 16:9 work surface and
+ * an alternating explainer column
  * Entrance/motion: fixed in world space while scrolling; each card becomes
  * viewable only when the camera retreats past its fixed Z position. Pointer
  * hover adds a temporary local CSS tilt without changing the base transform.
- * Editor: position and Euler XYZ rotation may be changed directly; reset
- * restores the active responsive preset below
+ * Editor: position, Euler XYZ rotation, and scalar size may be changed
+ * directly; reset restores the active responsive preset below
  * Rendering: a lightweight Three.js anchor supplies the world transform. Its
  * projected native DOM view remains the visual source at every visible depth;
  * camera-space distance continuously controls blur and opacity, while only the
@@ -81,8 +82,8 @@ export function getWorldVisibilityAtDepth(depth) {
 export const CARD_WORLD_CONFIG = Object.freeze({
   id: "portfolio-cards",
   depthRole: "world",
-  aspectRatio: 16 / 9,
-  width: 2.4,
+  aspectRatio: 2,
+  width: 5.4,
   cornerRadius: 0.12,
   worldUnitsPerCssPixel: 0.005,
   hover: Object.freeze({
@@ -92,28 +93,28 @@ export const CARD_WORLD_CONFIG = Object.freeze({
   }),
   presets: Object.freeze({
     desktop: [
-      { position: [-1.05, 0.32, 7.1], rotation: [0, 0, 0], scale: 0.95 },
-      { position: [1.05, -0.32, 12.5], rotation: [0, 0, 0], scale: 0.98 },
-      { position: [-0.92, -0.24, 17.9], rotation: [0, 0, 0], scale: 0.92 },
-      { position: [0.92, 0.26, 23.3], rotation: [0, 0, 0], scale: 0.95 },
+      { position: [-0.32, 0.12, 7.1], rotation: [0, 0, 0], scale: 1 },
+      { position: [0.32, -0.1, 12.5], rotation: [0, 0, 0], scale: 1 },
+      { position: [-0.32, -0.06, 17.9], rotation: [0, 0, 0], scale: 1 },
+      { position: [0.32, 0.08, 23.3], rotation: [0, 0, 0], scale: 1 },
     ],
     mobile: [
-      { position: [0, 0.48, 7.1], rotation: [0, 0, 0], scale: 0.72 },
-      { position: [0, -0.44, 12.5], rotation: [0, 0, 0], scale: 0.74 },
-      { position: [0, -0.34, 17.9], rotation: [0, 0, 0], scale: 0.7 },
-      { position: [0, 0.38, 23.3], rotation: [0, 0, 0], scale: 0.72 },
+      { position: [0, 0.12, 7.1], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, -0.1, 12.5], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, -0.06, 17.9], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, 0.08, 23.3], rotation: [0, 0, 0], scale: 0.3 },
     ],
     short: [
-      { position: [-1.08, 0.14, 7.1], rotation: [0, 0, 0], scale: 0.76 },
-      { position: [1.12, -0.14, 12.5], rotation: [0, 0, 0], scale: 0.78 },
-      { position: [-1, -0.1, 17.9], rotation: [0, 0, 0], scale: 0.72 },
-      { position: [1, 0.12, 23.3], rotation: [0, 0, 0], scale: 0.76 },
+      { position: [-0.24, 0.04, 7.1], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0.24, -0.04, 12.5], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [-0.24, -0.03, 17.9], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0.24, 0.04, 23.3], rotation: [0, 0, 0], scale: 0.68 },
     ],
     ultrawide: [
-      { position: [-1.3, 0.3, 7.1], rotation: [0, 0, 0], scale: 1.08 },
-      { position: [1.34, -0.3, 12.5], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [-1.2, -0.22, 17.9], rotation: [0, 0, 0], scale: 1.02 },
-      { position: [1.18, 0.24, 23.3], rotation: [0, 0, 0], scale: 1.08 },
+      { position: [-0.45, 0.12, 7.1], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0.45, -0.1, 12.5], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [-0.45, -0.06, 17.9], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0.45, 0.08, 23.3], rotation: [0, 0, 0], scale: 1.12 },
     ],
   }),
 });

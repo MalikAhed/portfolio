@@ -5,9 +5,9 @@ three layers:
 
 1. **Base world** — `.base-world` supplies the fixed warm background.
 2. **Depth world** — one persistent Three.js canvas renders the Hero portrait.
-   Four lightweight Three.js anchors hold the project cards at fixed world
-   coordinates, and their normal DOM project interfaces are projected into
-   screen space above the canvas.
+   Four lightweight Three.js anchors hold wide project frames at fixed world
+   coordinates. Each projected DOM frame pairs a large interactive work view
+   with an alternating explainer column.
 3. **Interface** — semantic DOM provides the header, contact action, skip link,
    identity copy, project controls, card-transform controls, and startup
    splash.
@@ -24,8 +24,8 @@ src/
 ├── styles/                   # Global tokens and stylesheet entry
 ├── world/
 │   ├── cards.js              # World anchors + projected DOM project views
-│   ├── card-editor.js        # Live position and rotation controls
-│   ├── card-editor.css       # Compact fixed Cards panel
+│   ├── project-frame-editor.js  # Final-frame position, rotation, and size controls
+│   ├── project-frame-editor.css # Compact fixed Project Frames panel
 │   ├── config.js             # Camera, focus, and responsive world positions
 │   ├── journey.css           # Transparent native-scroll distance
 │   ├── project-cards.css     # Interactive project-card presentation
@@ -51,12 +51,13 @@ src/
   the camera retreats; the header and contact interface remain crisp.
 - The WebGL renderer draws the Hero directly without post-processing. Every
   card is a conventional DOM interface aligned from its Three.js anchor's
-  projected corners, so the same card content remains visible before, during,
-  and after focus. The Code view has an Inspira-style folder tree beside the
-  source pane. The Cards panel may directly change each base position and XYZ
-  rotation, while pointer hover changes only the focused DOM surface. Reset
-  restores the active responsive preset from `config.js`; scrolling moves only
-  the camera.
+  projected corners, so the same project frame remains visible before, during,
+  and after focus. Its large work surface alternates left and right beside
+  project context, highlights, and stack details. The Code view has an
+  Inspira-style folder tree beside the source pane. The Project Frames panel
+  may directly change each base position, XYZ rotation, and size, while pointer
+  hover changes only the focused work surface. Reset restores the active
+  responsive preset from `config.js`; scrolling moves only the camera.
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
   supplies their internal z-order, so an approaching card crosses in front of
   the preceding card without removing either surface.

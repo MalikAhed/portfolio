@@ -1,8 +1,12 @@
 function createCounterProject({
   accent,
   description,
+  eyebrow,
+  highlights,
   id,
   initialValue,
+  stack,
+  summary,
   title,
 }) {
   const files = {
@@ -88,7 +92,16 @@ document.addEventListener("click", (event) => {
 `,
   };
 
-  return Object.freeze({ description, files: Object.freeze(files), id, title });
+  return Object.freeze({
+    description,
+    eyebrow,
+    files: Object.freeze(files),
+    highlights: Object.freeze(highlights),
+    id,
+    stack: Object.freeze(stack),
+    summary,
+    title,
+  });
 }
 
 /**
@@ -101,6 +114,11 @@ export const PROJECTS = Object.freeze([
     id: "signal-counter",
     title: "Signal Counter",
     description: "A tiny state and interaction study.",
+    eyebrow: "Interface system",
+    summary:
+      "A focused interaction study exploring immediate feedback, legible state, and controls that stay calm under repeated use.",
+    highlights: ["Clear state transitions", "Keyboard-ready controls"],
+    stack: ["HTML", "CSS", "JavaScript"],
     accent: "#ffca66",
     initialValue: 3,
   }),
@@ -108,6 +126,11 @@ export const PROJECTS = Object.freeze([
     id: "queue-control",
     title: "Queue Control",
     description: "A compact simulation of queue controls.",
+    eyebrow: "Operations tool",
+    summary:
+      "A compact control surface designed to make changing workload visible without burying the operator in interface chrome.",
+    highlights: ["Fast operational feedback", "Low-friction controls"],
+    stack: ["HTML", "CSS", "JavaScript"],
     accent: "#85d7ff",
     initialValue: 12,
   }),
@@ -115,6 +138,11 @@ export const PROJECTS = Object.freeze([
     id: "capacity-planner",
     title: "Capacity Planner",
     description: "A small planning-control prototype.",
+    eyebrow: "Planning prototype",
+    summary:
+      "A lightweight planning concept that turns an abstract capacity value into something direct, readable, and adjustable.",
+    highlights: ["Readable planning state", "Responsive interaction"],
+    stack: ["HTML", "CSS", "JavaScript"],
     accent: "#c0f58b",
     initialValue: 24,
   }),
@@ -122,6 +150,11 @@ export const PROJECTS = Object.freeze([
     id: "release-meter",
     title: "Release Meter",
     description: "A simple release-readiness interaction.",
+    eyebrow: "Delivery workflow",
+    summary:
+      "A release-readiness experiment that keeps the decision signal prominent and the supporting interaction deliberately simple.",
+    highlights: ["Prominent readiness signal", "Focused decision flow"],
+    stack: ["HTML", "CSS", "JavaScript"],
     accent: "#f7a8d8",
     initialValue: 84,
   }),

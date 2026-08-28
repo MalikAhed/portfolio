@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { getRequiredElement } from "../lib/dom.js";
-import { initCardEditor } from "./card-editor.js";
+import { initProjectFrameEditor } from "./project-frame-editor.js";
 import {
   HERO_CAMERA_Z,
   getCameraZAtProgress,
@@ -271,7 +271,7 @@ export function initWorld() {
   let portraitMesh;
   let portraitShadow;
   let journeyState = createJourneyState(0, reducedMotion.matches);
-  let cardEditor = null;
+  let projectFrameEditor = null;
   let disposeJourney = () => {};
 
   scene.add(portfolioCards.group, portraitGroup);
@@ -642,7 +642,7 @@ export function initWorld() {
   function handlePointerMove(event) {
     if (
       event.target instanceof Element &&
-      event.target.closest("[data-card-editor], [data-project-card]")
+      event.target.closest("[data-project-frame-editor], [data-project-card]")
     ) {
       if (pointerTarget.lengthSq() > 0) resetPointer();
       return;
@@ -764,7 +764,7 @@ export function initWorld() {
     }
     camera.updateProjectionMatrix();
     const presetChanged = portfolioCards.resize(cssWidth, window.innerHeight);
-    if (presetChanged) cardEditor?.refresh();
+    if (presetChanged) projectFrameEditor?.refresh();
     applyCamera();
     layoutPortrait();
     scene.updateMatrixWorld(true);
@@ -780,7 +780,7 @@ export function initWorld() {
     reducedMotion,
     handleJourneyState,
   );
-  cardEditor = initCardEditor(portfolioCards, () => {
+  projectFrameEditor = initProjectFrameEditor(portfolioCards, () => {
     previousFrameTime = 0;
     renderScene(performance.now(), true);
     previousFrameTime = 0;
@@ -809,7 +809,7 @@ export function initWorld() {
       handleContextRestored,
     );
     disposeJourney();
-    cardEditor?.dispose();
+    projectFrameEditor?.dispose();
     portfolioCards.dispose();
 
     const disposedGeometries = new Set();

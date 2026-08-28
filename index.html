@@ -137,58 +137,105 @@
           class="project-cards-layer"
           aria-label="Interactive project previews"
         ></section>
-        <details class="card-editor interface-layer" data-card-editor hidden>
+        <details
+          class="project-frame-editor interface-layer"
+          data-project-frame-editor
+          hidden
+        >
           <summary>
-            <span>Cards</span>
-            <span class="card-editor__mark" aria-hidden="true">+</span>
+            <span>Project Frames</span>
+            <span class="project-frame-editor__mark" aria-hidden="true">+</span>
           </summary>
-          <div class="card-editor__body">
-            <label class="card-editor__select" for="card-editor-select">
-              <span>Selected card</span>
-              <select id="card-editor-select" data-card-select>
-                <option value="0">Card 1</option>
-                <option value="1">Card 2</option>
-                <option value="2">Card 3</option>
-                <option value="3">Card 4</option>
+          <div class="project-frame-editor__body">
+            <label
+              class="project-frame-editor__select"
+              for="project-frame-editor-select"
+            >
+              <span>Selected project</span>
+              <select
+                id="project-frame-editor-select"
+                data-project-frame-select
+              >
+                <option value="0">Project 1 · left</option>
+                <option value="1">Project 2 · right</option>
+                <option value="2">Project 3 · left</option>
+                <option value="3">Project 4 · right</option>
               </select>
             </label>
-            <fieldset class="card-editor__group">
+            <fieldset class="project-frame-editor__group">
               <legend>Position</legend>
-              <div class="card-editor__grid">
-                <label class="card-editor__field">
+              <div class="project-frame-editor__grid">
+                <label class="project-frame-editor__field">
                   <span>X</span>
-                  <input type="number" step="0.01" data-card-position="x" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    data-project-frame-position="x"
+                  />
                 </label>
-                <label class="card-editor__field">
+                <label class="project-frame-editor__field">
                   <span>Y</span>
-                  <input type="number" step="0.01" data-card-position="y" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    data-project-frame-position="y"
+                  />
                 </label>
-                <label class="card-editor__field">
+                <label class="project-frame-editor__field">
                   <span>Z</span>
-                  <input type="number" step="0.01" data-card-position="z" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    data-project-frame-position="z"
+                  />
                 </label>
               </div>
             </fieldset>
-            <fieldset class="card-editor__group">
+            <fieldset class="project-frame-editor__group">
               <legend>Rotation (degrees)</legend>
-              <div class="card-editor__grid">
-                <label class="card-editor__field">
+              <div class="project-frame-editor__grid">
+                <label class="project-frame-editor__field">
                   <span>X</span>
-                  <input type="number" step="1" data-card-rotation="x" />
+                  <input
+                    type="number"
+                    step="1"
+                    data-project-frame-rotation="x"
+                  />
                 </label>
-                <label class="card-editor__field">
+                <label class="project-frame-editor__field">
                   <span>Y</span>
-                  <input type="number" step="1" data-card-rotation="y" />
+                  <input
+                    type="number"
+                    step="1"
+                    data-project-frame-rotation="y"
+                  />
                 </label>
-                <label class="card-editor__field">
+                <label class="project-frame-editor__field">
                   <span>Z</span>
-                  <input type="number" step="1" data-card-rotation="z" />
+                  <input
+                    type="number"
+                    step="1"
+                    data-project-frame-rotation="z"
+                  />
                 </label>
               </div>
             </fieldset>
-            <div class="card-editor__actions">
-              <button type="button" data-card-reset>Reset card</button>
-              <button type="button" data-card-reset-all>Reset all</button>
+            <label class="project-frame-editor__field">
+              <span>Size</span>
+              <input
+                type="number"
+                min="0.1"
+                step="0.01"
+                data-project-frame-size
+              />
+            </label>
+            <div class="project-frame-editor__actions">
+              <button type="button" data-project-frame-reset>
+                Reset project
+              </button>
+              <button type="button" data-project-frame-reset-all>
+                Reset all
+              </button>
             </div>
           </div>
         </details>

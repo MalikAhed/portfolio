@@ -105,7 +105,7 @@ function createFileTree(project, onSelect) {
 
 function createProjectCard(project, index, reducedMotion) {
   const card = document.createElement("article");
-  card.className = "project-card";
+  card.className = `project-card project-card--${index % 2 === 0 ? "work-left" : "work-right"}`;
   card.dataset.projectCard = project.id;
   card.setAttribute("aria-labelledby", `project-card-title-${index + 1}`);
   const cssWidth =
@@ -119,6 +119,44 @@ function createProjectCard(project, index, reducedMotion) {
 
   const surface = document.createElement("div");
   surface.className = "project-card__surface";
+
+  const explainer = document.createElement("aside");
+  explainer.className = "project-card__explainer";
+
+  const projectNumber = document.createElement("p");
+  projectNumber.className = "project-card__number";
+  projectNumber.textContent = String(index + 1).padStart(2, "0");
+
+  const explainerLabel = document.createElement("p");
+  explainerLabel.className = "project-card__eyebrow";
+  explainerLabel.textContent = project.eyebrow;
+
+  const explainerTitle = document.createElement("h3");
+  explainerTitle.textContent = project.title;
+
+  const explainerSummary = document.createElement("p");
+  explainerSummary.className = "project-card__summary";
+  explainerSummary.textContent = project.summary;
+
+  const highlights = document.createElement("ul");
+  highlights.className = "project-card__highlights";
+  project.highlights.forEach((highlight) => {
+    const item = document.createElement("li");
+    item.textContent = highlight;
+    highlights.append(item);
+  });
+
+  const stack = document.createElement("p");
+  stack.className = "project-card__stack";
+  stack.textContent = project.stack.join(" · ");
+  explainer.append(
+    projectNumber,
+    explainerLabel,
+    explainerTitle,
+    explainerSummary,
+    highlights,
+    stack,
+  );
 
   const header = document.createElement("header");
   header.className = "project-card__header";
@@ -180,7 +218,7 @@ function createProjectCard(project, index, reducedMotion) {
   codePanel.append(treePanel, sourcePanel);
   viewport.append(previewPanel, codePanel);
   surface.append(header, viewport);
-  card.append(surface);
+  card.append(surface, explainer);
 
   const fileEntries = Object.entries(project.files);
   let fileTree;
@@ -500,6 +538,7 @@ export function createPortfolioCards(reducedMotion, container) {
         y: entry.rig.rotation.y,
         z: entry.rig.rotation.z,
       },
+      size: entry.anchor.scale.x,
     };
   }
 
@@ -509,6 +548,12 @@ export function createPortfolioCards(reducedMotion, container) {
     if (type !== "position" && type !== "rotation") return;
     if (axis !== "x" && axis !== "y" && axis !== "z") return;
     entry.rig[type][axis] = value;
+  }
+
+  function setSize(index, value) {
+    const entry = entries[index];
+    if (!entry) throw new RangeError(`Unknown portfolio card: ${index}`);
+    entry.anchor.scale.setScalar(value);
   }
 
   function resetCard(index) {
@@ -525,6 +570,7 @@ export function createPortfolioCards(reducedMotion, container) {
     resetAllCards,
     resetCard,
     resize,
+    setSize,
     setTransformComponent,
     update,
     dispose() {
