@@ -25,9 +25,9 @@ Malik explicitly asks for them.
 - The v3 portrait uses a firm silhouette plus one soft, right-offset shadow
   mesh for depth. Keep that shadow tied to the portrait's world transform.
 - Keep the four project frames fixed at their configured world coordinates
-  unless the Project Frames editor changes a base position, rotation, or size.
-  Scroll moves the camera, not the frames. Pointer hover may tilt the work
-  surface independently.
+  unless the Project Frames editor changes a base position, rotation,
+  dimensions, or scale. Scroll moves the camera, not the frames. Pointer hover
+  may tilt the work surface independently.
 - Render the world directly with Three.js. Do not add post-processing or a
   scene-effects editor unless Malik explicitly asks for one.
 - Keep interface controls in semantic DOM above the world canvas.

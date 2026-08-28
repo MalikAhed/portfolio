@@ -193,10 +193,15 @@ function createProjectCard(project, index, reducedMotion) {
   card.className = `project-card project-card--${index % 2 === 0 ? "work-left" : "work-right"}`;
   card.dataset.projectCard = project.id;
   card.setAttribute("aria-labelledby", `project-card-title-${index + 1}`);
-  const cssWidth =
-    CARD_WORLD_CONFIG.width / CARD_WORLD_CONFIG.worldUnitsPerCssPixel;
-  card.style.inlineSize = `${cssWidth}px`;
-  card.style.blockSize = `${cssWidth / CARD_WORLD_CONFIG.aspectRatio}px`;
+  function setDimensions(width, height) {
+    card.style.inlineSize = `${width / CARD_WORLD_CONFIG.worldUnitsPerCssPixel}px`;
+    card.style.blockSize = `${height / CARD_WORLD_CONFIG.worldUnitsPerCssPixel}px`;
+  }
+
+  setDimensions(
+    CARD_WORLD_CONFIG.width,
+    CARD_WORLD_CONFIG.width / CARD_WORLD_CONFIG.aspectRatio,
+  );
   card.style.setProperty(
     "--project-card-radius",
     `${CARD_WORLD_CONFIG.cornerRadius / CARD_WORLD_CONFIG.worldUnitsPerCssPixel}px`,
@@ -387,6 +392,7 @@ function createProjectCard(project, index, reducedMotion) {
 
   return {
     element: card,
+    setDimensions,
     dispose() {
       previewButton.removeEventListener("click", handleModeClick);
       codeButton.removeEventListener("click", handleModeClick);
@@ -426,11 +432,13 @@ export function createPortfolioCards(reducedMotion, container) {
       depth: Number.POSITIVE_INFINITY,
       entryProgress: 0,
       focusDistance: Number.POSITIVE_INFINITY,
+      height: CARD_WORLD_CONFIG.width / CARD_WORLD_CONFIG.aspectRatio,
       inFront: false,
       rig,
       screenBounds: { bottom: 0, left: 0, right: 0, top: 0 },
       visibility: 0,
       view,
+      width: CARD_WORLD_CONFIG.width,
     };
   });
 
@@ -438,10 +446,14 @@ export function createPortfolioCards(reducedMotion, container) {
 
   function applyPreset(index) {
     const config = getCardPreset(preset)[index];
-    const { anchor, rig } = entries[index];
+    const entry = entries[index];
+    const { anchor, rig, view } = entry;
     rig.position.set(...config.position);
     rig.rotation.set(...config.rotation);
     anchor.scale.setScalar(config.scale);
+    entry.width = CARD_WORLD_CONFIG.width;
+    entry.height = CARD_WORLD_CONFIG.width / CARD_WORLD_CONFIG.aspectRatio;
+    view.setDimensions(entry.width, entry.height);
   }
 
   function resize(width, height) {
@@ -462,9 +474,8 @@ export function createPortfolioCards(reducedMotion, container) {
   }
 
   function projectEntry(entry, camera, width, height) {
-    const halfWidth = CARD_WORLD_CONFIG.width / 2;
-    const halfHeight =
-      CARD_WORLD_CONFIG.width / CARD_WORLD_CONFIG.aspectRatio / 2;
+    const halfWidth = entry.width / 2;
+    const halfHeight = entry.height / 2;
     projectPoint(
       entry.anchor,
       -halfWidth,
@@ -531,9 +542,8 @@ export function createPortfolioCards(reducedMotion, container) {
   function positionView(entry, camera, width, height) {
     projectEntry(entry, camera, width, height);
 
-    const cssWidth =
-      CARD_WORLD_CONFIG.width / CARD_WORLD_CONFIG.worldUnitsPerCssPixel;
-    const cssHeight = cssWidth / CARD_WORLD_CONFIG.aspectRatio;
+    const cssWidth = entry.width / CARD_WORLD_CONFIG.worldUnitsPerCssPixel;
+    const cssHeight = entry.height / CARD_WORLD_CONFIG.worldUnitsPerCssPixel;
     const a = (projectedTopRight.x - projectedTopLeft.x) / cssWidth;
     const b = (projectedTopRight.y - projectedTopLeft.y) / cssWidth;
     const c = (projectedBottomLeft.x - projectedTopLeft.x) / cssHeight;
@@ -645,6 +655,10 @@ export function createPortfolioCards(reducedMotion, container) {
     const entry = entries[index];
     if (!entry) throw new RangeError(`Unknown portfolio card: ${index}`);
     return {
+      dimensions: {
+        height: entry.height,
+        width: entry.width,
+      },
       position: {
         x: entry.rig.position.x,
         y: entry.rig.position.y,
@@ -673,6 +687,14 @@ export function createPortfolioCards(reducedMotion, container) {
     entry.anchor.scale.setScalar(value);
   }
 
+  function setFrameDimension(index, dimension, value) {
+    const entry = entries[index];
+    if (!entry) throw new RangeError(`Unknown portfolio card: ${index}`);
+    if (dimension !== "width" && dimension !== "height") return;
+    entry[dimension] = value;
+    entry.view.setDimensions(entry.width, entry.height);
+  }
+
   function resetCard(index) {
     if (entries[index]) applyPreset(index);
   }
@@ -687,6 +709,7 @@ export function createPortfolioCards(reducedMotion, container) {
     resetAllCards,
     resetCard,
     resize,
+    setFrameDimension,
     setSize,
     setTransformComponent,
     update,

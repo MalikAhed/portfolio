@@ -61,9 +61,11 @@ src/
   plane, then the work surface slides into place and the explainer resolves
   upward from blur. The Preview/Code control is one pill toggle, and the Code
   view has an Inspira-style folder tree beside the source pane. The Project
-  Frames panel may directly change each base position, XYZ rotation, and size,
-  while pointer hover changes only the focused work surface. Reset restores the
-  active responsive preset from `config.js`; scrolling moves only the camera.
+  Frames panel may directly change each base position, XYZ rotation, frame
+  width, frame height, and scale. It can copy the selected dimensions for
+  permanent configuration, while pointer hover changes only the focused work
+  surface. Reset restores the active responsive preset from `config.js`;
+  scrolling moves only the camera.
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
   supplies their internal z-order, so an approaching card crosses in front of
   the preceding card without removing either surface.
