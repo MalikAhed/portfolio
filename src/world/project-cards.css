@@ -61,7 +61,8 @@
 .project-card__explainer {
   grid-area: copy;
   align-self: center;
-  padding-inline: 4px;
+  justify-self: center;
+  inline-size: calc(100% - 40px);
   color: var(--color-ink-strong);
 }
 
