@@ -31,6 +31,11 @@
   grid-template-areas: "copy work";
 }
 
+[data-project-card="stockthink"].project-card--work-left {
+  grid-template-columns: minmax(0, 1.16fr) minmax(0, 0.84fr);
+  gap: 34px;
+}
+
 .project-card.is-interactive {
   pointer-events: auto;
 }
@@ -58,6 +63,34 @@
   transform-style: preserve-3d;
   transition: transform 180ms ease;
   backface-visibility: hidden;
+}
+
+.project-card__preview-loader {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  color: #77736d;
+  background: #f7f4ee;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.project-card__preview-loader[hidden] {
+  display: none;
+}
+
+.project-card__preview-loader-mark {
+  inline-size: 46px;
+  block-size: 46px;
+  border: 3px solid rgb(28 27 25 / 12%);
+  border-top-color: #1c1b19;
+  border-radius: 50%;
+  animation: project-preview-loader 900ms linear infinite;
 }
 
 .project-card__explainer {
@@ -331,13 +364,9 @@
   background: #fff;
 }
 
-/* StockThink's application shell is taller than the portfolio viewport. Give
-   the iframe a larger layout viewport, then fit it back into the same frame. */
-[data-project-card="stockthink"] .project-card__frame {
-  width: 116.28%;
-  height: 116.28%;
-  transform: scale(0.86);
-  transform-origin: left top;
+.project-card__preview {
+  position: relative;
+  overflow: hidden;
 }
 
 .project-card__code {
@@ -478,6 +507,16 @@
 
   .project-card__tech-track {
     animation-play-state: paused;
+  }
+
+  .project-card__preview-loader-mark {
+    animation: none;
+  }
+}
+
+@keyframes project-preview-loader {
+  to {
+    transform: rotate(1turn);
   }
 }
 

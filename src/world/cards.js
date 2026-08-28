@@ -285,6 +285,16 @@ function createProjectCard(project, index, reducedMotion) {
   previewPanel.className = "project-card__panel project-card__preview";
   previewPanel.dataset.cardPanel = "preview";
 
+  const previewLoader = document.createElement("div");
+  previewLoader.className = "project-card__preview-loader";
+  previewLoader.setAttribute("role", "status");
+  const previewLoaderMark = document.createElement("span");
+  previewLoaderMark.className = "project-card__preview-loader-mark";
+  previewLoaderMark.setAttribute("aria-hidden", "true");
+  const previewLoaderText = document.createElement("span");
+  previewLoaderText.textContent = `Loading ${project.title}`;
+  previewLoader.append(previewLoaderMark, previewLoaderText);
+
   const preview = document.createElement("iframe");
   preview.className = "project-card__frame";
   preview.title = `${project.title} interactive preview`;
@@ -293,9 +303,8 @@ function createProjectCard(project, index, reducedMotion) {
     project.previewUrl ? "allow-scripts allow-same-origin" : "allow-scripts",
   );
   preview.setAttribute("loading", "lazy");
-  if (project.previewUrl) preview.src = project.previewUrl;
-  else preview.srcdoc = createProjectPreviewDocument(project);
-  previewPanel.append(preview);
+  preview.hidden = true;
+  previewPanel.append(previewLoader, preview);
 
   const codePanel = document.createElement("div");
   codePanel.className = "project-card__panel project-card__code";
@@ -350,6 +359,8 @@ function createProjectCard(project, index, reducedMotion) {
 
   let pointerBounds = null;
   let tiltAnimationFrameId = 0;
+  let previewLoadTimer = 0;
+  let previewLoaded = false;
   let nextTiltX = 0;
   let nextTiltY = 0;
 
@@ -382,6 +393,41 @@ function createProjectCard(project, index, reducedMotion) {
     surface.style.removeProperty("--card-tilt-y");
   }
 
+  function unloadPreview() {
+    if (previewLoadTimer) window.clearTimeout(previewLoadTimer);
+    previewLoadTimer = 0;
+    if (!previewLoaded) return;
+    previewLoaded = false;
+    preview.hidden = true;
+    previewLoader.hidden = false;
+    preview.removeAttribute("src");
+    preview.srcdoc = "";
+  }
+
+  function schedulePreview() {
+    if (!project.previewUrl || previewLoaded) return;
+    if (previewLoadTimer) window.clearTimeout(previewLoadTimer);
+    previewLoadTimer = window.setTimeout(() => {
+      previewLoadTimer = 0;
+      previewLoaded = true;
+      preview.addEventListener(
+        "load",
+        () => {
+          previewLoader.hidden = true;
+          preview.hidden = false;
+        },
+        { once: true },
+      );
+      preview.src = project.previewUrl;
+    }, 700);
+  }
+
+  function updatePreviewActivity(active) {
+    if (!project.previewUrl) return;
+    if (active) schedulePreview();
+    else unloadPreview();
+  }
+
   previewButton.addEventListener("click", handleModeClick);
   codeButton.addEventListener("click", handleModeClick);
   card.addEventListener("pointerenter", handlePointerEnter);
@@ -389,10 +435,16 @@ function createProjectCard(project, index, reducedMotion) {
   card.addEventListener("pointerleave", resetTilt);
   setMode("preview");
   setFile(fileEntries[0][0]);
+  if (!project.previewUrl) {
+    previewLoader.hidden = true;
+    preview.hidden = false;
+    preview.srcdoc = createProjectPreviewDocument(project);
+  }
 
   return {
     element: card,
     setDimensions,
+    updatePreviewActivity,
     dispose() {
       previewButton.removeEventListener("click", handleModeClick);
       codeButton.removeEventListener("click", handleModeClick);
@@ -403,6 +455,7 @@ function createProjectCard(project, index, reducedMotion) {
       if (tiltAnimationFrameId) {
         window.cancelAnimationFrame(tiltAnimationFrameId);
       }
+      unloadPreview();
       preview.srcdoc = "";
     },
   };
@@ -648,6 +701,7 @@ export function createPortfolioCards(reducedMotion, container) {
       entry.view.element.inert = !interactive;
       entry.view.element.classList.toggle("is-active", active && rendered);
       entry.view.element.classList.toggle("is-interactive", interactive);
+      entry.view.updatePreviewActivity(interactive);
     });
   }
 

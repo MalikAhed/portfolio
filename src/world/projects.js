@@ -26,7 +26,7 @@ const STOCKTHINK = Object.freeze({
   technologies: STOCKTHINK_TECHNOLOGIES,
   githubUrl: "https://github.com/MalikAhed/stockthink",
   liveUrl: "https://malikahed.github.io/stockthink/",
-  previewUrl: "https://malikahed.github.io/stockthink/app.html",
+  previewUrl: "https://malikahed.github.io/stockthink/frontend/landing/",
   files: STOCKTHINK_SOURCE_FILES,
 });
 
