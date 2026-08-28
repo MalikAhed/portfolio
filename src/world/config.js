@@ -13,6 +13,7 @@ import * as THREE from "three";
 
 export const HERO_CAMERA_Z = 5;
 export const JOURNEY_CAMERA_END_Z = 28.2;
+export const WORLD_CAMERA_FOV = 45;
 
 /**
  * One fixed focal region in front of the camera. Every DOM card uses this same
@@ -26,7 +27,8 @@ export const FOCUS_WORLD_CONFIG = Object.freeze({
   fadeBand: 4.4,
   blurPixelsPerWorldUnit: 1.5,
   maxBlurPixels: 9,
-  interactionBand: 1.15,
+  interactionBand: 1.9,
+  previewBand: 1.9,
   visibilityThreshold: 0.002,
 });
 
@@ -76,8 +78,9 @@ export function getWorldVisibilityAtDepth(depth) {
  *
  * Owner: depth world
  * Depth role: world
- * Shape: wide project frame containing an interactive 16:9 work surface and
- * an alternating explainer column
+ * Shape: wide project frame containing an interactive 4:3 work surface and
+ * an alternating explainer column. Very wide, short viewports use 3:2 so the
+ * work surface and its header remain inside the available height.
  * Entrance/motion: fixed in world space while scrolling; each frame stays
  * hidden as the camera crosses its fixed Z plane, then its work surface slides
  * in and its explainer resolves upward from blur before the shared focal
@@ -103,6 +106,13 @@ export const CARD_WORLD_CONFIG = Object.freeze({
   height: 3.25,
   cornerRadius: 0.12,
   worldUnitsPerCssPixel: 0.005,
+  responsive: Object.freeze({
+    authoredScale: 1.12,
+    surfaceWidthFraction: 0.64,
+    viewportHeightFraction: 0.94,
+    viewportWidthFraction: 0.94,
+    wideSurfaceAspect: 3 / 2,
+  }),
   hover: Object.freeze({
     maxTilt: Math.PI / 18,
     scale: 1.035,
@@ -135,6 +145,39 @@ export const CARD_WORLD_CONFIG = Object.freeze({
     ],
   }),
 });
+
+/**
+ * Preserve the editor's authored scale while fitting the complete frame at
+ * its focal depth. Projection is height-based, so using one fixed desktop
+ * scale makes the same card overflow at common fullscreen aspect ratios.
+ */
+export function getResponsiveCardScale(
+  viewportWidth,
+  viewportHeight,
+  cardWidth,
+  authoredScale,
+) {
+  const focusWorldHeight =
+    2 *
+    Math.tan(THREE.MathUtils.degToRad(WORLD_CAMERA_FOV / 2)) *
+    FOCUS_WORLD_CONFIG.distance;
+  const widthFitScale =
+    ((viewportWidth * CARD_WORLD_CONFIG.responsive.viewportWidthFraction) /
+      Math.max(1, viewportHeight)) *
+    (focusWorldHeight / cardWidth);
+  const heightFitScale =
+    (CARD_WORLD_CONFIG.responsive.viewportHeightFraction *
+      focusWorldHeight *
+      CARD_WORLD_CONFIG.responsive.wideSurfaceAspect) /
+    (cardWidth * CARD_WORLD_CONFIG.responsive.surfaceWidthFraction);
+  const responsiveFactor = Math.min(
+    1,
+    Math.min(widthFitScale, heightFitScale) /
+      CARD_WORLD_CONFIG.responsive.authoredScale,
+  );
+
+  return authoredScale * responsiveFactor;
+}
 
 export function getJourneyPreset(width, height) {
   const aspect = width / Math.max(1, height);

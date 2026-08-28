@@ -71,11 +71,23 @@ src/
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
   supplies their internal z-order, so an approaching card crosses in front of
   the preceding card without removing either surface.
+- The StockThink preview uses a staged load. After the portfolio finishes, its
+  document and entry bundles are prefetched at idle priority without creating
+  an iframe or WebGL context. Pausing in StockThink's focus band starts the real
+  iframe behind a matching branded loading curtain. On the deployed same-origin
+  site, that curtain stays until StockThink's own loader reports completion.
+  Once initialized, the iframe keeps its state but is hidden outside Preview
+  focus so it is not painted while the visitor continues through the world.
 - One fixed focal model is defined in `config.js`. Camera-space distance drives
   continuous DOM opacity and Gaussian blur for every registered project; the
   nearest card becomes interactive only inside the sharp band. Nearly invisible
   or off-screen cards are hidden and inert, and additional `PROJECTS` entries
   inherit the same behavior without pair-specific handoff logic.
+- Focused frames retain their authored dimensions and editor scale, then apply
+  a projection-only viewport fit so fullscreen and ultrawide windows keep the
+  complete left/right composition visible. Very wide, short windows use a 3:2
+  work surface instead of 4:3 to preserve that vertical fit. Resizing within
+  one preset updates the fit without resetting editor changes.
 - Rendering sleeps when the scene is settled or the page is hidden. Native
   scroll, resize, pointer motion, or editor changes render the required output.
   WebGL pixel count is capped. Only cards with a meaningful on-screen opacity

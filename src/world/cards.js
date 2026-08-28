@@ -6,6 +6,7 @@ import {
   getCardPreset,
   getJourneyPreset,
   getProjectFrameEntryAtDepth,
+  getResponsiveCardScale,
   getWorldBlurAtDepth,
   getWorldVisibilityAtDepth,
 } from "./config.js";
@@ -107,6 +108,129 @@ function createTechMarquee(project) {
   });
   marquee.append(track);
   return marquee;
+}
+
+function createPreviewLoader(brand) {
+  const element = document.createElement("div");
+  element.className = "project-card__preview-loader";
+  element.setAttribute("aria-live", "polite");
+  element.setAttribute("aria-label", `${brand} preview waiting to load`);
+
+  const word = document.createElement("div");
+  word.className = "project-card__preview-loader-word";
+  const letters = [...brand].map((letter, index) => {
+    const span = document.createElement("span");
+    span.textContent = letter;
+    span.style.setProperty("--loader-letter", String(index));
+    word.append(span);
+    return span;
+  });
+
+  const track = document.createElement("div");
+  track.className = "project-card__preview-loader-track";
+  const fill = document.createElement("i");
+  track.append(fill);
+
+  const percentage = document.createElement("div");
+  percentage.className = "project-card__preview-loader-percentage";
+  percentage.textContent = "0%";
+  element.append(word, track, percentage);
+
+  function setProgress(progress) {
+    const clampedProgress = Math.min(100, Math.max(0, progress));
+    fill.style.inlineSize = `${clampedProgress.toFixed(1)}%`;
+    percentage.textContent = `${Math.round(clampedProgress)}%`;
+    const litLetters = Math.ceil((clampedProgress / 100) * letters.length);
+    letters.forEach((letter, index) => {
+      letter.classList.toggle("is-lit", index < litLetters);
+    });
+  }
+
+  return { element, setProgress };
+}
+
+function schedulePreviewPrefetch(url) {
+  if (!url) return () => {};
+  const connection = navigator.connection;
+  if (
+    connection?.saveData ||
+    /(^|-)2g$/.test(connection?.effectiveType ?? "")
+  ) {
+    return () => {};
+  }
+
+  let idleCallbackId = 0;
+  let timeoutId = 0;
+  let prefetchController = null;
+  const prefetchLinks = [];
+
+  async function prefetch() {
+    prefetchController = new AbortController();
+    try {
+      const response = await fetch(url, {
+        cache: "force-cache",
+        credentials: "omit",
+        priority: "low",
+        signal: prefetchController.signal,
+      });
+      if (!response.ok) return;
+
+      const previewOrigin = new URL(url).origin;
+      const previewDocument = new DOMParser().parseFromString(
+        await response.text(),
+        "text/html",
+      );
+      const resources = [
+        ...previewDocument.querySelectorAll(
+          'script[src], link[rel="modulepreload"][href], link[rel="stylesheet"][href]',
+        ),
+      ];
+      const uniqueResources = new Map();
+      resources.forEach((resource) => {
+        const source =
+          resource.getAttribute("src") ?? resource.getAttribute("href");
+        const resourceUrl = new URL(source, url);
+        if (resourceUrl.origin !== previewOrigin) return;
+        uniqueResources.set(
+          resourceUrl.href,
+          resource.matches('link[rel="stylesheet"]') ? "style" : "script",
+        );
+      });
+
+      uniqueResources.forEach((resourceType, resourceUrl) => {
+        const link = document.createElement("link");
+        link.rel = "prefetch";
+        link.as = resourceType;
+        link.href = resourceUrl;
+        link.fetchPriority = "low";
+        document.head.append(link);
+        prefetchLinks.push(link);
+      });
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.warn("Could not prefetch the project preview.", error);
+      }
+    }
+  }
+
+  function schedule() {
+    if ("requestIdleCallback" in window) {
+      idleCallbackId = window.requestIdleCallback(prefetch, { timeout: 4000 });
+    } else {
+      timeoutId = window.setTimeout(prefetch, 1800);
+    }
+  }
+
+  if (document.readyState === "complete") schedule();
+  else window.addEventListener("load", schedule, { once: true });
+
+  return () => {
+    window.removeEventListener("load", schedule);
+    if (idleCallbackId) window.cancelIdleCallback(idleCallbackId);
+    if (timeoutId) window.clearTimeout(timeoutId);
+    prefetchController?.abort();
+    prefetchLinks.forEach((link) => link.remove());
+  };
 }
 
 function createTreeIcon(type) {
@@ -285,12 +409,17 @@ function createProjectCard(project, index, reducedMotion) {
   previewPanel.className = "project-card__panel project-card__preview";
   previewPanel.dataset.cardPanel = "preview";
 
+  const previewLoader = project.previewBrand
+    ? createPreviewLoader(project.previewBrand)
+    : null;
+
   const preview = document.createElement("iframe");
   preview.className = "project-card__frame";
   preview.title = `${project.title} interactive preview`;
   if (!project.previewUrl) preview.setAttribute("sandbox", "allow-scripts");
   preview.setAttribute("loading", "lazy");
   preview.hidden = true;
+  if (previewLoader) previewPanel.append(previewLoader.element);
   previewPanel.append(preview);
 
   const codePanel = document.createElement("div");
@@ -319,7 +448,9 @@ function createProjectCard(project, index, reducedMotion) {
 
   function setFile(filename) {
     code.textContent = project.files[filename] ?? "";
-    sourceLabel.textContent = filename;
+    sourceLabel.textContent = project.sourceRevision
+      ? `${filename} · GitHub ${project.sourceRevision}`
+      : filename;
     fileTree.fileButtons.forEach((button) => {
       const selected = button.dataset.projectFile === filename;
       button.classList.toggle("is-active", selected);
@@ -330,7 +461,10 @@ function createProjectCard(project, index, reducedMotion) {
   fileTree = createFileTree(project, setFile);
   treePanel.append(fileTree.element);
 
+  let currentMode = "preview";
+
   function setMode(mode) {
+    currentMode = mode;
     const showPreview = mode === "preview";
     previewPanel.hidden = !showPreview;
     codePanel.hidden = showPreview;
@@ -338,6 +472,9 @@ function createProjectCard(project, index, reducedMotion) {
     codeButton.classList.toggle("is-active", !showPreview);
     previewButton.setAttribute("aria-pressed", String(showPreview));
     codeButton.setAttribute("aria-pressed", String(!showPreview));
+    if (showPreview && previewActive) schedulePreview();
+    else if (!showPreview && !previewLoadStarted) clearPreviewLoadTimer();
+    syncPreviewVisibility();
   }
 
   function handleModeClick(event) {
@@ -347,9 +484,17 @@ function createProjectCard(project, index, reducedMotion) {
   let pointerBounds = null;
   let tiltAnimationFrameId = 0;
   let previewLoadTimer = 0;
-  let previewLoaded = false;
+  let previewLoaderDoneTimer = 0;
+  let previewProgressTimer = 0;
+  let previewReadyFallbackTimer = 0;
+  let previewReadyPollTimer = 0;
+  let previewLoadStarted = false;
+  let previewReady = false;
+  let previewActive = false;
+  let previewProgress = 0;
   let nextTiltX = 0;
   let nextTiltY = 0;
+  const disposePreviewPrefetch = schedulePreviewPrefetch(project.previewUrl);
 
   function handlePointerEnter() {
     pointerBounds = card.getBoundingClientRect();
@@ -380,35 +525,114 @@ function createProjectCard(project, index, reducedMotion) {
     surface.style.removeProperty("--card-tilt-y");
   }
 
-  function unloadPreview() {
-    if (previewLoadTimer) window.clearTimeout(previewLoadTimer);
+  function clearPreviewLoadTimer() {
+    if (!previewLoadTimer) return;
+    window.clearTimeout(previewLoadTimer);
     previewLoadTimer = 0;
-    if (!previewLoaded) return;
-    previewLoaded = false;
-    preview.hidden = true;
-    preview.removeAttribute("src");
-    preview.srcdoc = "";
+  }
+
+  function syncPreviewVisibility() {
+    if (!project.previewUrl) return;
+    const showingPreview = currentMode === "preview";
+    preview.hidden = !(showingPreview && previewActive && previewLoadStarted);
+    if (previewLoader) previewLoader.element.hidden = !showingPreview;
+  }
+
+  function startPreviewProgress() {
+    if (!previewLoader || previewProgressTimer) return;
+    previewLoader.element.classList.add("is-loading");
+    previewProgressTimer = window.setInterval(() => {
+      previewProgress = Math.min(
+        92,
+        previewProgress + Math.max(0.8, (92 - previewProgress) * 0.075),
+      );
+      previewLoader.setProgress(previewProgress);
+    }, 180);
+  }
+
+  function completePreviewProgress() {
+    if (!previewLoader || previewReady) return;
+    previewReady = true;
+    if (previewReadyPollTimer) window.clearInterval(previewReadyPollTimer);
+    if (previewReadyFallbackTimer) {
+      window.clearTimeout(previewReadyFallbackTimer);
+    }
+    previewReadyPollTimer = 0;
+    previewReadyFallbackTimer = 0;
+    if (previewProgressTimer) window.clearInterval(previewProgressTimer);
+    previewProgressTimer = 0;
+    previewProgress = 100;
+    previewLoader.setProgress(100);
+    previewLoader.element.setAttribute(
+      "aria-label",
+      `${project.previewBrand} preview ready`,
+    );
+    previewLoaderDoneTimer = window.setTimeout(() => {
+      previewLoaderDoneTimer = 0;
+      previewLoader.element.classList.add("is-complete");
+    }, 220);
+  }
+
+  function checkPreviewReadiness() {
+    try {
+      const previewDocument = preview.contentDocument;
+      const nativeLoader = previewDocument?.getElementById("load");
+      if (
+        nativeLoader?.classList.contains("done") ||
+        (!nativeLoader && previewDocument?.readyState === "complete")
+      ) {
+        completePreviewProgress();
+      }
+    } catch {
+      // Local development is cross-origin. Production shares github.io and
+      // can observe StockThink's native loader directly.
+    }
+  }
+
+  function handlePreviewLoad() {
+    if (!previewLoadStarted) return;
+    checkPreviewReadiness();
+    if (!previewReady && !previewReadyPollTimer) {
+      previewReadyPollTimer = window.setInterval(checkPreviewReadiness, 250);
+      previewReadyFallbackTimer = window.setTimeout(
+        completePreviewProgress,
+        11000,
+      );
+    }
+    syncPreviewVisibility();
+  }
+
+  function startPreview() {
+    if (!project.previewUrl || previewLoadStarted) return;
+    previewLoadStarted = true;
+    preview.hidden = false;
+    startPreviewProgress();
+    preview.src = project.previewUrl;
   }
 
   function schedulePreview() {
-    if (!project.previewUrl || previewLoaded) return;
-    if (previewLoadTimer) window.clearTimeout(previewLoadTimer);
+    if (!project.previewUrl || previewLoadStarted) {
+      syncPreviewVisibility();
+      return;
+    }
+    clearPreviewLoadTimer();
     previewLoadTimer = window.setTimeout(() => {
       previewLoadTimer = 0;
-      previewLoaded = true;
       // StockThink measures its canvas during startup. It must have a real
       // viewport before its URL is assigned so its own loader can complete.
-      preview.hidden = false;
-      preview.src = project.previewUrl;
-    }, 700);
+      startPreview();
+    }, 550);
   }
 
   function updatePreviewActivity(active) {
     if (!project.previewUrl) return;
-    if (active) schedulePreview();
-    else unloadPreview();
+    previewActive = active;
+    if (active && currentMode === "preview") schedulePreview();
+    else clearPreviewLoadTimer();
+    syncPreviewVisibility();
   }
 
+  preview.addEventListener("load", handlePreviewLoad);
   previewButton.addEventListener("click", handleModeClick);
   codeButton.addEventListener("click", handleModeClick);
   card.addEventListener("pointerenter", handlePointerEnter);
@@ -435,7 +659,19 @@ function createProjectCard(project, index, reducedMotion) {
       if (tiltAnimationFrameId) {
         window.cancelAnimationFrame(tiltAnimationFrameId);
       }
-      unloadPreview();
+      clearPreviewLoadTimer();
+      if (previewLoaderDoneTimer) {
+        window.clearTimeout(previewLoaderDoneTimer);
+      }
+      if (previewProgressTimer) window.clearInterval(previewProgressTimer);
+      if (previewReadyPollTimer) window.clearInterval(previewReadyPollTimer);
+      if (previewReadyFallbackTimer) {
+        window.clearTimeout(previewReadyFallbackTimer);
+      }
+      disposePreviewPrefetch();
+      preview.removeEventListener("load", handlePreviewLoad);
+      preview.hidden = true;
+      preview.removeAttribute("src");
       preview.srcdoc = "";
     },
   };
@@ -462,6 +698,7 @@ export function createPortfolioCards(reducedMotion, container) {
     group.add(rig);
     return {
       anchor,
+      baseScale: CARD_WORLD_CONFIG.responsive.authoredScale,
       depth: Number.POSITIVE_INFINITY,
       entryProgress: 0,
       focusDistance: Number.POSITIVE_INFINITY,
@@ -476,25 +713,45 @@ export function createPortfolioCards(reducedMotion, container) {
   });
 
   let preset = "";
+  let viewportHeight = 1;
+  let viewportWidth = 1;
+
+  function applyResponsiveScale(entry) {
+    entry.anchor.scale.setScalar(
+      getResponsiveCardScale(
+        viewportWidth,
+        viewportHeight,
+        entry.width,
+        entry.baseScale,
+      ),
+    );
+  }
 
   function applyPreset(index) {
     const config = getCardPreset(preset)[index];
     const entry = entries[index];
-    const { anchor, rig, view } = entry;
+    const { rig, view } = entry;
     rig.position.set(...config.position);
     rig.rotation.set(...config.rotation);
-    anchor.scale.setScalar(config.scale);
+    entry.baseScale = config.scale;
     entry.width = CARD_WORLD_CONFIG.width;
     entry.height = CARD_WORLD_CONFIG.height;
     view.setDimensions(entry.width, entry.height);
+    applyResponsiveScale(entry);
   }
 
   function resize(width, height) {
     const nextPreset = getJourneyPreset(width, height);
-    if (nextPreset === preset) return false;
-    preset = nextPreset;
-    entries.forEach((_, index) => applyPreset(index));
-    return true;
+    const presetChanged = nextPreset !== preset;
+    viewportWidth = width;
+    viewportHeight = height;
+    if (presetChanged) {
+      preset = nextPreset;
+      entries.forEach((_, index) => applyPreset(index));
+    } else {
+      entries.forEach(applyResponsiveScale);
+    }
+    return presetChanged;
   }
 
   function projectPoint(anchor, x, y, camera, width, height, target) {
@@ -617,7 +874,7 @@ export function createPortfolioCards(reducedMotion, container) {
 
       if (
         inFront &&
-        focusDistance <= FOCUS_WORLD_CONFIG.interactionBand &&
+        entry.visibility > FOCUS_WORLD_CONFIG.visibilityThreshold &&
         focusDistance < activeDistance
       ) {
         activeEntry = entry;
@@ -641,6 +898,8 @@ export function createPortfolioCards(reducedMotion, container) {
         active &&
         activeDistance <= FOCUS_WORLD_CONFIG.interactionBand &&
         rendered;
+      const previewActive =
+        active && activeDistance <= FOCUS_WORLD_CONFIG.previewBand && rendered;
 
       if (rendered) {
         positionView(entry, camera, width, height);
@@ -681,7 +940,7 @@ export function createPortfolioCards(reducedMotion, container) {
       entry.view.element.inert = !interactive;
       entry.view.element.classList.toggle("is-active", active && rendered);
       entry.view.element.classList.toggle("is-interactive", interactive);
-      entry.view.updatePreviewActivity(interactive);
+      entry.view.updatePreviewActivity(previewActive);
     });
   }
 
@@ -703,7 +962,7 @@ export function createPortfolioCards(reducedMotion, container) {
         y: entry.rig.rotation.y,
         z: entry.rig.rotation.z,
       },
-      size: entry.anchor.scale.x,
+      size: entry.baseScale,
     };
   }
 
@@ -718,7 +977,8 @@ export function createPortfolioCards(reducedMotion, container) {
   function setSize(index, value) {
     const entry = entries[index];
     if (!entry) throw new RangeError(`Unknown portfolio card: ${index}`);
-    entry.anchor.scale.setScalar(value);
+    entry.baseScale = value;
+    applyResponsiveScale(entry);
   }
 
   function setFrameDimension(index, dimension, value) {
@@ -727,6 +987,7 @@ export function createPortfolioCards(reducedMotion, container) {
     if (dimension !== "width" && dimension !== "height") return;
     entry[dimension] = value;
     entry.view.setDimensions(entry.width, entry.height);
+    applyResponsiveScale(entry);
   }
 
   function resetCard(index) {

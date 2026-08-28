@@ -3,6 +3,7 @@ import { getRequiredElement } from "../lib/dom.js";
 import { initProjectFrameEditor } from "./project-frame-editor.js";
 import {
   HERO_CAMERA_Z,
+  WORLD_CAMERA_FOV,
   getCameraZAtProgress,
   getWorldBlurAtDepth,
   getWorldVisibilityAtDepth,
@@ -216,7 +217,7 @@ export function initWorld() {
 
   const scene = new THREE.Scene();
 
-  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 120);
+  const camera = new THREE.PerspectiveCamera(WORLD_CAMERA_FOV, 1, 0.1, 120);
   camera.position.set(0, 0, HERO_CAMERA_Z);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const portfolioCards = createPortfolioCards(reducedMotion, cardsStage);
