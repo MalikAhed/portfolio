@@ -7,8 +7,8 @@ import {
   getJourneyPreset,
   getProjectFrameEntryAtDepth,
   getResponsiveCardScale,
+  getWorldExitVisibilityAtDepth,
   getWorldBlurAtDepth,
-  getWorldVisibilityAtDepth,
 } from "./config.js";
 import { PROJECTS, createProjectPreviewDocument } from "./projects.js";
 
@@ -523,6 +523,9 @@ function createProjectCard(project, index) {
 
   const preview = document.createElement("iframe");
   preview.className = "project-card__frame";
+  if (project.previewViewportWidth) {
+    preview.classList.add("project-card__frame--fitted-website");
+  }
   preview.title = `${project.title} interactive preview`;
   preview.allow = "fullscreen";
   if (!project.previewUrl) preview.setAttribute("sandbox", "allow-scripts");
@@ -694,6 +697,22 @@ function createProjectCard(project, index) {
   let previewActive = false;
   let previewProgress = 0;
   const disposePreviewPrefetch = schedulePreviewPrefetch(project.previewUrl);
+  const previewResizeObserver = project.previewViewportWidth
+    ? new ResizeObserver(([entry]) => {
+        const panelWidth = entry.contentRect.width;
+        const panelHeight = entry.contentRect.height;
+        if (!panelWidth || !panelHeight) return;
+        const viewportWidth = Math.max(
+          panelWidth,
+          project.previewViewportWidth,
+        );
+        const scale = panelWidth / viewportWidth;
+        preview.style.inlineSize = `${viewportWidth}px`;
+        preview.style.blockSize = `${panelHeight / scale}px`;
+        preview.style.transform = `scale(${scale})`;
+      })
+    : null;
+  previewResizeObserver?.observe(previewPanel);
 
   function setSideTransform(side, transform) {
     if (!PROJECT_SIDE_NAMES.includes(side)) return;
@@ -868,6 +887,7 @@ function createProjectCard(project, index) {
         window.clearTimeout(previewReadyFallbackTimer);
       }
       disposePreviewPrefetch();
+      previewResizeObserver?.disconnect();
       preview.removeEventListener("load", handlePreviewLoad);
       preview.hidden = true;
       preview.removeAttribute("src");
@@ -1076,9 +1096,10 @@ export function createPortfolioCards(container) {
       const inFront = depth > camera.near && depth < camera.far;
       const focusDistance = Math.abs(depth - FOCUS_WORLD_CONFIG.distance);
       entry.depth = depth;
+      entry.worldZ = worldPosition.z;
       entry.focusDistance = focusDistance;
       entry.inFront = inFront;
-      entry.visibility = inFront ? getWorldVisibilityAtDepth(depth) : 0;
+      entry.visibility = inFront ? getWorldExitVisibilityAtDepth(depth) : 0;
       entry.entryProgress = inFront ? getProjectFrameEntryAtDepth(depth) : 0;
       if (entry.visibility > FOCUS_WORLD_CONFIG.visibilityThreshold) {
         projectEntry(entry, camera, width, height);
@@ -1094,12 +1115,9 @@ export function createPortfolioCards(container) {
       }
     });
 
-    entries
-      .filter((entry) => entry.inFront)
-      .sort((first, second) => second.depth - first.depth)
-      .forEach((entry, index) => {
-        entry.view.element.style.zIndex = String(index + 1);
-      });
+    entries.forEach((entry) => {
+      entry.view.element.style.zIndex = String(Math.round(entry.worldZ * 100));
+    });
 
     entries.forEach((entry) => {
       const fullscreen = entry.view.isFullscreen();
@@ -1127,9 +1145,7 @@ export function createPortfolioCards(container) {
 
       if (rendered) {
         positionView(entry, camera, width, height);
-        entry.view.element.style.opacity = (
-          entry.visibility * entry.entryProgress
-        ).toFixed(4);
+        entry.view.element.style.opacity = entry.visibility.toFixed(4);
         entry.view.element.style.setProperty(
           "--frame-entry",
           entry.entryProgress.toFixed(4),
@@ -1150,9 +1166,10 @@ export function createPortfolioCards(container) {
             PROJECT_FRAME_ENTRY_CONFIG.workVerticalOffset
           ).toFixed(2)}px`,
         );
+        const depthBlur = getWorldBlurAtDepth(entry.depth);
         entry.view.element.style.setProperty(
-          "--card-defocus",
-          `${getWorldBlurAtDepth(entry.depth).toFixed(2)}px`,
+          "--card-depth-filter",
+          depthBlur < 0.05 ? "none" : `blur(${depthBlur.toFixed(2)}px)`,
         );
         entry.view.element.style.visibility = "visible";
       } else {

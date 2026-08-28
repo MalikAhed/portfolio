@@ -1,4 +1,5 @@
 import "@fontsource/anton/latin-400.css";
+import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource/dm-serif-display/latin-400.css";
 import "@fontsource/manrope/latin-400.css";
 import "@fontsource/manrope/latin-600.css";

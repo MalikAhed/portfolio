@@ -6,6 +6,17 @@
   pointer-events: none;
 }
 
+.stockthink-chess-piece {
+  position: absolute;
+  inset: 0 auto auto 0;
+  display: block;
+  max-inline-size: none;
+  object-fit: contain;
+  pointer-events: none;
+  transform-origin: center;
+  will-change: transform, opacity, filter;
+}
+
 .project-card {
   position: absolute;
   inset: 0 auto auto 0;
@@ -21,7 +32,7 @@
   opacity: 0;
   backface-visibility: hidden;
   contain: layout style;
-  filter: blur(var(--card-defocus, 0px));
+  filter: var(--card-depth-filter, none);
   transform-origin: 0 0;
   will-change: transform;
   perspective: 1600px;
@@ -87,9 +98,10 @@
   grid-area: copy;
   align-self: stretch;
   justify-self: center;
-  inline-size: min(100%, 620px);
+  inline-size: min(100%, 640px);
   block-size: 100%;
-  padding-block: 24px 54px;
+  padding-block: 20px 50px;
+  padding-inline: 6px;
   color: var(--color-ink-strong);
   transform: translate3d(
       var(--side-position-x, 0),
@@ -116,7 +128,7 @@
   );
   filter: blur(calc((1 - var(--reveal-progress)) * 18px));
   opacity: var(--reveal-progress);
-  transform: translateY(calc((1 - var(--reveal-progress)) * 46px));
+  transform: none;
 }
 
 .project-card__tech-marquee {
@@ -182,29 +194,49 @@
 
 .project-card__explainer h3 {
   max-inline-size: none;
-  font-family: var(--font-body);
-  font-size: 56px;
-  font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.045em;
+  font-family:
+    "Bricolage Grotesque Variable", "Bricolage Grotesque", sans-serif;
+  font-size: 68px;
+  font-weight: 750;
+  line-height: 0.96;
+  letter-spacing: -0.052em;
   white-space: nowrap;
 }
 
+[data-project-card="stockthink"] .project-card__explainer h3 {
+  font-size: 76px;
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.054em;
+  text-transform: uppercase;
+}
+
 .project-card__summary {
-  max-inline-size: 36rem;
-  margin-block-start: 24px;
-  color: rgb(28 27 25 / 72%);
-  font-size: 19px;
-  line-height: 1.62;
+  max-inline-size: 32rem;
+  margin-block-start: 28px;
+  color: rgb(28 27 25 / 80%);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.016em;
+  text-wrap: pretty;
+}
+
+[data-project-card="stockthink"] .project-card__summary {
+  margin-block-start: 30px;
+  font-size: 23px;
+  line-height: 1.48;
+  letter-spacing: -0.018em;
 }
 
 .project-card__highlights {
   display: grid;
-  gap: 8px;
-  margin: 26px 0 0;
+  gap: 10px;
+  margin: 28px 0 0;
   padding-inline-start: 24px;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
+  line-height: 1.42;
   list-style: disc;
 }
 
@@ -217,7 +249,7 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-block-start: auto;
-  padding-block-start: 28px;
+  padding-block-start: 32px;
 }
 
 .project-card__actions a {
@@ -456,6 +488,14 @@ body.has-project-fallback-fullscreen .project-cards-layer {
   block-size: 100%;
   border: 0;
   background: #fff;
+}
+
+.project-card__frame--fitted-website {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  max-inline-size: none;
+  transform-origin: top left;
 }
 
 .project-card__preview {

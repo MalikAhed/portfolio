@@ -25,6 +25,7 @@ src/
 ├── styles/                   # Global tokens and stylesheet entry
 ├── world/
 │   ├── cards.js              # World anchors + projected DOM project views
+│   ├── chess-world.js        # Depth-projected StockThink chess-piece sprites
 │   ├── project-frame-editor.js  # Final-frame position, rotation, and size controls
 │   ├── project-frame-editor.css # Compact fixed Project Frames panel
 │   ├── config.js             # Camera, focus, and responsive world positions
@@ -40,6 +41,9 @@ src/
 - Every full load clears restored hash/scroll state and starts at the Hero.
 - The splash plays on every motion-enabled load and releases immediately for
   reduced motion or a failed WebGL startup.
+- The Hero reveal gives the identity name a long ease-out arrival, then lets
+  the portrait and its tied shadow continue settling more slowly into their
+  final position without changing the scroll-driven world motion.
 - `main.js` loads the Three.js world as one deferred chunk.
 - `world.js` owns the renderer, Hero meshes, native scroll mapping, pointer
   interaction, resize handling, and disposal.
@@ -62,9 +66,10 @@ src/
   and after focus. Every project matches StockThink's large 4:3 desktop work
   surface, alternating left and right beside project context, a contained
   looping technology chain, bulleted highlights, and project links. Frames
-  stay hidden while the camera crosses their
-  plane, then the work surface slides into place and the explainer resolves
-  upward from blur. The Preview/Code control is one pill toggle, and the Code
+  stay hidden while the camera crosses their plane, then every work surface maps
+  scroll depth linearly to the same constant-speed horizontal path into place.
+  The explainer resolves from blur without a second movement axis. The
+  Preview/Code control is one pill toggle, and the Code
   view has an Inspira-style folder tree beside the source pane. Repository paths
   render as real nested, collapsible folders, and the source header repeats the
   active path as a breadcrumb. Its header also exposes the complete work surface
@@ -78,12 +83,27 @@ src/
   only the camera.
   Text sides are offset 65 CSS pixels away from their paired work surface:
   positive X for left-preview cards and negative X for right-preview cards.
+  All explainers share a larger Bricolage Grotesque title system, readable
+  22-pixel summaries, consistent highlight spacing, and balanced text widths.
+  StockThink's title additionally mirrors its original hero wordmark at weight
+  800 with uppercase lettering and the same tight tracking.
   Project header controls remain available throughout the card's clear
   presentation range. Fullscreen uses the browser API when permitted and a
   viewport-filling fallback when an embedded browser denies that API.
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
-  supplies their internal z-order, so an approaching card crosses in front of
-  the preceding card without removing either surface.
+  supplies the shared z-order for cards and projected chess pieces, so an
+  approaching card crosses in front of every earlier card and piece at the
+  correct world depth without removing either surface. Cards enter fully opaque
+  but blurred, switch to a true filter-free presentation at their focal depth
+  for crisp iframe and text rendering, and only blur and fade after receding.
+- StockThink is surrounded by three fully opaque foreground chess-piece sprites
+  registered to Three.js anchors at distinct world Z positions. Projected DOM
+  images let them cross the interactive surface. A section-entry gate prevents
+  them from leaking into the preceding world. Every piece appears fully opaque
+  but blurred at its own camera-space entry, sharpens independently at focus,
+  then blurs and fades after receding. Piece sprites use a stronger blur range
+  than cards so the effect remains legible on their large silhouettes. They
+  remain pointer-inert and introduce no independent motion under reduced motion.
 - The StockThink preview uses a staged load. After the portfolio finishes, its
   document and entry bundles are prefetched at idle priority without creating
   an iframe or WebGL context. Pausing in StockThink's focus band starts the real
@@ -91,8 +111,12 @@ src/
   site, that curtain stays until StockThink's own loader reports completion.
   Once initialized, the iframe keeps its state but is hidden outside Preview
   focus so it is not painted while the visitor continues through the world.
-- One fixed focal model is defined in `config.js`. Camera-space distance drives
-  continuous DOM opacity and Gaussian blur for every registered project; the
+  Its iframe retains a full 1440-pixel website viewport and scales that complete
+  viewport into the available preview panel, so the website's full desktop
+  width remains visible instead of collapsing to the card width.
+- One fixed focal model is defined in `config.js`. Projects enter fully opaque
+  by sliding from alternating sides into their exact authored positions, then
+  camera-space distance drives their exit opacity and Gaussian blur; the
   nearest card becomes interactive only inside the sharp band. Nearly invisible
   or off-screen cards are hidden and inert, and additional `PROJECTS` entries
   inherit the same behavior without pair-specific handoff logic.

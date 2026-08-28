@@ -12,13 +12,14 @@ import {
   getWorldVisibilityAtDepth,
 } from "./config.js";
 import { createPortfolioCards } from "./cards.js";
+import { createStockthinkChessWorld } from "./chess-world.js";
 
 const BACKGROUND_COLOR = 0xf5f0e8;
 // The portrait texture is 1024px wide, so rendering a larger full-screen
 // framebuffer adds GPU work without adding visible portrait detail.
 const MAX_PIXEL_COUNT = 1920 * 1080;
 const INTRO_MINIMUM_MS = 1200;
-const INTRO_CAMERA_DURATION_MS = 650;
+const INTRO_CAMERA_DURATION_MS = 2000;
 const INTRO_FAILSAFE_MS = 1000;
 const SPLASH_REVEAL_FAILSAFE_MS = 1400;
 const SCROLL_RENDER_SETTLE_MS = 140;
@@ -268,6 +269,7 @@ export function initWorld() {
   camera.position.set(0, 0, HERO_CAMERA_Z);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const portfolioCards = createPortfolioCards(cardsStage);
+  const stockthinkChessWorld = createStockthinkChessWorld(cardsStage, assetUrl);
 
   let renderer;
   try {
@@ -336,7 +338,7 @@ export function initWorld() {
   let projectFrameEditor = null;
   let disposeJourney = () => {};
 
-  scene.add(portfolioCards.group, portraitGroup);
+  scene.add(portfolioCards.group, stockthinkChessWorld.group, portraitGroup);
   const textureLoader = new THREE.TextureLoader();
 
   function handlePortraitTexture(portraitTexture) {
@@ -630,8 +632,7 @@ export function initWorld() {
       easedProgress,
     );
     camera.updateMatrixWorld();
-    const portraitProgress = THREE.MathUtils.clamp(progress / 0.9, 0, 1);
-    const portraitEasedProgress = 1 - Math.pow(1 - portraitProgress, 5);
+    const portraitEasedProgress = 1 - Math.pow(1 - progress, 5);
     introPortraitOffsetY = THREE.MathUtils.lerp(
       introPortraitStartOffsetY,
       0,
@@ -703,6 +704,11 @@ export function initWorld() {
         stage.clientWidth,
         stage.clientHeight,
         journeyScrolling,
+      );
+      stockthinkChessWorld.update(
+        camera,
+        stage.clientWidth,
+        stage.clientHeight,
       );
     }
     renderWorld();
@@ -853,6 +859,7 @@ export function initWorld() {
     layoutPortrait();
     scene.updateMatrixWorld(true);
     portfolioCards.update(camera, cssWidth, cssHeight, journeyScrolling);
+    stockthinkChessWorld.update(camera, cssWidth, cssHeight);
     if (!journeyScrolling) renderWorld();
   }
 
@@ -895,6 +902,7 @@ export function initWorld() {
     disposeJourney();
     projectFrameEditor?.dispose();
     portfolioCards.dispose();
+    stockthinkChessWorld.dispose();
 
     const disposedGeometries = new Set();
     const disposedMaterials = new Set();

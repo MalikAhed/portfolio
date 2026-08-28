@@ -44,14 +44,16 @@ export const PROJECT_FRAME_ENTRY_CONFIG = Object.freeze({
   startDepth: 2.8,
   settleDepth: 4.7,
   workHorizontalOffset: 420,
-  workVerticalOffset: 220,
+  workVerticalOffset: 0,
 });
 
 export function getProjectFrameEntryAtDepth(depth) {
-  return THREE.MathUtils.smoothstep(
-    depth,
-    PROJECT_FRAME_ENTRY_CONFIG.startDepth,
-    PROJECT_FRAME_ENTRY_CONFIG.settleDepth,
+  return THREE.MathUtils.clamp(
+    (depth - PROJECT_FRAME_ENTRY_CONFIG.startDepth) /
+      (PROJECT_FRAME_ENTRY_CONFIG.settleDepth -
+        PROJECT_FRAME_ENTRY_CONFIG.startDepth),
+    0,
+    1,
   );
 }
 
@@ -81,6 +83,29 @@ export function getWorldVisibilityAtDepth(depth) {
   );
 }
 
+export function getWorldExitBlurAtDepth(depth) {
+  const recedingDistance = Math.max(
+    0,
+    depth - (FOCUS_WORLD_CONFIG.distance + FOCUS_WORLD_CONFIG.sharpBand),
+  );
+
+  return Math.min(
+    FOCUS_WORLD_CONFIG.maxBlurPixels,
+    recedingDistance * FOCUS_WORLD_CONFIG.blurPixelsPerWorldUnit,
+  );
+}
+
+export function getWorldExitVisibilityAtDepth(depth) {
+  return (
+    1 -
+    THREE.MathUtils.smoothstep(
+      depth,
+      FOCUS_WORLD_CONFIG.distance + FOCUS_WORLD_CONFIG.sharpBand,
+      FOCUS_WORLD_CONFIG.distance + FOCUS_WORLD_CONFIG.fadeBand,
+    )
+  );
+}
+
 /**
  * Static card-world setup.
  *
@@ -91,8 +116,8 @@ export function getWorldVisibilityAtDepth(depth) {
  * work surface and its header remain inside the available height.
  * Entrance/motion: fixed in world space while scrolling; each frame stays
  * hidden as the camera crosses its fixed Z plane, then its work surface slides
- * in and its explainer resolves upward from blur before the shared focal
- * distance. The DOM surface remains geometrically stable for dependable
+ * horizontally along one line and its explainer resolves from blur before the
+ * shared focal distance. The DOM surface remains geometrically stable for dependable
  * pointer interaction.
  * Editor: position, Euler XYZ rotation, and scalar size may be changed
  * directly; reset restores the active responsive preset below
@@ -175,6 +200,46 @@ export const CARD_WORLD_CONFIG = Object.freeze({
       { position: [0, 0.06, 27.4], rotation: [0, 0, 0], scale: 1.12 },
     ],
   }),
+});
+
+/**
+ * Projected chess-piece sprites surrounding StockThink. Their Three.js anchors
+ * provide genuine camera-space parallax while DOM images allow foreground
+ * pieces to cross the interactive project surface without taking input.
+ */
+export const STOCKTHINK_CHESS_WORLD_CONFIG = Object.freeze({
+  projectPosition: Object.freeze([0, 0.06, 11.2]),
+  blurPixelsPerWorldUnit: 4.5,
+  maxBlurPixels: 26,
+  pieces: Object.freeze([
+    Object.freeze({
+      asset: "assets/rook.png",
+      aspect: 1216 / 1294,
+      position: Object.freeze([-4.05, -1.5, 12.05]),
+      height: 2.05,
+      rotation: -17,
+      flip: false,
+      opacity: 1,
+    }),
+    Object.freeze({
+      asset: "assets/bishiop.png",
+      aspect: 1022 / 1538,
+      position: Object.freeze([1.2, 1.48, 12.3]),
+      height: 1.58,
+      rotation: 58,
+      flip: true,
+      opacity: 1,
+    }),
+    Object.freeze({
+      asset: "assets/kight.png",
+      aspect: 1024 / 1536,
+      position: Object.freeze([3.82, -0.08, 12.55]),
+      height: 2.05,
+      rotation: 7,
+      flip: true,
+      opacity: 1,
+    }),
+  ]),
 });
 
 /**
