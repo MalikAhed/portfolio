@@ -55,7 +55,7 @@ src/
 - The WebGL renderer draws the Hero directly without post-processing. Every
   card is a conventional DOM interface aligned from its Three.js anchor's
   projected corners, so the same project frame remains visible before, during,
-  and after focus. Its large work surface alternates left and right beside
+  and after focus. Its large 4:3 desktop work surface alternates left and right beside
   project context, a contained looping technology chain, bulleted highlights,
   and project links. Frames stay hidden while the camera crosses their
   plane, then the work surface slides into place and the explainer resolves
