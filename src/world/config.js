@@ -100,7 +100,7 @@ export const CARD_WORLD_CONFIG = Object.freeze({
   id: "portfolio-cards",
   depthRole: "world",
   aspectRatio: 2,
-  width: 5.4,
+  width: 6.2,
   cornerRadius: 0.12,
   worldUnitsPerCssPixel: 0.005,
   hover: Object.freeze({
@@ -110,10 +110,10 @@ export const CARD_WORLD_CONFIG = Object.freeze({
   }),
   presets: Object.freeze({
     desktop: [
-      { position: [-0.32, 0.12, 7.1], rotation: [0, 0, 0], scale: 1 },
-      { position: [0.32, -0.1, 12.5], rotation: [0, 0, 0], scale: 1 },
-      { position: [-0.32, -0.06, 17.9], rotation: [0, 0, 0], scale: 1 },
-      { position: [0.32, 0.08, 23.3], rotation: [0, 0, 0], scale: 1 },
+      { position: [0, 0.06, 7.1], rotation: [0, 0, 0], scale: 1 },
+      { position: [0, -0.05, 12.5], rotation: [0, 0, 0], scale: 1 },
+      { position: [0, -0.03, 17.9], rotation: [0, 0, 0], scale: 1 },
+      { position: [0, 0.04, 23.3], rotation: [0, 0, 0], scale: 1 },
     ],
     mobile: [
       { position: [0, 0.12, 7.1], rotation: [0, 0, 0], scale: 0.3 },
@@ -122,16 +122,16 @@ export const CARD_WORLD_CONFIG = Object.freeze({
       { position: [0, 0.08, 23.3], rotation: [0, 0, 0], scale: 0.3 },
     ],
     short: [
-      { position: [-0.24, 0.04, 7.1], rotation: [0, 0, 0], scale: 0.68 },
-      { position: [0.24, -0.04, 12.5], rotation: [0, 0, 0], scale: 0.68 },
-      { position: [-0.24, -0.03, 17.9], rotation: [0, 0, 0], scale: 0.68 },
-      { position: [0.24, 0.04, 23.3], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, 0.03, 7.1], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, -0.03, 12.5], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, -0.02, 17.9], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, 0.03, 23.3], rotation: [0, 0, 0], scale: 0.68 },
     ],
     ultrawide: [
-      { position: [-0.45, 0.12, 7.1], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0.45, -0.1, 12.5], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [-0.45, -0.06, 17.9], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0.45, 0.08, 23.3], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 7.1], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, -0.05, 12.5], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, -0.03, 17.9], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.04, 23.3], rotation: [0, 0, 0], scale: 1.12 },
     ],
   }),
 });

@@ -10,10 +10,10 @@
   position: absolute;
   inset: 0 auto auto 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.52fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 1.48fr) minmax(0, 0.94fr);
   grid-template-areas: "work copy";
   align-items: center;
-  gap: 42px;
+  gap: 52px;
   color: #1d1d1f;
   font-family: var(--font-body);
   pointer-events: none;
@@ -27,7 +27,7 @@
 }
 
 .project-card--work-right {
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.52fr);
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.48fr);
   grid-template-areas: "copy work";
 }
 
@@ -62,7 +62,7 @@
   grid-area: copy;
   align-self: center;
   justify-self: center;
-  inline-size: calc(100% - 40px);
+  inline-size: min(100%, 430px);
   color: var(--color-ink-strong);
 }
 
@@ -111,15 +111,15 @@
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  inline-size: 62px;
-  block-size: 62px;
+  inline-size: 76px;
+  block-size: 76px;
   border: 1px solid rgb(28 27 25 / 12%);
-  border-radius: 15px;
+  border-radius: 20px;
   background: rgb(255 255 255 / 62%);
 }
 
 .project-card__tech-mark {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.04em;
 }
@@ -141,19 +141,19 @@
 
 .project-card__explainer h3 {
   max-inline-size: none;
-  font-family: var(--font-display);
-  font-size: 34px;
-  font-weight: 400;
-  line-height: 0.98;
-  letter-spacing: -0.035em;
+  font-family: var(--font-body);
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
   white-space: nowrap;
 }
 
 .project-card__summary {
   margin-block-start: 20px;
   color: rgb(28 27 25 / 72%);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 .project-card__highlights {
@@ -161,7 +161,7 @@
   gap: 8px;
   margin: 22px 0 0;
   padding-inline-start: 18px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   list-style: disc;
 }
