@@ -97,16 +97,24 @@ src/
   one preset updates the fit without resetting editor changes.
 - Rendering sleeps when the scene is settled or the page is hidden. During
   active native scrolling, camera and DOM projection state update without a
-  WebGL draw, chess animation, or visible StockThink iframe; one settled frame
-  resumes them after scrolling stops. Resize, pointer motion, or editor changes
-  otherwise render the required output. WebGL pixel count is capped. Only cards
-  with a meaningful on-screen opacity are painted, and just one card's main
-  content is interactive. Project cards do not run hover animation frames.
+  WebGL draw, chess animation, or visible StockThink iframe; the static Hero
+  surrogate prevents a stale portrait or chess frame from leaking through.
+  One settled frame resumes the renderer after scrolling stops. Chess pieces
+  remain hidden while crossing the camera plane, then share the StockThink
+  frame's entrance and focal visibility. Resize, pointer motion, or editor
+  changes otherwise render the required output. WebGL pixel count is capped.
+  Only cards with a meaningful on-screen opacity are painted, and just one
+  card's main content is interactive. Project cards do not run hover animation
+  frames.
 
 ## Progressive enhancement
 
 - Identity and contact content exist in HTML before JavaScript runs.
 - The DOM portrait stays visible until the WebGL portrait texture loads.
+- During active native scrolling, that same DOM portrait temporarily stands in
+  for the sleeping WebGL canvas. It inherits the shared Hero depth transform,
+  blur, and fade, so the cutout and its shadow continue to recede without a GPU
+  draw. The canvas returns on the settled frame.
 - Missing WebGL, texture failure, or blocked modules leave the static Hero
   usable and release the splash.
 - Reduced motion skips large startup travel and disables pointer-driven scene

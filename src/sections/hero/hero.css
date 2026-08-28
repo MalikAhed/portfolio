@@ -103,12 +103,30 @@
   opacity: 0;
 }
 
+/* WebGL stays asleep during native scrolling. The already-loaded fallback
+   stands in for the same cutout and shadow so the Hero can still recede with
+   the shared origin transform instead of freezing at its previous frame. */
+.has-hero-webgl .portfolio-world.is-journey-scrolling .hero__portrait-fallback {
+  opacity: 1;
+}
+
 .scene canvas {
   display: block;
   inline-size: 100%;
   block-size: 100%;
   filter: blur(var(--origin-defocus));
   opacity: var(--origin-visibility);
+}
+
+.portfolio-world.is-journey-scrolling .scene canvas {
+  visibility: hidden;
+}
+
+/* Once the Hero is fully gone, release its canvas-wide treatment so the same
+   persistent renderer can draw project-world decoration at normal clarity. */
+.portfolio-world.is-origin-cleared .scene canvas {
+  filter: none;
+  opacity: 1;
 }
 
 .hero__identity {

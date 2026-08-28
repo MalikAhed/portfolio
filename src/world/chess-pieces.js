@@ -1,4 +1,9 @@
 import * as THREE from "three";
+import {
+  FOCUS_WORLD_CONFIG,
+  getProjectFrameEntryAtDepth,
+  getWorldVisibilityAtDepth,
+} from "./config.js";
 
 const PIECE_WORLD_Z = 7.02;
 const ACTIVE_DISTANCE = 7;
@@ -96,11 +101,15 @@ export function createStockThinkChessPieces() {
     color: 0xf7efe1,
     metalness: 0.05,
     roughness: 0.42,
+    transparent: true,
+    opacity: 0,
   });
   const charcoal = new THREE.MeshStandardMaterial({
     color: 0x82796d,
     metalness: 0.08,
     roughness: 0.48,
+    transparent: true,
+    opacity: 0,
   });
   const pieces = [
     { mesh: createRook(charcoal), position: [-5.1, 1.15, 0.12], scale: 0.72 },
@@ -134,7 +143,17 @@ export function createStockThinkChessPieces() {
   return {
     group,
     isActive(cameraZ) {
-      return Math.abs(cameraZ - PIECE_WORLD_Z) < ACTIVE_DISTANCE;
+      return (
+        group.visible && Math.abs(cameraZ - PIECE_WORLD_Z) < ACTIVE_DISTANCE
+      );
+    },
+    setCameraZ(cameraZ) {
+      const depth = cameraZ - PIECE_WORLD_Z;
+      const visibility =
+        getProjectFrameEntryAtDepth(depth) * getWorldVisibilityAtDepth(depth);
+      group.visible = visibility > FOCUS_WORLD_CONFIG.visibilityThreshold;
+      ivory.opacity = visibility;
+      charcoal.opacity = visibility;
     },
     update(time, reducedMotion) {
       pieces.forEach(({ mesh }, index) => {

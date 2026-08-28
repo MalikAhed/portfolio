@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { getRequiredElement } from "../lib/dom.js";
 import { initProjectFrameEditor } from "./project-frame-editor.js";
 import {
+  FOCUS_WORLD_CONFIG,
   HERO_CAMERA_Z,
   WORLD_CAMERA_FOV,
   getCameraZAtProgress,
@@ -149,6 +150,10 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
       "--origin-visibility",
       state.originVisibility.toFixed(4),
     );
+    worldStage.classList.toggle(
+      "is-origin-cleared",
+      state.originVisibility <= FOCUS_WORLD_CONFIG.visibilityThreshold,
+    );
     worldStage.classList.toggle("is-journey-canvas", progress > 0);
     if (progress <= 0.002 || scrollDelta < -1) {
       worldStage.classList.remove("is-header-hidden");
@@ -199,6 +204,8 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
     reducedMotion.removeEventListener("change", requestUpdate);
     worldStage.classList.remove("is-journey-canvas");
     worldStage.classList.remove("is-header-hidden");
+    worldStage.classList.remove("is-journey-scrolling");
+    worldStage.classList.remove("is-origin-cleared");
     worldStage.style.removeProperty("--origin-depth-scale");
     worldStage.style.removeProperty("--origin-defocus");
     worldStage.style.removeProperty("--origin-visibility");
@@ -655,6 +662,9 @@ export function initWorld() {
     portraitGroup.rotation.x = -pointerCurrent.y * 0.016;
     portraitGroup.position.x = pointerCurrent.x * 0.038;
     portraitGroup.position.y = pointerCurrent.y * 0.02 + introPortraitOffsetY;
+    portraitGroup.visible =
+      journeyState.originVisibility > FOCUS_WORLD_CONFIG.visibilityThreshold;
+    stockThinkChess.setCameraZ(camera.position.z);
     if (!journeyScrolling) stockThinkChess.update(time, reducedMotion.matches);
     scene.updateMatrixWorld(true);
     if (forceCards || camera.position.z !== renderedCardsCameraZ) {
@@ -769,6 +779,7 @@ export function initWorld() {
   function handleJourneyState(nextState, scrolling) {
     journeyState = nextState;
     journeyScrolling = scrolling;
+    worldStage.classList.toggle("is-journey-scrolling", scrolling);
     previousFrameTime = 0;
     renderScene(performance.now(), true);
     if (sceneNeedsAnotherFrame()) requestSceneFrame();
