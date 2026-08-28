@@ -4,9 +4,8 @@ The site is one continuous world, not a collection of visual sections. It has
 three layers:
 
 1. **Base world** — `.base-world` supplies the fixed warm background.
-2. **Depth world** — one persistent Three.js canvas renders the Hero portrait
-   and the procedural chess pieces surrounding StockThink. Four lightweight
-   Three.js anchors hold wide project frames at fixed world coordinates. A
+2. **Depth world** — one persistent Three.js canvas renders the Hero portrait.
+   Four lightweight Three.js anchors hold wide project frames at fixed world coordinates. A
    large projected “My Work” marker separates the Hero from the project rail.
    Each projected DOM frame pairs an interactive work view with an alternating
    explainer column.
@@ -26,7 +25,6 @@ src/
 ├── styles/                   # Global tokens and stylesheet entry
 ├── world/
 │   ├── cards.js              # World anchors + projected DOM project views
-│   ├── chess-pieces.js        # Procedural StockThink depth decoration
 │   ├── project-frame-editor.js  # Final-frame position, rotation, and size controls
 │   ├── project-frame-editor.css # Compact fixed Project Frames panel
 │   ├── config.js             # Camera, focus, and responsive world positions
@@ -104,13 +102,11 @@ src/
   work surface instead of 4:3 to preserve that vertical fit. Resizing within
   one preset updates the fit without resetting editor changes.
 - Rendering sleeps when the scene is settled or the page is hidden. During
-  active native scrolling, camera and DOM projection state update without a
-  WebGL draw, chess animation, or visible StockThink iframe; the static Hero
-  surrogate prevents a stale portrait or chess frame from leaking through.
-  One settled frame resumes the renderer after scrolling stops. Chess pieces
-  remain hidden while crossing the camera plane, then share the StockThink
-  frame's entrance and focal visibility. Resize, pointer motion, or editor
-  changes otherwise render the required output. WebGL pixel count is capped.
+  active native scrolling, the camera, DOM projection state, and WebGL portrait
+  update together so the cutout and its tied shadow retain one continuous
+  transform; the StockThink iframe remains hidden until scrolling settles.
+  Resize, pointer motion, or editor changes otherwise render the required
+  output. WebGL pixel count is capped.
   Only cards with a meaningful on-screen opacity are painted, and just one
   card's main content is interactive. Project cards do not run hover animation
   frames.
@@ -119,11 +115,9 @@ src/
 
 - Identity and contact content exist in HTML before JavaScript runs.
 - The DOM portrait stays visible until the WebGL portrait texture loads.
-- During active native scrolling, that same DOM portrait temporarily stands in
-  for the sleeping WebGL canvas. It inherits the shared Hero depth transform,
-  blur, fade, and exact responsive portrait geometry, so the cutout and its
-  shadow continue to recede without a GPU draw or a swap-time position jump.
-  The canvas returns on the settled frame.
+- During active native scrolling, the persistent WebGL portrait remains the
+  visual source and follows the shared Hero depth transform, blur, and fade.
+  The DOM portrait remains the fallback only for loading or missing WebGL.
 - Missing WebGL, texture failure, or blocked modules leave the static Hero
   usable and release the splash.
 - Reduced motion skips large startup travel and disables pointer-driven scene

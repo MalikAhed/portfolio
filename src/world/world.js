@@ -12,7 +12,6 @@ import {
   getWorldVisibilityAtDepth,
 } from "./config.js";
 import { createPortfolioCards } from "./cards.js";
-import { createStockThinkChessPieces } from "./chess-pieces.js";
 
 const BACKGROUND_COLOR = 0xf5f0e8;
 // The portrait texture is 1024px wide, so rendering a larger full-screen
@@ -269,7 +268,6 @@ export function initWorld() {
   camera.position.set(0, 0, HERO_CAMERA_Z);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const portfolioCards = createPortfolioCards(cardsStage);
-  const stockThinkChess = createStockThinkChessPieces();
 
   let renderer;
   try {
@@ -296,7 +294,6 @@ export function initWorld() {
   let journeyScrolling = false;
 
   function renderWorld() {
-    if (journeyScrolling) return;
     renderer.clear(true, true, true);
     renderer.render(scene, camera);
   }
@@ -339,7 +336,7 @@ export function initWorld() {
   let projectFrameEditor = null;
   let disposeJourney = () => {};
 
-  scene.add(portfolioCards.group, stockThinkChess.group, portraitGroup);
+  scene.add(portfolioCards.group, portraitGroup);
   const textureLoader = new THREE.TextureLoader();
 
   function handlePortraitTexture(portraitTexture) {
@@ -379,7 +376,7 @@ export function initWorld() {
     layoutPortrait();
     applyCamera();
     compileWorld();
-    if (!journeyScrolling) renderWorld();
+    renderWorld();
     document.documentElement.classList.add("has-hero-webgl");
     resolvePortraitReady();
   }
@@ -698,8 +695,6 @@ export function initWorld() {
     portraitGroup.visible =
       journeyState.originVisibility > FOCUS_WORLD_CONFIG.visibilityThreshold;
     updateWorkTitle(workTitle, camera.position.z);
-    stockThinkChess.setCameraZ(camera.position.z);
-    if (!journeyScrolling) stockThinkChess.update(time, reducedMotion.matches);
     scene.updateMatrixWorld(true);
     if (forceCards || camera.position.z !== renderedCardsCameraZ) {
       renderedCardsCameraZ = camera.position.z;
@@ -759,8 +754,7 @@ export function initWorld() {
     const pointerIsSettling =
       pointerCurrent.distanceToSquared(pointerTarget) > 0.000001;
     const introIsAnimating = introCameraStartTime !== null;
-    const chessIsAnimating = stockThinkChess.isActive(camera.position.z);
-    return pointerIsSettling || introIsAnimating || chessIsAnimating;
+    return pointerIsSettling || introIsAnimating;
   }
 
   function runSceneFrame(time) {
