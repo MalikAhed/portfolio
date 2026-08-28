@@ -4,10 +4,11 @@ The site is one continuous world, not a collection of visual sections. It has
 three layers:
 
 1. **Base world** — `.base-world` supplies the fixed warm background.
-2. **Depth world** — one persistent Three.js canvas renders the Hero portrait.
-   Four lightweight Three.js anchors hold wide project frames at fixed world
-   coordinates. Each projected DOM frame pairs a large interactive work view
-   with an alternating explainer column.
+2. **Depth world** — one persistent Three.js canvas renders the Hero portrait
+   and the procedural chess pieces surrounding StockThink. Four lightweight
+   Three.js anchors hold wide project frames at fixed world coordinates. Each
+   projected DOM frame pairs a large interactive work view with an alternating
+   explainer column.
 3. **Interface** — semantic DOM provides the header, contact action, skip link,
    identity copy, project controls, card-transform controls, and startup
    splash.
@@ -24,6 +25,7 @@ src/
 ├── styles/                   # Global tokens and stylesheet entry
 ├── world/
 │   ├── cards.js              # World anchors + projected DOM project views
+│   ├── chess-pieces.js        # Procedural StockThink depth decoration
 │   ├── project-frame-editor.js  # Final-frame position, rotation, and size controls
 │   ├── project-frame-editor.css # Compact fixed Project Frames panel
 │   ├── config.js             # Camera, focus, and responsive world positions

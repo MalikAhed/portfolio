@@ -8,6 +8,7 @@ import {
   getWorldVisibilityAtDepth,
 } from "./config.js";
 import { createPortfolioCards } from "./cards.js";
+import { createStockThinkChessPieces } from "./chess-pieces.js";
 
 const BACKGROUND_COLOR = 0xf5f0e8;
 // The portrait texture is 1024px wide, so rendering a larger full-screen
@@ -219,6 +220,7 @@ export function initWorld() {
   camera.position.set(0, 0, HERO_CAMERA_Z);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const portfolioCards = createPortfolioCards(reducedMotion, cardsStage);
+  const stockThinkChess = createStockThinkChessPieces();
 
   let renderer;
   try {
@@ -286,7 +288,7 @@ export function initWorld() {
   let projectFrameEditor = null;
   let disposeJourney = () => {};
 
-  scene.add(portfolioCards.group, portraitGroup);
+  scene.add(portfolioCards.group, stockThinkChess.group, portraitGroup);
   const textureLoader = new THREE.TextureLoader();
 
   function handlePortraitTexture(portraitTexture) {
@@ -632,6 +634,7 @@ export function initWorld() {
     portraitGroup.rotation.x = -pointerCurrent.y * 0.016;
     portraitGroup.position.x = pointerCurrent.x * 0.038;
     portraitGroup.position.y = pointerCurrent.y * 0.02 + introPortraitOffsetY;
+    stockThinkChess.update(time, reducedMotion.matches);
     scene.updateMatrixWorld(true);
     if (forceCards || camera.position.z !== renderedCardsCameraZ) {
       renderedCardsCameraZ = camera.position.z;
@@ -684,7 +687,8 @@ export function initWorld() {
     const pointerIsSettling =
       pointerCurrent.distanceToSquared(pointerTarget) > 0.000001;
     const introIsAnimating = introCameraStartTime !== null;
-    return pointerIsSettling || introIsAnimating;
+    const chessIsAnimating = stockThinkChess.isActive(camera.position.z);
+    return pointerIsSettling || introIsAnimating || chessIsAnimating;
   }
 
   function runSceneFrame(time) {

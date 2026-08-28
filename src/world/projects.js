@@ -5,6 +5,69 @@ const PLACEHOLDER_TECHNOLOGIES = Object.freeze([
   Object.freeze({ label: "Three.js", mark: "3" }),
 ]);
 
+const STOCKTHINK_TECHNOLOGIES = Object.freeze([
+  Object.freeze({ label: "TypeScript", mark: "TS" }),
+  Object.freeze({ label: "Vite", mark: "V" }),
+  Object.freeze({ label: "Stockfish", mark: "SF" }),
+  Object.freeze({ label: "WebAssembly", mark: "W" }),
+  Object.freeze({ label: "Chessops", mark: "C" }),
+]);
+
+const STOCKTHINK = Object.freeze({
+  id: "stockthink",
+  title: "StockThink",
+  description: "Free, private chess analysis in your browser.",
+  summary:
+    "A chess game-review experience that turns engine analysis into clear move classifications, accuracy scores, and explanations of why each decision worked or failed.",
+  highlights: Object.freeze([
+    "Stockfish 18 NNUE runs locally with WebAssembly",
+    "Verified chess concepts explain every classification",
+  ]),
+  technologies: STOCKTHINK_TECHNOLOGIES,
+  githubUrl: "https://github.com/MalikAhed/stockthink",
+  liveUrl: "https://malikahed.github.io/stockthink/",
+  previewUrl: "https://malikahed.github.io/stockthink/",
+  files: Object.freeze({
+    "main.ts": `import { Chessground } from "chessground";
+import { Chess, normalizeMove } from "chessops/chess";
+import { analysisQueue } from "@backend/chesscom/queue";
+
+async function startAnalysis(pgn: string) {
+  const job = {
+    id: crypto.randomUUID(),
+    pgn,
+    tier: "standard",
+    label: "Pasted game",
+  };
+
+  const report = await analysisQueue.runNow(job, updateProgress);
+  openReport(report);
+}`,
+    "analysis.ts": `export async function analyzeGame(pgn: string) {
+  const positions = parseGame(pgn);
+  const engine = await createStockfishWorker();
+
+  return analyzePositions(engine, positions, {
+    multiPv: 3,
+    onPosition: classifyMove,
+    explain: composeVerifiedExplanation,
+  });
+}`,
+    "package.json": `{
+  "name": "stockthink",
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "chessground": "^9.1.1",
+    "chessops": "^0.14.2",
+    "three": "^0.160.1"
+  }
+}`,
+  }),
+});
+
 function createCounterProject({
   accent,
   description,
@@ -118,18 +181,7 @@ document.addEventListener("click", (event) => {
  * a separately built application.
  */
 export const PROJECTS = Object.freeze([
-  createCounterProject({
-    id: "signal-counter",
-    title: "Signal Counter",
-    description: "A tiny state and interaction study.",
-    summary:
-      "A focused interaction study exploring immediate feedback, legible state, and controls that stay calm under repeated use.",
-    highlights: ["Clear state transitions", "Keyboard-ready controls"],
-    accent: "#ffca66",
-    initialValue: 3,
-    githubUrl: "https://github.com/MalikAhed/portfolio",
-    liveUrl: "https://malikahed.github.io/portfolio/",
-  }),
+  STOCKTHINK,
   createCounterProject({
     id: "queue-control",
     title: "Queue Control",

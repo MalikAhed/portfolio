@@ -288,7 +288,10 @@ function createProjectCard(project, index, reducedMotion) {
   const preview = document.createElement("iframe");
   preview.className = "project-card__frame";
   preview.title = `${project.title} interactive preview`;
-  preview.setAttribute("sandbox", "allow-scripts");
+  preview.setAttribute(
+    "sandbox",
+    project.previewUrl ? "allow-scripts allow-same-origin" : "allow-scripts",
+  );
   preview.setAttribute("loading", "lazy");
   if (project.previewUrl) preview.src = project.previewUrl;
   else preview.srcdoc = createProjectPreviewDocument(project);
