@@ -10,7 +10,7 @@
   position: absolute;
   inset: 0 auto auto 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.72fr) minmax(0, 0.72fr);
+  grid-template-columns: minmax(0, 1.52fr) minmax(0, 0.9fr);
   grid-template-areas: "work copy";
   align-items: center;
   gap: 42px;
@@ -27,7 +27,7 @@
 }
 
 .project-card--work-right {
-  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.72fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.52fr);
   grid-template-areas: "copy work";
 }
 
@@ -80,7 +80,7 @@
 .project-card__tech-marquee {
   overflow: hidden;
   inline-size: 100%;
-  margin-block-end: 28px;
+  margin-block-end: 30px;
   mask-image: linear-gradient(
     90deg,
     transparent,
@@ -110,8 +110,8 @@
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  inline-size: 48px;
-  block-size: 48px;
+  inline-size: 62px;
+  block-size: 62px;
   border: 1px solid rgb(28 27 25 / 12%);
   border-radius: 15px;
   background: rgb(255 255 255 / 62%);
@@ -132,38 +132,20 @@
   white-space: nowrap;
 }
 
-.project-card__number,
-.project-card__eyebrow,
 .project-card__explainer h3,
 .project-card__summary,
-.project-card__stack {
+.project-card__actions {
   margin: 0;
 }
 
-.project-card__number {
-  margin-block-end: 24px;
-  color: rgb(28 27 25 / 35%);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-}
-
-.project-card__eyebrow {
-  margin-block-end: 12px;
-  color: rgb(28 27 25 / 58%);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
 .project-card__explainer h3 {
-  max-inline-size: 11ch;
+  max-inline-size: none;
   font-family: var(--font-display);
-  font-size: 38px;
+  font-size: 34px;
   font-weight: 400;
   line-height: 0.98;
   letter-spacing: -0.035em;
+  white-space: nowrap;
 }
 
 .project-card__summary {
@@ -177,55 +159,40 @@
   display: grid;
   gap: 8px;
   margin: 22px 0 0;
-  padding: 0;
+  padding-inline-start: 18px;
   font-size: 11px;
   font-weight: 700;
-  list-style: none;
+  list-style: disc;
 }
 
 .project-card__highlights li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.project-card__highlights li::before {
-  flex: 0 0 auto;
-  inline-size: 16px;
-  block-size: 1px;
-  background: currentcolor;
-  content: "";
-}
-
-.project-card__stack {
-  margin-block-start: 24px;
-  color: rgb(28 27 25 / 44%);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  padding-inline-start: 2px;
 }
 
 .project-card__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-block-start: 24px;
+  margin-block-start: 26px;
 }
 
 .project-card__actions a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-block-size: 36px;
-  padding: 8px 13px;
+  gap: 8px;
+  min-block-size: 44px;
+  padding: 10px 16px;
   border: 1px solid rgb(28 27 25 / 16%);
   border-radius: 999px;
   color: inherit;
   background: rgb(255 255 255 / 48%);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   text-decoration: none;
+  transition:
+    box-shadow 260ms ease,
+    transform 260ms ease;
 }
 
 .project-card__actions a:last-child {
@@ -235,9 +202,20 @@
 
 .project-card__actions a:hover,
 .project-card__actions a:focus-visible {
-  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgb(28 27 25 / 14%);
+  transform: translateY(-4px) scale(1.025);
 }
 
+.project-card__action-icon {
+  inline-size: 17px;
+  block-size: 17px;
+  transition: transform 220ms ease;
+}
+
+.project-card__actions a:hover .project-card__action-icon,
+.project-card__actions a:focus-visible .project-card__action-icon {
+  transform: translate(2px, -2px) rotate(-4deg);
+}
 .project-card__header {
   display: flex;
   align-items: center;
@@ -304,14 +282,24 @@
   background: transparent !important;
   font-size: 12px;
   font-weight: 700;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 
-.project-card__mode:hover,
-.project-card__mode:focus-visible,
 .project-card__mode.is-active {
   color: #1d1d1f !important;
   background: #fff !important;
   box-shadow: 0 1px 4px rgb(28 28 26 / 12%);
+}
+
+.project-card__mode:not(.is-active):hover,
+.project-card__mode:not(.is-active):focus-visible {
+  color: #1d1d1f !important;
+  background: rgb(255 255 255 / 38%) !important;
+  transform: translateY(-1px);
 }
 
 .project-card__mode-icon {

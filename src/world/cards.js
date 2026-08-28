@@ -48,6 +48,28 @@ function createModeIcon(type) {
   return icon;
 }
 
+function createActionIcon(type) {
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.classList.add("project-card__action-icon");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("aria-hidden", "true");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("stroke-width", "1.8");
+  path.setAttribute(
+    "d",
+    type === "github"
+      ? "M9 19c-4.5 1.4-4.5-2.5-6.3-3 M15.3 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.7-1.4 5.7-6.2A4.8 4.8 0 0 0 19.2 6a4.4 4.4 0 0 0-.1-3.3S18 2.4 15.5 4a12.1 12.1 0 0 0-6.5 0C6.5 2.4 5.4 2.7 5.4 2.7A4.4 4.4 0 0 0 5.3 6 4.8 4.8 0 0 0 4 9.3c0 4.8 2.9 5.9 5.7 6.2-.5.5-.6 1.2-.5 2V21"
+      : "M14 4h6v6 M20 4 11 13 M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6",
+  );
+  icon.append(path);
+  return icon;
+}
+
 function createTechMark(technology) {
   const item = document.createElement("span");
   item.className = "project-card__tech";
@@ -188,14 +210,6 @@ function createProjectCard(project, index, reducedMotion) {
 
   const techMarquee = createTechMarquee(project);
 
-  const projectNumber = document.createElement("p");
-  projectNumber.className = "project-card__number";
-  projectNumber.textContent = String(index + 1).padStart(2, "0");
-
-  const explainerLabel = document.createElement("p");
-  explainerLabel.className = "project-card__eyebrow";
-  explainerLabel.textContent = project.eyebrow;
-
   const explainerTitle = document.createElement("h3");
   explainerTitle.textContent = project.title;
 
@@ -211,31 +225,24 @@ function createProjectCard(project, index, reducedMotion) {
     highlights.append(item);
   });
 
-  const stack = document.createElement("p");
-  stack.className = "project-card__stack";
-  stack.textContent = project.stack.join(" · ");
-
   const actions = document.createElement("div");
   actions.className = "project-card__actions";
   const githubLink = document.createElement("a");
   githubLink.href = project.githubUrl;
   githubLink.target = "_blank";
   githubLink.rel = "noreferrer";
-  githubLink.textContent = "View on GitHub";
+  githubLink.append(createActionIcon("github"), "View on GitHub");
   const liveLink = document.createElement("a");
   liveLink.href = project.liveUrl;
   liveLink.target = "_blank";
   liveLink.rel = "noreferrer";
-  liveLink.textContent = "View live";
+  liveLink.append(createActionIcon("live"), "View live");
   actions.append(githubLink, liveLink);
   explainer.append(
     techMarquee,
-    projectNumber,
-    explainerLabel,
     explainerTitle,
     explainerSummary,
     highlights,
-    stack,
     actions,
   );
   [...explainer.children].forEach((child, childIndex) => {

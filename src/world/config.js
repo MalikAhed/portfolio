@@ -31,8 +31,8 @@ export const FOCUS_WORLD_CONFIG = Object.freeze({
 });
 
 export const PROJECT_FRAME_ENTRY_CONFIG = Object.freeze({
-  startDepth: 3.25,
-  settleDepth: 4.55,
+  startDepth: 2.8,
+  settleDepth: 4.7,
   workHorizontalOffset: 420,
   workVerticalOffset: 220,
 });

@@ -53,8 +53,8 @@ src/
   card is a conventional DOM interface aligned from its Three.js anchor's
   projected corners, so the same project frame remains visible before, during,
   and after focus. Its large work surface alternates left and right beside
-  project context, a contained looping technology chain, highlights, stack
-  details, and project links. Frames stay hidden while the camera crosses their
+  project context, a contained looping technology chain, bulleted highlights,
+  and project links. Frames stay hidden while the camera crosses their
   plane, then the work surface slides into place and the explainer resolves
   upward from blur. The Preview/Code control is one pill toggle, and the Code
   view has an Inspira-style folder tree beside the source pane. The Project
