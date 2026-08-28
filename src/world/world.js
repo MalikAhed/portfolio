@@ -238,7 +238,7 @@ export function initWorld() {
   const camera = new THREE.PerspectiveCamera(WORLD_CAMERA_FOV, 1, 0.1, 120);
   camera.position.set(0, 0, HERO_CAMERA_Z);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const portfolioCards = createPortfolioCards(reducedMotion, cardsStage);
+  const portfolioCards = createPortfolioCards(cardsStage);
   const stockThinkChess = createStockThinkChessPieces();
 
   let renderer;

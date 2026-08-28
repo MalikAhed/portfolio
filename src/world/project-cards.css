@@ -42,6 +42,10 @@
   pointer-events: auto;
 }
 
+.project-card.is-controls-interactive .project-card__header-actions {
+  pointer-events: auto;
+}
+
 .project-card__work-transform {
   display: flex;
   align-self: center;
@@ -69,8 +73,6 @@
 }
 
 .project-card__surface {
-  --card-tilt-x: 0deg;
-  --card-tilt-y: 0deg;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   inline-size: 100%;
@@ -81,10 +83,6 @@
   border-radius: var(--project-card-radius, 34px);
   background: #fff;
   box-shadow: 0 26px 60px rgb(28 28 26 / 16%);
-  transform: rotateX(var(--card-tilt-x)) rotateY(var(--card-tilt-y));
-  transform-style: preserve-3d;
-  transition: transform 180ms ease;
-  backface-visibility: hidden;
 }
 
 .project-card__explainer {
@@ -268,6 +266,8 @@
   transform: translate(2px, -2px) rotate(-4deg);
 }
 .project-card__header {
+  position: relative;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -401,7 +401,8 @@
   block-size: 17px;
 }
 
-.project-card__surface:fullscreen {
+.project-card__surface:fullscreen,
+.project-card.is-fallback-fullscreen .project-card__surface {
   inline-size: 100vw;
   block-size: 100vh;
   aspect-ratio: auto;
@@ -410,6 +411,42 @@
   background: #fff;
   box-shadow: none;
   transform: none;
+}
+
+body.has-project-fallback-fullscreen {
+  overflow: hidden;
+}
+
+body.has-project-fallback-fullscreen .project-cards-layer {
+  z-index: var(--depth-system);
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.project-card.is-fallback-fullscreen {
+  position: fixed !important;
+  z-index: var(--depth-system) !important;
+  inset: 0 !important;
+  display: block;
+  inline-size: 100vw !important;
+  block-size: 100vh !important;
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+.project-card.is-fallback-fullscreen .project-card__work-transform {
+  position: fixed;
+  inset: 0;
+  inline-size: 100vw;
+  block-size: 100vh;
+  transform: none;
+}
+
+.project-card.is-fallback-fullscreen .project-card__explainer {
+  display: none;
 }
 
 .project-card__viewport,
@@ -635,13 +672,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-card,
-  .project-card__surface {
+  .project-card {
     transition: none;
-  }
-
-  .project-card__surface {
-    transform: rotateX(var(--card-tilt-x)) rotateY(var(--card-tilt-y));
   }
 
   .project-card__work-transform {

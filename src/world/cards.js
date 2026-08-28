@@ -20,14 +20,15 @@ const projectedBottomLeft = new THREE.Vector3();
 const projectedBottomRight = new THREE.Vector3();
 const PROJECT_SIDE_NAMES = Object.freeze(["preview", "text"]);
 
-function cloneSideTransform(side) {
+function cloneSideTransform(projectId, side) {
   const defaults = CARD_WORLD_CONFIG.sideTransforms[side];
+  const override = CARD_WORLD_CONFIG.sideTransformOverrides[projectId]?.[side];
   return {
-    position: { ...defaults.position },
-    rotation: { ...defaults.rotation },
-    width: defaults.width,
-    height: defaults.height,
-    scale: defaults.scale,
+    position: { ...defaults.position, ...override?.position },
+    rotation: { ...defaults.rotation, ...override?.rotation },
+    width: override?.width ?? defaults.width,
+    height: override?.height ?? defaults.height,
+    scale: override?.scale ?? defaults.scale,
   };
 }
 
@@ -340,7 +341,7 @@ function createFileTree(project, onSelect) {
   };
 }
 
-function createProjectCard(project, index, reducedMotion) {
+function createProjectCard(project, index) {
   const card = document.createElement("article");
   card.className = `project-card project-card--${index % 2 === 0 ? "work-left" : "work-right"}`;
   card.dataset.projectCard = project.id;
@@ -437,9 +438,6 @@ function createProjectCard(project, index, reducedMotion) {
   const fullscreenLabel = document.createElement("span");
   fullscreenLabel.textContent = "Full screen";
   fullscreenButton.append(fullscreenIcon.element, fullscreenLabel);
-  fullscreenButton.hidden =
-    !document.fullscreenEnabled ||
-    typeof surface.requestFullscreen !== "function";
 
   const headerActions = document.createElement("div");
   headerActions.className = "project-card__header-actions";
@@ -508,6 +506,11 @@ function createProjectCard(project, index, reducedMotion) {
   treePanel.append(fileTree.element);
 
   let currentMode = "preview";
+  let fallbackFullscreen = false;
+
+  function isFullscreen() {
+    return document.fullscreenElement === surface || fallbackFullscreen;
+  }
 
   function setMode(mode) {
     currentMode = mode;
@@ -528,7 +531,7 @@ function createProjectCard(project, index, reducedMotion) {
   }
 
   function syncFullscreenButton() {
-    const fullscreen = document.fullscreenElement === surface;
+    const fullscreen = isFullscreen();
     fullscreenButton.classList.toggle("is-active", fullscreen);
     fullscreenButton.setAttribute("aria-pressed", String(fullscreen));
     fullscreenButton.setAttribute(
@@ -548,21 +551,55 @@ function createProjectCard(project, index, reducedMotion) {
     syncPreviewVisibility();
   }
 
+  function setFallbackFullscreen(fullscreen) {
+    fallbackFullscreen = fullscreen;
+    card.classList.toggle("is-fallback-fullscreen", fullscreen);
+    document.body.classList.toggle(
+      "has-project-fallback-fullscreen",
+      fullscreen || Boolean(document.querySelector(".is-fallback-fullscreen")),
+    );
+    syncFullscreenButton();
+  }
+
   async function handleFullscreenClick() {
-    try {
-      if (document.fullscreenElement === surface) {
+    if (fallbackFullscreen) {
+      setFallbackFullscreen(false);
+      return;
+    }
+
+    if (document.fullscreenElement === surface) {
+      try {
         await document.exitFullscreen();
-      } else {
-        resetTilt();
-        await surface.requestFullscreen({ navigationUI: "hide" });
+      } catch (error) {
+        console.warn("Could not exit the project fullscreen state.", error);
       }
-    } catch (error) {
-      console.warn("Could not change the project fullscreen state.", error);
+      return;
+    }
+
+    if (
+      document.fullscreenEnabled &&
+      typeof surface.requestFullscreen === "function"
+    ) {
+      try {
+        await surface.requestFullscreen();
+        return;
+      } catch (error) {
+        console.warn(
+          "Native fullscreen was unavailable; using the viewport fallback.",
+          error,
+        );
+      }
+    }
+
+    setFallbackFullscreen(true);
+  }
+
+  function handleFullscreenKeydown(event) {
+    if (event.key === "Escape" && fallbackFullscreen) {
+      setFallbackFullscreen(false);
     }
   }
 
-  let pointerBounds = null;
-  let tiltAnimationFrameId = 0;
   let previewLoadTimer = 0;
   let previewLoaderDoneTimer = 0;
   let previewProgressTimer = 0;
@@ -572,38 +609,7 @@ function createProjectCard(project, index, reducedMotion) {
   let previewReady = false;
   let previewActive = false;
   let previewProgress = 0;
-  let nextTiltX = 0;
-  let nextTiltY = 0;
   const disposePreviewPrefetch = schedulePreviewPrefetch(project.previewUrl);
-
-  function handlePointerEnter() {
-    pointerBounds = card.getBoundingClientRect();
-  }
-
-  function handlePointerMove(event) {
-    if (reducedMotion.matches || event.pointerType === "touch") return;
-    const bounds = pointerBounds ?? card.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) / Math.max(1, bounds.width) - 0.5;
-    const y = (event.clientY - bounds.top) / Math.max(1, bounds.height) - 0.5;
-    nextTiltX = -y * 2.5;
-    nextTiltY = x * 3.5;
-    if (tiltAnimationFrameId) return;
-    tiltAnimationFrameId = window.requestAnimationFrame(() => {
-      tiltAnimationFrameId = 0;
-      surface.style.setProperty("--card-tilt-x", `${nextTiltX.toFixed(2)}deg`);
-      surface.style.setProperty("--card-tilt-y", `${nextTiltY.toFixed(2)}deg`);
-    });
-  }
-
-  function resetTilt() {
-    pointerBounds = null;
-    if (tiltAnimationFrameId) {
-      window.cancelAnimationFrame(tiltAnimationFrameId);
-      tiltAnimationFrameId = 0;
-    }
-    surface.style.removeProperty("--card-tilt-x");
-    surface.style.removeProperty("--card-tilt-y");
-  }
 
   function setSideTransform(side, transform) {
     if (!PROJECT_SIDE_NAMES.includes(side)) return;
@@ -632,7 +638,7 @@ function createProjectCard(project, index, reducedMotion) {
   }
 
   function isPreviewAvailable() {
-    return previewActive || document.fullscreenElement === surface;
+    return previewActive || isFullscreen();
   }
 
   function syncPreviewVisibility() {
@@ -745,9 +751,7 @@ function createProjectCard(project, index, reducedMotion) {
   codeButton.addEventListener("click", handleModeClick);
   fullscreenButton.addEventListener("click", handleFullscreenClick);
   document.addEventListener("fullscreenchange", syncFullscreenButton);
-  card.addEventListener("pointerenter", handlePointerEnter);
-  card.addEventListener("pointermove", handlePointerMove);
-  card.addEventListener("pointerleave", resetTilt);
+  document.addEventListener("keydown", handleFullscreenKeydown);
   setMode("preview");
   setFile(fileEntries[0][0]);
   syncFullscreenButton();
@@ -758,6 +762,7 @@ function createProjectCard(project, index, reducedMotion) {
 
   return {
     element: card,
+    isFullscreen,
     setDimensions,
     setSideTransform,
     updatePreviewActivity,
@@ -766,13 +771,9 @@ function createProjectCard(project, index, reducedMotion) {
       codeButton.removeEventListener("click", handleModeClick);
       fullscreenButton.removeEventListener("click", handleFullscreenClick);
       document.removeEventListener("fullscreenchange", syncFullscreenButton);
+      document.removeEventListener("keydown", handleFullscreenKeydown);
+      if (fallbackFullscreen) setFallbackFullscreen(false);
       fileTree.dispose();
-      card.removeEventListener("pointerenter", handlePointerEnter);
-      card.removeEventListener("pointermove", handlePointerMove);
-      card.removeEventListener("pointerleave", resetTilt);
-      if (tiltAnimationFrameId) {
-        window.cancelAnimationFrame(tiltAnimationFrameId);
-      }
       clearPreviewLoadTimer();
       if (previewLoaderDoneTimer) {
         window.clearTimeout(previewLoaderDoneTimer);
@@ -797,14 +798,14 @@ function createProjectCard(project, index, reducedMotion) {
  * the continuous visuals, controls, previews, source views, and keyboard
  * behavior.
  */
-export function createPortfolioCards(reducedMotion, container) {
+export function createPortfolioCards(container) {
   const group = new THREE.Group();
   group.name = CARD_WORLD_CONFIG.id;
 
   const entries = PROJECTS.map((project, index) => {
     const rig = new THREE.Group();
     rig.name = `portfolio-card-rig-${index + 1}`;
-    const view = createProjectCard(project, index, reducedMotion);
+    const view = createProjectCard(project, index);
     container.append(view.element);
     const anchor = new THREE.Object3D();
     anchor.name = `portfolio-card-anchor-${index + 1}`;
@@ -818,11 +819,12 @@ export function createPortfolioCards(reducedMotion, container) {
       focusDistance: Number.POSITIVE_INFINITY,
       height: CARD_WORLD_CONFIG.height,
       inFront: false,
+      projectId: project.id,
       rig,
       screenBounds: { bottom: 0, left: 0, right: 0, top: 0 },
       sideTransforms: {
-        preview: cloneSideTransform("preview"),
-        text: cloneSideTransform("text"),
+        preview: cloneSideTransform(project.id, "preview"),
+        text: cloneSideTransform(project.id, "text"),
       },
       visibility: 0,
       view,
@@ -859,7 +861,7 @@ export function createPortfolioCards(reducedMotion, container) {
     entry.width = CARD_WORLD_CONFIG.width;
     entry.height = CARD_WORLD_CONFIG.height;
     PROJECT_SIDE_NAMES.forEach((side) => {
-      entry.sideTransforms[side] = cloneSideTransform(side);
+      entry.sideTransforms[side] = cloneSideTransform(entry.projectId, side);
       applySideTransform(entry, side);
     });
     view.setDimensions(entry.width, entry.height);
@@ -1016,14 +1018,23 @@ export function createPortfolioCards(reducedMotion, container) {
       });
 
     entries.forEach((entry) => {
+      const fullscreen = entry.view.isFullscreen();
       const active = entry === activeEntry;
       const rendered =
-        entry.visibility > FOCUS_WORLD_CONFIG.visibilityThreshold &&
-        isOnScreen(entry.screenBounds, width, height);
+        fullscreen ||
+        (entry.visibility > FOCUS_WORLD_CONFIG.visibilityThreshold &&
+          isOnScreen(entry.screenBounds, width, height));
+      const controlsInteractive =
+        fullscreen ||
+        (active &&
+          rendered &&
+          entry.visibility >= 0.25 &&
+          entry.entryProgress >= 0.7);
       const interactive =
-        active &&
-        activeDistance <= FOCUS_WORLD_CONFIG.interactionBand &&
-        rendered;
+        fullscreen ||
+        (active &&
+          activeDistance <= FOCUS_WORLD_CONFIG.interactionBand &&
+          rendered);
       const previewActive =
         !scrolling &&
         active &&
@@ -1066,8 +1077,12 @@ export function createPortfolioCards(reducedMotion, container) {
       }
 
       entry.view.element.style.pointerEvents = interactive ? "auto" : "none";
-      entry.view.element.inert = !interactive;
+      entry.view.element.inert = !controlsInteractive;
       entry.view.element.classList.toggle("is-active", active && rendered);
+      entry.view.element.classList.toggle(
+        "is-controls-interactive",
+        controlsInteractive,
+      );
       entry.view.element.classList.toggle("is-interactive", interactive);
       entry.view.updatePreviewActivity(previewActive);
     });
@@ -1157,7 +1172,7 @@ export function createPortfolioCards(reducedMotion, container) {
     const entry = entries[index];
     if (!entry) throw new RangeError(`Unknown portfolio card: ${index}`);
     if (!PROJECT_SIDE_NAMES.includes(side)) return;
-    entry.sideTransforms[side] = cloneSideTransform(side);
+    entry.sideTransforms[side] = cloneSideTransform(entry.projectId, side);
     applySideTransform(entry, side);
   }
 

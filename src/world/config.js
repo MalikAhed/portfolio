@@ -84,8 +84,8 @@ export function getWorldVisibilityAtDepth(depth) {
  * Entrance/motion: fixed in world space while scrolling; each frame stays
  * hidden as the camera crosses its fixed Z plane, then its work surface slides
  * in and its explainer resolves upward from blur before the shared focal
- * distance. Pointer hover adds a temporary local CSS tilt without changing the
- * base transform.
+ * distance. The DOM surface remains geometrically stable for dependable
+ * pointer interaction.
  * Editor: position, Euler XYZ rotation, and scalar size may be changed
  * directly; reset restores the active responsive preset below
  * Rendering: a lightweight Three.js anchor supplies the world transform. Its
@@ -129,10 +129,12 @@ export const CARD_WORLD_CONFIG = Object.freeze({
       scale: 1,
     }),
   }),
-  hover: Object.freeze({
-    maxTilt: Math.PI / 18,
-    scale: 1.035,
-    response: 12,
+  sideTransformOverrides: Object.freeze({
+    stockthink: Object.freeze({
+      text: Object.freeze({
+        position: Object.freeze({ x: 65 }),
+      }),
+    }),
   }),
   presets: Object.freeze({
     desktop: [

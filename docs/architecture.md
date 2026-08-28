@@ -67,9 +67,14 @@ src/
   Project Frames panel may directly change each base position, XYZ rotation,
   frame width, frame height, and scale, plus independent preview-side and
   text-side position, rotation, width, height, and scale. It can copy either
-  side or the complete selected project settings for permanent configuration,
-  while pointer hover changes only the focused work surface. Reset restores the
-  active responsive preset from `config.js`; scrolling moves only the camera.
+  side or the complete selected project settings for permanent configuration.
+  Project surfaces do not tilt on hover, keeping mouse hit targets stable.
+  Reset restores the active responsive preset from `config.js`; scrolling moves
+  only the camera.
+  StockThink's configured text-side default is offset 65 CSS pixels to the
+  right. Project header controls remain available throughout the card's clear
+  presentation range. Fullscreen uses the browser API when permitted and a
+  viewport-filling fallback when an embedded browser denies that API.
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
   supplies their internal z-order, so an approaching card crosses in front of
   the preceding card without removing either surface.
@@ -95,9 +100,8 @@ src/
   WebGL draw, chess animation, or visible StockThink iframe; one settled frame
   resumes them after scrolling stops. Resize, pointer motion, or editor changes
   otherwise render the required output. WebGL pixel count is capped. Only cards
-  with a meaningful on-screen opacity are painted, just one card is interactive,
-  and pointer tilt reads layout once on entry before batching style updates to
-  animation frames.
+  with a meaningful on-screen opacity are painted, and just one card's main
+  content is interactive. Project cards do not run hover animation frames.
 
 ## Progressive enhancement
 
