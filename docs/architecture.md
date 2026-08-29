@@ -32,6 +32,8 @@ src/
 │   ├── project-frame-editor.js  # Final-frame position, rotation, and size controls
 │   ├── project-frame-editor.css # Compact fixed Project Frames panel
 │   ├── learn-object-editor.js   # Full-Stack Quest object XYZ/visibility controls
+│   ├── black-hole-camera-editor.js # Live final-camera timing controls
+│   ├── ending-composition.css # Responsive final identity and contact overlay
 │   ├── config.js             # Camera, focus, and responsive world positions
 │   ├── journey.css           # Transparent native-scroll distance
 │   ├── project-cards.css     # Interactive project-card presentation
@@ -66,7 +68,9 @@ src/
   scale, visibility, and blur use the same camera-depth model as the cards.
 - The fixed header hides while native scroll moves deeper into the project
   world and returns as soon as scroll reverses toward the Hero. It remains
-  visible at the Hero origin and while the mobile navigation is open.
+  visible at the Hero origin and while the mobile navigation is open. The
+  header returns for the final composition and switches its brand, navigation,
+  menu, and contact treatment to white against the black world.
 - The WebGL renderer draws the Hero directly without post-processing. Every
   card is a conventional DOM interface aligned from its Three.js anchor's
   projected corners, so the same project frame remains visible before, during,
@@ -97,6 +101,9 @@ src/
   Project header controls remain available throughout the card's clear
   presentation range. Fullscreen uses the browser API when permitted and a
   viewport-filling fallback when an embedded browser denies that API.
+  Preview loaders wait briefly before appearing, so cached or immediately ready
+  content never flashes a spinner. Readiness hides the loader and reveals the
+  preview in the same update with no blank frame between them.
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
   supplies the shared z-order for cards and projected world pieces, so an
   approaching card crosses in front of every earlier card and piece at the
@@ -117,37 +124,73 @@ src/
   distinct foreground Z positions, so every crop sharpens, blurs, and fades at
   its own camera distance; the following project naturally crosses in front.
   Its lightweight iframe remains mounted after its first load. No poster or
-  freeze-frame artwork covers the real project surface. A cream-and-red splash
-  appears for the first load only and clears on the
-  iframe's load event; later focused visits reveal the already-mounted preview
+  freeze-frame artwork covers the real project surface. A shared cream-and-red
+  “Preparing preview…” spinner covers a meaningfully slow first load and clears
+  on the iframe's load event; later focused visits reveal the already-mounted preview
   immediately. The site can finish its imagery progressively. Local
   `srcdoc` project simulations are also created only on first focus instead of
   at world startup.
 - The StockThink preview is one local screenshot captured from the original
   landing hero after its reveal. It remains the sole preview surface throughout
-  scrolling, with no iframe, loader, poster, or fallback frame. The separate
+  scrolling, with a shared spinner covering only a meaningfully slow image
+  download and no iframe, poster, or fallback frame. The separate
   projected chess-piece sprites around the card remain part of the portfolio
   world.
 - Murajaa replaces the third placeholder with its live Arabic-first Tawjihi
   flashcard PWA. The lightweight plain-HTML preview stays mounted after its
-  first focus, preserving its local study state while avoiding reloads. Four
+  first focus, with the shared loading spinner clearing when its iframe is
+  ready and preserving its local study state while avoiding reloads. Four
   generated Murajaa screens surround the frame at distinct foreground depths.
 - Full-Stack Quest replaces the final placeholder with the deployed real
   learning application, including its sixteen biome backgrounds, 112-lesson
   path, navigation, league rank, streak, lesson views, XP, and challenge UI.
-  Original project artwork supplies the separate book, flame, and rank objects
-  distributed around the frame at distinct world depths. The camera rail
+  The shared loading spinner covers its first iframe download. Original project
+  artwork supplies the separate book, flame, and rank objects distributed
+  around the frame at distinct world depths. The camera rail
   continues beyond this final frame so it can recede naturally before the
   native scroll range ends.
 - A final projected “And much more” composition follows Full-Stack Quest. Its
   compact grid summarizes additional work areas and links to the complete
   public repository list without adding another featured-project frame.
-- The passage from Full-Stack Quest to the final composition reveals Malik's
-  Schwarzschild ray-marched line-path simulation inside an isolated, pointer-
-  inert surface. Camera Z pulls the view outward while raising the simulation's
-  line count and orbit speed and accelerating two looping streak layers. The
-  embedded renderer runs only while the passage is visible, never takes over
-  native scrolling, and is disabled under reduced motion.
+- As Murajaa enters, a lightweight canvas layer begins revealing black radial
+  light-speed streaks from the far depth layer, above only the warm base and
+  behind the Three.js world, project surfaces, and final composition. The world
+  renderer clears those streaks beneath each visible project explainer and the
+  final composition, so transparent copy areas occlude them like the opaque
+  preview surfaces without introducing a section background. The world
+  darkens after the remaining work recedes and is almost fully black before the
+  black hole appears; during that transition, the streaks invert to white.
+  Malik's Schwarzschild ray-marched line-path simulation then uses a brief,
+  stronger blur-and-opacity entrance in that full-screen, pointer-inert surface.
+  Both clear linearly within a short camera-Z interval, masking the cached ray
+  map's first rim pixels while the view is still very close. Its camera distance, line count,
+  orbit speed, and downward framing use the same short linear camera-Z interval
+  beginning at the chosen movement start, without an eased slowdown or hold.
+  The physical camera then remains fixed for the rest of the journey. Its live
+  camera panel exposes only the final scroll Z and the Z position where the
+  black hole starts moving down.
+  Changing the final scroll Z updates the endpoint of the same native-scroll
+  linear camera rail. Once the black-hole view is established, the
+  radial light-speed streaks fade away independently. During the remaining
+  scroll, the black hole shrinks and its completed ray-marched image slides down
+  together at a constant rate over a short, fixed camera-Z interval, then holds
+  that framing through the end of the journey. The interval is independent of
+  the editable scroll endpoint, so extending the journey cannot slow the move.
+  The physical observer keeps the simulation's fixed inclination and view
+  rotation, preventing an overhead view while leaving clear space above the
+  disk. The Black Hole Camera panel can
+  capture the current camera Z as the exact movement start and copy both live
+  values for permanent configuration. The black-hole surface
+  remains fully visible and alive at the end of the rail instead of fading back
+  to the warm base. The embedded renderer runs only while the passage is
+  visible, never takes over native scrolling, and is disabled under reduced
+  motion.
+- A fixed semantic ending composition fades in linearly as the black hole
+  settles into its lower framing. Malik's compact identity statement occupies
+  the clear space above, while Gaza, age, and full-stack details sit opposite a
+  single GitHub action around the black hole. The composition has no background or clipping,
+  becomes interactive only when almost fully visible, reverses directly with
+  native scroll, and is reset with the world lifecycle.
 - One fixed focal model is defined in `config.js`. Projects enter fully opaque
   by sliding from alternating sides into their exact authored positions, then
   camera-space distance drives their exit opacity and Gaussian blur; the
@@ -189,8 +232,8 @@ src/
 ## Assets and dependencies
 
 Only files referenced by the live page belong in `public/assets`. The runtime
-dependencies are Three.js and the three local font packages. Vite is the build
-tool; no framework or parallel editor runtime is present.
+dependencies are Three.js and the locally bundled font packages. Vite is the
+build tool; no framework or parallel editor runtime is present.
 The Hero portrait and foreground chess cutouts use full-resolution, high-quality
 WebP with preserved alpha. Chess images retain their original PNGs as runtime
 fallbacks for preview environments that fail to resolve the optimized files.

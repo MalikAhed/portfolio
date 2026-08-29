@@ -3,6 +3,7 @@ import { getRequiredElement } from "../lib/dom.js";
 import {
   FOCUS_WORLD_CONFIG,
   HERO_CAMERA_Z,
+  JOURNEY_CAMERA_END_Z,
   MORE_WORK_WORLD_CONFIG,
   WARP_SPEED_WORLD_CONFIG,
   WORK_TITLE_WORLD_CONFIG,
@@ -13,6 +14,7 @@ import {
   getWorldVisibilityAtDepth,
 } from "./config.js";
 import { createPortfolioCards } from "./cards.js";
+import { initBlackHoleCameraEditor } from "./black-hole-camera-editor.js";
 import { createStockthinkChessWorld } from "./chess-world.js";
 import { createCubeBurgerIngredientWorld } from "./ingredient-world.js";
 import { initLearnObjectEditor } from "./learn-object-editor.js";
@@ -105,8 +107,187 @@ function clamp(value, minimum = 0, maximum = 1) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-function createJourneyState(progress, reducedMotion) {
-  const fullTravelCameraZ = getCameraZAtProgress(progress);
+function createWarpLines(canvas, occluders) {
+  const context = canvas.getContext("2d", { alpha: true });
+  const maximumLineCount = 220;
+  const lines = Array.from({ length: maximumLineCount }, () => ({}));
+  let width = 1;
+  let height = 1;
+  let active = false;
+  let travel = 0;
+  let colorChannel = 16;
+  let animationFrameId = 0;
+  let previousTime = 0;
+
+  function resetLine(line, distribute = false) {
+    line.angle = Math.random() * Math.PI * 2;
+    line.radius = distribute ? Math.random() : Math.random() * 0.075;
+    line.speed = 0.45 + Math.random() * 0.9;
+    line.brightness = 0.38 + Math.random() * 0.62;
+    line.width = 0.45 + Math.random() * 1.25;
+  }
+
+  lines.forEach((line) => resetLine(line, true));
+
+  function eraseForegroundWork() {
+    context.save();
+    context.globalCompositeOperation = "destination-out";
+    context.fillStyle = "#000";
+
+    occluders.forEach(({ element, opacityElement = element }) => {
+      const opacity = Number.parseFloat(opacityElement.style.opacity || "1");
+      if (
+        opacity <= FOCUS_WORLD_CONFIG.visibilityThreshold ||
+        opacityElement.style.visibility === "hidden"
+      ) {
+        return;
+      }
+
+      const bounds = element.getBoundingClientRect();
+      if (
+        bounds.right <= 0 ||
+        bounds.bottom <= 0 ||
+        bounds.left >= width ||
+        bounds.top >= height
+      ) {
+        return;
+      }
+
+      // Clear slightly beyond the visual bounds so the canvas drop shadow
+      // cannot leak back over the foreground edge.
+      const padding = 12;
+      const x = bounds.left - padding;
+      const y = bounds.top - padding;
+      const occluderWidth = bounds.width + padding * 2;
+      const occluderHeight = bounds.height + padding * 2;
+
+      context.globalAlpha = clamp(opacity);
+      context.beginPath();
+      if (typeof context.roundRect === "function") {
+        context.roundRect(x, y, occluderWidth, occluderHeight, 32);
+      } else {
+        context.rect(x, y, occluderWidth, occluderHeight);
+      }
+      context.fill();
+    });
+
+    context.restore();
+  }
+
+  function resize() {
+    width = Math.max(1, window.innerWidth);
+    height = Math.max(1, window.innerHeight);
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+    canvas.width = Math.round(width * pixelRatio);
+    canvas.height = Math.round(height * pixelRatio);
+    context?.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  }
+
+  function render(time) {
+    animationFrameId = 0;
+    if (!active || !context || document.hidden) return;
+
+    const deltaTime = previousTime
+      ? THREE.MathUtils.clamp((time - previousTime) / 1000, 0, 0.05)
+      : 1 / 60;
+    previousTime = time;
+    context.clearRect(0, 0, width, height);
+    context.lineCap = "round";
+
+    const centerX = width * 0.5;
+    const centerY = height * 0.5;
+    const maximumRadius = Math.hypot(width, height) * 0.62;
+    const visibleLineCount = Math.round(
+      THREE.MathUtils.lerp(42, maximumLineCount, travel),
+    );
+    const radialCompression = 1 + travel * 0.7;
+    const motionSpeed = 0.14 + travel * 0.72;
+    const baseTrail = 0.01 + travel * 0.045;
+
+    for (let index = 0; index < visibleLineCount; index += 1) {
+      const line = lines[index];
+      line.radius +=
+        deltaTime * line.speed * motionSpeed * (0.3 + line.radius * 1.7);
+      if (line.radius > 1.04) resetLine(line);
+
+      const headRadius =
+        maximumRadius * Math.pow(line.radius, radialCompression);
+      const tailProgress = Math.max(
+        0,
+        line.radius - baseTrail * (0.55 + line.radius),
+      );
+      const tailRadius =
+        maximumRadius * Math.pow(tailProgress, radialCompression);
+      const cosine = Math.cos(line.angle);
+      const sine = Math.sin(line.angle);
+      const edgeFade = 1 - THREE.MathUtils.smoothstep(line.radius, 0.82, 1.04);
+      const centerFade = THREE.MathUtils.smoothstep(line.radius, 0.015, 0.16);
+      const opacity =
+        line.brightness * edgeFade * centerFade * (0.55 + travel * 0.45);
+
+      context.beginPath();
+      context.moveTo(
+        centerX + cosine * tailRadius,
+        centerY + sine * tailRadius,
+      );
+      context.lineTo(
+        centerX + cosine * headRadius,
+        centerY + sine * headRadius,
+      );
+      context.lineWidth = line.width * (0.75 + travel * 0.85);
+      context.strokeStyle = `rgba(${colorChannel}, ${colorChannel}, ${colorChannel}, ${opacity.toFixed(3)})`;
+      context.stroke();
+    }
+
+    eraseForegroundWork();
+
+    animationFrameId = window.requestAnimationFrame(render);
+  }
+
+  function setState(nextActive, nextTravel, nextColorChannel = 16) {
+    travel = clamp(nextTravel);
+    colorChannel = Math.round(clamp(nextColorChannel, 0, 255));
+    if (active === nextActive) return;
+    active = nextActive;
+    previousTime = 0;
+    if (active && !animationFrameId && !document.hidden) {
+      animationFrameId = window.requestAnimationFrame(render);
+    } else if (!active) {
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+      animationFrameId = 0;
+      context?.clearRect(0, 0, width, height);
+    }
+  }
+
+  function handleVisibilityChange() {
+    if (active && !document.hidden && !animationFrameId) {
+      previousTime = 0;
+      animationFrameId = window.requestAnimationFrame(render);
+    }
+  }
+
+  window.addEventListener("resize", resize, { passive: true });
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  resize();
+
+  return {
+    setState,
+    dispose() {
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      canvas.width = 1;
+      canvas.height = 1;
+    },
+  };
+}
+
+function createJourneyState(
+  progress,
+  reducedMotion,
+  journeyEndCameraZ = JOURNEY_CAMERA_END_Z,
+) {
+  const fullTravelCameraZ = getCameraZAtProgress(progress, journeyEndCameraZ);
   const cameraTargetZ = reducedMotion
     ? HERO_CAMERA_Z + (fullTravelCameraZ - HERO_CAMERA_Z) * 0.18
     : fullTravelCameraZ;
@@ -125,9 +306,7 @@ function updateWorkTitle(element, cameraZ) {
   const visibility = inFront ? getWorldVisibilityAtDepth(depth) : 0;
   const entryProgress = inFront ? getProjectFrameEntryAtDepth(depth) : 0;
   const opacity = visibility * entryProgress;
-  const scale = inFront
-    ? clamp(FOCUS_WORLD_CONFIG.distance / depth, 0.55, 2.4)
-    : 1;
+  const scale = inFront ? FOCUS_WORLD_CONFIG.distance / depth : 1;
 
   element.style.setProperty("--work-title-scale", scale.toFixed(5));
   element.style.setProperty(
@@ -145,9 +324,7 @@ function updateMoreWork(element, cameraZ, scrolling) {
   const visibility = inFront ? getWorldVisibilityAtDepth(depth) : 0;
   const entryProgress = inFront ? getProjectFrameEntryAtDepth(depth) : 0;
   const opacity = visibility * entryProgress;
-  const scale = inFront
-    ? clamp(FOCUS_WORLD_CONFIG.distance / depth, 0.7, 1.35)
-    : 1;
+  const scale = inFront ? FOCUS_WORLD_CONFIG.distance / depth : 1;
   const interactive =
     !scrolling &&
     opacity > 0.65 &&
@@ -166,71 +343,176 @@ function updateMoreWork(element, cameraZ, scrolling) {
   element.inert = !interactive;
 }
 
-function updateWarpSpeed(element, cameraZ, reducedMotion) {
+function updateWarpSpeed(
+  element,
+  endingComposition,
+  cameraZ,
+  reducedMotion,
+  warpLines,
+  cameraSettings,
+) {
   const simulation = element.querySelector("[data-warp-simulation]");
+  const worldStage = element.closest("[data-world-stage]");
   if (reducedMotion) {
     element.style.opacity = "0";
     element.style.visibility = "hidden";
+    worldStage?.classList.remove("is-warp-active");
+    worldStage?.classList.remove("is-ending-visible");
+    endingComposition.style.opacity = "0";
+    endingComposition.style.visibility = "hidden";
+    endingComposition.classList.remove("is-interactive");
+    endingComposition.inert = true;
+    endingComposition.setAttribute("aria-hidden", "true");
     simulation?.contentWindow?.postMessage(
       { type: "portfolio-warp", active: false, intensity: 0 },
       window.location.origin,
     );
+    warpLines.setState(false, 0);
     return;
   }
 
-  const { startCameraZ, peakCameraZ, endCameraZ } = WARP_SPEED_WORLD_CONFIG;
-  const entering = THREE.MathUtils.smoothstep(
-    cameraZ,
-    startCameraZ,
-    peakCameraZ,
-  );
-  const leaving =
-    1 - THREE.MathUtils.smoothstep(cameraZ, peakCameraZ, endCameraZ);
-  const intensity = Math.min(entering, leaving);
-  const travel = THREE.MathUtils.clamp(
-    (cameraZ - startCameraZ) / (endCameraZ - startCameraZ),
+  const {
+    effectStartCameraZ,
+    effectRevealEndCameraZ,
+    simulationStartCameraZ,
+    simulationRevealTravelCameraZ,
+    simulationStartOpacity,
+    simulationStartBlurPixels,
+    nearCameraDistance,
+    farCameraDistance,
+    blackHoleShiftTravelCameraZ,
+    endBlackHoleScreenOffset,
+    endingRevealStartCameraZ,
+    endingRevealEndCameraZ,
+    darknessFadeStartCameraZ,
+    darknessFadeEndCameraZ,
+    lineFadeStartCameraZ,
+    lineFadeEndCameraZ,
+    startLineCount,
+    endLineCount,
+  } = WARP_SPEED_WORLD_CONFIG;
+  const { journeyEndCameraZ, blackHoleShiftStartCameraZ } = cameraSettings;
+  const passageActive = cameraZ >= effectStartCameraZ;
+  const lineExitVisibility =
+    1 -
+    THREE.MathUtils.smoothstep(
+      cameraZ,
+      lineFadeStartCameraZ,
+      lineFadeEndCameraZ,
+    );
+  const linesActive = passageActive && lineExitVisibility > 0.001;
+  const simulationActive = cameraZ >= simulationStartCameraZ;
+  const simulationRevealProgress = THREE.MathUtils.clamp(
+    (cameraZ - simulationStartCameraZ) / simulationRevealTravelCameraZ,
     0,
     1,
   );
+  const simulationVisibility = simulationActive
+    ? THREE.MathUtils.lerp(simulationStartOpacity, 1, simulationRevealProgress)
+    : 0;
+  const simulationBlur = THREE.MathUtils.lerp(
+    simulationStartBlurPixels,
+    0,
+    simulationRevealProgress,
+  );
+  const effectVisibility =
+    THREE.MathUtils.smoothstep(
+      cameraZ,
+      effectStartCameraZ,
+      effectRevealEndCameraZ,
+    ) * lineExitVisibility;
+  const effectTravel = THREE.MathUtils.clamp(
+    (cameraZ - effectStartCameraZ) / (journeyEndCameraZ - effectStartCameraZ),
+    0,
+    1,
+  );
+  const blackHoleMotionProgress = THREE.MathUtils.clamp(
+    (cameraZ - blackHoleShiftStartCameraZ) / blackHoleShiftTravelCameraZ,
+    0,
+    1,
+  );
+  const blackHoleScreenOffset = THREE.MathUtils.lerp(
+    0,
+    endBlackHoleScreenOffset,
+    blackHoleMotionProgress,
+  );
+  const endingVisibility = THREE.MathUtils.clamp(
+    (cameraZ - endingRevealStartCameraZ) /
+      (endingRevealEndCameraZ - endingRevealStartCameraZ),
+    0,
+    1,
+  );
+  const endingVisible = endingVisibility > 0.001;
+  const endingInteractive = endingVisibility > 0.96;
+  const darkness = THREE.MathUtils.smoothstep(
+    cameraZ,
+    darknessFadeStartCameraZ,
+    darknessFadeEndCameraZ,
+  );
+  const colorInversion = THREE.MathUtils.smoothstep(darkness, 0.44, 0.56);
+  const colorChannel = THREE.MathUtils.lerp(16, 249, colorInversion);
+  const cameraDistance = THREE.MathUtils.lerp(
+    nearCameraDistance,
+    farCameraDistance,
+    blackHoleMotionProgress,
+  );
+  const lineCount = Math.round(
+    THREE.MathUtils.lerp(startLineCount, endLineCount, blackHoleMotionProgress),
+  );
 
-  element.style.setProperty("--warp-intensity", intensity.toFixed(4));
-  element.style.setProperty("--warp-travel", travel.toFixed(4));
-  element.style.setProperty("--warp-scale", (0.72 + travel * 1.45).toFixed(4));
+  element.style.setProperty("--warp-travel", effectTravel.toFixed(4));
   element.style.setProperty(
-    "--warp-scale-near",
-    (0.9 + travel * 1.9).toFixed(4),
+    "--warp-effect-visibility",
+    effectVisibility.toFixed(4),
   );
-  element.style.setProperty("--warp-rotation", `${(travel * 4).toFixed(2)}deg`);
+  element.style.setProperty("--warp-darkness", darkness.toFixed(4));
   element.style.setProperty(
-    "--warp-rotation-near",
-    `${(travel * -3).toFixed(2)}deg`,
+    "--warp-hole-visibility",
+    simulationVisibility.toFixed(4),
   );
   element.style.setProperty(
-    "--warp-blur",
-    `${((1 - intensity) * 1.5).toFixed(2)}px`,
+    "--warp-hole-blur",
+    `${simulationBlur.toFixed(2)}px`,
   );
   element.style.setProperty(
-    "--warp-duration",
-    `${(900 - intensity * 760).toFixed(0)}ms`,
+    "--warp-line-color",
+    `${colorChannel.toFixed(0)} ${colorChannel.toFixed(0)} ${colorChannel.toFixed(0)}`,
   );
-  element.style.setProperty(
-    "--hole-opacity",
-    (0.35 + intensity * 0.65).toFixed(4),
+  element.style.opacity = "1";
+  element.style.visibility = passageActive ? "visible" : "hidden";
+  endingComposition.style.setProperty(
+    "--ending-visibility",
+    endingVisibility.toFixed(4),
   );
-  element.style.setProperty("--hole-scale", (3.4 - travel * 2.55).toFixed(4));
-  element.style.opacity = intensity.toFixed(4);
-  element.style.visibility = intensity > 0.01 ? "visible" : "hidden";
+  endingComposition.style.visibility = endingVisible ? "visible" : "hidden";
+  endingComposition.classList.toggle("is-interactive", endingInteractive);
+  endingComposition.inert = !endingInteractive;
+  endingComposition.setAttribute(
+    "aria-hidden",
+    endingVisible ? "false" : "true",
+  );
+  worldStage?.classList.toggle("is-warp-active", simulationActive);
+  worldStage?.classList.toggle("is-ending-visible", endingVisible);
+  warpLines.setState(linesActive, effectTravel, colorChannel);
   simulation?.contentWindow?.postMessage(
     {
       type: "portfolio-warp",
-      active: intensity > 0.01,
-      intensity,
+      active: simulationActive,
+      travel: blackHoleMotionProgress,
+      cameraDistance,
+      blackHoleScreenOffset,
+      lineCount,
     },
     window.location.origin,
   );
 }
 
-function initJourneyScroll(worldStage, reducedMotion, onChange) {
+function initJourneyScroll(
+  worldStage,
+  reducedMotion,
+  getJourneyEndCameraZ,
+  onChange,
+) {
   const journeyTrack = getRequiredElement("[data-journey-track]");
   let startY = 0;
   let endY = 1;
@@ -252,7 +534,11 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
     animationFrameId = 0;
     const progress = clamp((window.scrollY - startY) / (endY - startY));
     const scrollDelta = window.scrollY - previousScrollY;
-    const state = createJourneyState(progress, reducedMotion.matches);
+    const state = createJourneyState(
+      progress,
+      reducedMotion.matches,
+      getJourneyEndCameraZ(),
+    );
     worldStage.style.setProperty(
       "--origin-depth-scale",
       state.originDepthScale.toFixed(5),
@@ -310,19 +596,22 @@ function initJourneyScroll(worldStage, reducedMotion, onChange) {
   measure();
   update();
 
-  return () => {
-    if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
-    if (scrollSettleTimer) window.clearTimeout(scrollSettleTimer);
-    window.removeEventListener("scroll", handleScroll);
-    window.removeEventListener("resize", handleResize);
-    reducedMotion.removeEventListener("change", requestUpdate);
-    worldStage.classList.remove("is-journey-canvas");
-    worldStage.classList.remove("is-header-hidden");
-    worldStage.classList.remove("is-journey-scrolling");
-    worldStage.classList.remove("is-origin-cleared");
-    worldStage.style.removeProperty("--origin-depth-scale");
-    worldStage.style.removeProperty("--origin-defocus");
-    worldStage.style.removeProperty("--origin-visibility");
+  return {
+    refresh: requestUpdate,
+    dispose() {
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+      if (scrollSettleTimer) window.clearTimeout(scrollSettleTimer);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+      reducedMotion.removeEventListener("change", requestUpdate);
+      worldStage.classList.remove("is-journey-canvas");
+      worldStage.classList.remove("is-header-hidden");
+      worldStage.classList.remove("is-journey-scrolling");
+      worldStage.classList.remove("is-origin-cleared");
+      worldStage.style.removeProperty("--origin-depth-scale");
+      worldStage.style.removeProperty("--origin-defocus");
+      worldStage.style.removeProperty("--origin-visibility");
+    },
   };
 }
 
@@ -349,6 +638,8 @@ export function initWorld() {
   const workTitle = getRequiredElement("[data-work-title]");
   const moreWork = getRequiredElement("[data-more-work]");
   const warpSpeed = getRequiredElement("[data-warp-speed]");
+  const endingComposition = getRequiredElement("[data-ending-composition]");
+  const warpLinesCanvas = getRequiredElement("[data-warp-lines]");
   const app = getRequiredElement("#app");
   const splashProgressFill = getRequiredElement(".splash__progress-fill");
   const splashPercentage = getRequiredElement(".splash__percentage");
@@ -364,6 +655,17 @@ export function initWorld() {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const renderBudget = getRenderBudget();
   const portfolioCards = createPortfolioCards(cardsStage);
+  const warpLines = createWarpLines(warpLinesCanvas, [
+    ...Array.from(
+      cardsStage.querySelectorAll("[data-project-card]"),
+      (card) => ({
+        element: card.querySelector(".project-card__explainer"),
+        opacityElement: card,
+      }),
+    ),
+    { element: workTitle },
+    { element: moreWork },
+  ]);
   const stockthinkChessWorld = createStockthinkChessWorld(cardsStage, assetUrl);
   const cubeBurgerIngredientWorld = createCubeBurgerIngredientWorld(
     cardsStage,
@@ -398,6 +700,10 @@ export function initWorld() {
   renderer.autoClear = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   stage.append(renderer.domElement);
+  const blackHoleCameraEditor = initBlackHoleCameraEditor(
+    () => camera.position.z,
+    refreshBlackHoleCamera,
+  );
   let journeyScrolling = false;
   let webglFrameVisible = false;
 
@@ -452,6 +758,7 @@ export function initWorld() {
   let portraitMesh;
   let portraitShadow;
   let journeyState = createJourneyState(0, reducedMotion.matches);
+  let refreshJourney = () => {};
   let disposeJourney = () => {};
 
   scene.add(
@@ -820,7 +1127,15 @@ export function initWorld() {
       journeyState.originVisibility > FOCUS_WORLD_CONFIG.visibilityThreshold;
     updateWorkTitle(workTitle, camera.position.z);
     updateMoreWork(moreWork, camera.position.z, journeyScrolling);
-    updateWarpSpeed(warpSpeed, camera.position.z, reducedMotion.matches);
+    updateWarpSpeed(
+      warpSpeed,
+      endingComposition,
+      camera.position.z,
+      reducedMotion.matches,
+      warpLines,
+      blackHoleCameraEditor.settings,
+    );
+    blackHoleCameraEditor.setCurrentCameraZ(camera.position.z);
     scene.updateMatrixWorld(true);
     if (forceCards || camera.position.z !== renderedCardsCameraZ) {
       renderedCardsCameraZ = camera.position.z;
@@ -857,6 +1172,11 @@ export function initWorld() {
     renderScene(performance.now(), true);
   }
 
+  function refreshBlackHoleCamera() {
+    refreshJourney();
+    renderScene(performance.now(), true);
+  }
+
   function applyCamera() {
     camera.position.set(0, 0, journeyState.cameraTargetZ);
     camera.quaternion.identity();
@@ -872,7 +1192,7 @@ export function initWorld() {
     if (
       event.target instanceof Element &&
       event.target.closest(
-        "[data-project-frame-editor], [data-learn-object-editor], [data-project-card]",
+        "[data-project-frame-editor], [data-learn-object-editor], [data-black-hole-camera-editor], [data-project-card]",
       )
     ) {
       if (pointerTarget.lengthSq() > 0) resetPointer();
@@ -1023,7 +1343,15 @@ export function initWorld() {
     murajaaScreenWorld.update(camera, cssWidth, cssHeight, journeyScrolling);
     learnObjectWorld.update(camera, cssWidth, cssHeight);
     updateMoreWork(moreWork, camera.position.z, journeyScrolling);
-    updateWarpSpeed(warpSpeed, camera.position.z, reducedMotion.matches);
+    updateWarpSpeed(
+      warpSpeed,
+      endingComposition,
+      camera.position.z,
+      reducedMotion.matches,
+      warpLines,
+      blackHoleCameraEditor.settings,
+    );
+    blackHoleCameraEditor.setCurrentCameraZ(camera.position.z);
     if (!journeyScrolling) renderWorld();
   }
 
@@ -1038,11 +1366,14 @@ export function initWorld() {
   const resizeObserver = new ResizeObserver(requestResize);
   resizeObserver.observe(stage);
   resizeScene();
-  disposeJourney = initJourneyScroll(
+  const journeyController = initJourneyScroll(
     getRequiredElement("[data-world-stage]"),
     reducedMotion,
+    () => blackHoleCameraEditor.settings.journeyEndCameraZ,
     handleJourneyState,
   );
+  refreshJourney = journeyController.refresh;
+  disposeJourney = journeyController.dispose;
   syncAnimationLoop();
   prepareIntro();
 
@@ -1074,8 +1405,14 @@ export function initWorld() {
     stockthinkChessWorld.dispose();
     cubeBurgerIngredientWorld.dispose();
     learnObjectEditor.dispose();
+    blackHoleCameraEditor.dispose();
     murajaaScreenWorld.dispose();
     learnObjectWorld.dispose();
+    warpLines.dispose();
+    worldStage.classList.remove("is-warp-active");
+    worldStage.classList.remove("is-ending-visible");
+    endingComposition.inert = true;
+    endingComposition.setAttribute("aria-hidden", "true");
 
     const disposedGeometries = new Set();
     const disposedMaterials = new Set();

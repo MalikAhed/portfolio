@@ -1,80 +1,53 @@
 .warp-speed {
   position: fixed;
-  z-index: calc(var(--depth-interface) - 2);
+  /* The passage is scenery: base background below, every world object above. */
+  z-index: var(--depth-far);
   inset: 0;
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  perspective: 420px;
-  --warp-intensity: 0;
   --warp-travel: 0;
-  --warp-scale: 0.72;
-  --warp-scale-near: 0.9;
-  --warp-rotation: 0deg;
-  --warp-rotation-near: 0deg;
-  --warp-blur: 1.5px;
-  --hole-scale: 3.4;
-  --hole-opacity: 0.35;
-  --warp-duration: 900ms;
-  background: #000;
+  --warp-effect-visibility: 0;
+  --warp-darkness: 0;
+  --warp-hole-visibility: 0;
+  --warp-hole-blur: 0px;
+  --warp-line-color: 16 16 16;
+  background: rgb(0 0 0 / var(--warp-darkness));
 }
 
 .warp-speed__simulation {
   position: absolute;
+  z-index: 0;
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
   border: 0;
-  opacity: var(--hole-opacity);
+  background: #000;
+  opacity: var(--warp-hole-visibility);
+  filter: blur(var(--warp-hole-blur));
   pointer-events: none;
-  transform: scale(var(--hole-scale));
-  transform-origin: center;
 }
 
-.warp-speed::before,
-.warp-speed::after {
+.warp-speed__lines {
   position: absolute;
-  inset: -45vmax;
-  content: "";
-  background: repeating-conic-gradient(
-    from 7deg at 50% 50%,
-    transparent 0deg 3.8deg,
-    rgb(16 17 16 / 0%) 3.8deg 4.05deg,
-    rgb(16 17 16 / 74%) 4.08deg 4.16deg,
-    transparent 4.2deg 8deg
+  z-index: 1;
+  inset: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  opacity: calc(
+    var(--warp-effect-visibility) * (0.42 + var(--warp-travel) * 0.58)
   );
-  mask-image: radial-gradient(
-    circle at center,
-    transparent 0 9%,
-    rgb(0 0 0 / 12%) 18%,
-    #000 58%,
-    transparent 86%
-  );
-  transform: translateZ(0) scale(var(--warp-scale)) rotate(var(--warp-rotation));
-  transform-origin: center;
-  animation: warp-lines var(--warp-duration) linear infinite;
+  filter: drop-shadow(0 0 5px rgb(var(--warp-line-color) / 72%));
+  pointer-events: none;
 }
 
-.warp-speed::after {
-  inset: -28vmax;
-  background: repeating-conic-gradient(
-    from -2deg at 50% 50%,
-    transparent 0deg 6.5deg,
-    rgb(255 255 255 / 88%) 6.55deg 6.65deg,
-    transparent 6.7deg 13deg
-  );
-  filter: blur(var(--warp-blur));
-  mix-blend-mode: overlay;
-  transform: translateZ(0) scale(var(--warp-scale-near))
-    rotate(var(--warp-rotation-near));
-  animation-direction: reverse;
-}
-
-@keyframes warp-lines {
-  to {
-    rotate: 9deg;
-  }
+.portfolio-world.is-warp-active [data-project-frame-editor],
+.portfolio-world.is-warp-active .learn-object-editor {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

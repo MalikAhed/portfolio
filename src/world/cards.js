@@ -19,6 +19,7 @@ const projectedTopRight = new THREE.Vector3();
 const projectedBottomLeft = new THREE.Vector3();
 const projectedBottomRight = new THREE.Vector3();
 const PROJECT_SIDE_NAMES = Object.freeze(["preview", "text"]);
+const PREVIEW_LOADER_REVEAL_DELAY_MS = 140;
 
 function cloneSideTransform(projectId, side) {
   const defaults = CARD_WORLD_CONFIG.sideTransforms[side];
@@ -104,14 +105,46 @@ function createTechMark(technology) {
   const item = document.createElement("span");
   item.className = "project-card__tech";
   item.setAttribute("aria-label", technology.label);
+  if (technology.hideLabel) item.classList.add("is-logo-only");
+  if (technology.fillLogo) item.classList.add("is-logo-fill");
+  item.style.setProperty("--tech-background", technology.background ?? "#fff");
+  item.style.setProperty(
+    "--tech-foreground",
+    technology.foreground ?? "#1c1b19",
+  );
+  item.style.setProperty("--tech-logo-scale", technology.logoScale ?? 1);
+  if (technology.markSize) {
+    item.style.setProperty("--tech-mark-size", technology.markSize);
+  }
 
   const mark = document.createElement("span");
   mark.className = "project-card__tech-mark";
   mark.textContent = technology.mark;
 
+  if (technology.logo) {
+    const logo = document.createElement("img");
+    logo.className = "project-card__tech-logo";
+    if (technology.invertLogo) logo.classList.add("is-inverted");
+    logo.src = technology.logo;
+    logo.alt = "";
+    logo.loading = "lazy";
+    logo.decoding = "async";
+    mark.textContent = "";
+    logo.addEventListener(
+      "error",
+      () => {
+        logo.remove();
+        mark.textContent = technology.mark;
+      },
+      { once: true },
+    );
+    mark.append(logo);
+  }
+
   const label = document.createElement("span");
   label.className = "project-card__tech-label";
   label.textContent = technology.label;
+  if (technology.hideLabel) label.setAttribute("aria-hidden", "true");
   item.append(mark, label);
   return item;
 }
@@ -139,46 +172,26 @@ function createTechMarquee(project) {
   return marquee;
 }
 
-function createPreviewLoader(brand, theme) {
+function createPreviewLoader(projectTitle, theme) {
   const element = document.createElement("div");
   element.className = "project-card__preview-loader";
   if (theme) {
     element.classList.add(`project-card__preview-loader--${theme}`);
   }
+  element.setAttribute("role", "status");
   element.setAttribute("aria-live", "polite");
-  element.setAttribute("aria-label", `${brand} preview waiting to load`);
+  element.setAttribute("aria-label", `Preparing ${projectTitle} preview`);
 
-  const word = document.createElement("div");
-  word.className = "project-card__preview-loader-word";
-  const letters = [...brand].map((letter, index) => {
-    const span = document.createElement("span");
-    span.textContent = letter;
-    span.style.setProperty("--loader-letter", String(index));
-    word.append(span);
-    return span;
-  });
+  const spinner = document.createElement("span");
+  spinner.className = "project-card__preview-loader-spinner";
+  spinner.setAttribute("aria-hidden", "true");
 
-  const track = document.createElement("div");
-  track.className = "project-card__preview-loader-track";
-  const fill = document.createElement("i");
-  track.append(fill);
+  const message = document.createElement("span");
+  message.className = "project-card__preview-loader-message";
+  message.textContent = "Preparing preview…";
 
-  const percentage = document.createElement("div");
-  percentage.className = "project-card__preview-loader-percentage";
-  percentage.textContent = "0%";
-  element.append(word, track, percentage);
-
-  function setProgress(progress) {
-    const clampedProgress = Math.min(100, Math.max(0, progress));
-    fill.style.inlineSize = `${clampedProgress.toFixed(1)}%`;
-    percentage.textContent = `${Math.round(clampedProgress)}%`;
-    const litLetters = Math.ceil((clampedProgress / 100) * letters.length);
-    letters.forEach((letter, index) => {
-      letter.classList.toggle("is-lit", index < litLetters);
-    });
-  }
-
-  return { element, setProgress };
+  element.append(spinner, message);
+  return element;
 }
 
 function schedulePreviewPrefetch(url) {
@@ -533,9 +546,10 @@ function createProjectCard(project, index) {
   previewPanel.className = "project-card__panel project-card__preview";
   previewPanel.dataset.cardPanel = "preview";
 
-  const previewLoader = project.previewBrand
-    ? createPreviewLoader(project.previewBrand, project.previewLoaderTheme)
-    : null;
+  const previewLoader = createPreviewLoader(
+    project.title,
+    project.previewLoaderTheme,
+  );
   const preview = document.createElement("iframe");
   preview.className = "project-card__frame";
   if (project.previewViewportWidth) {
@@ -556,8 +570,8 @@ function createProjectCard(project, index) {
     previewImage.decoding = "async";
     previewImage.hidden = true;
   }
-  if (previewLoader) previewPanel.append(previewLoader.element);
-  previewPanel.append(previewImage ?? preview);
+  previewPanel.append(previewLoader);
+  if (previewImage) previewPanel.append(previewImage);
 
   const codePanel = document.createElement("div");
   codePanel.className = "project-card__panel project-card__code";
@@ -713,14 +727,12 @@ function createProjectCard(project, index) {
   }
 
   let previewLoadTimer = 0;
-  let previewLoaderDoneTimer = 0;
-  let previewProgressTimer = 0;
+  let previewLoaderRevealTimer = 0;
   let previewReadyFallbackTimer = 0;
   let previewReadyPollTimer = 0;
   let previewLoadStarted = false;
   let previewReady = false;
   let previewActive = false;
-  let previewProgress = 0;
   const disposePreviewPrefetch = schedulePreviewPrefetch(project.previewUrl);
   const previewResizeObserver = project.previewViewportWidth
     ? new ResizeObserver(([entry]) => {
@@ -765,6 +777,26 @@ function createProjectCard(project, index) {
     previewLoadTimer = 0;
   }
 
+  function clearPreviewLoaderRevealTimer() {
+    if (!previewLoaderRevealTimer) return;
+    window.clearTimeout(previewLoaderRevealTimer);
+    previewLoaderRevealTimer = 0;
+  }
+
+  function schedulePreviewLoaderReveal() {
+    if (
+      previewReady ||
+      previewLoaderRevealTimer ||
+      previewLoader.classList.contains("is-visible")
+    ) {
+      return;
+    }
+    previewLoaderRevealTimer = window.setTimeout(() => {
+      previewLoaderRevealTimer = 0;
+      if (!previewReady) previewLoader.classList.add("is-visible");
+    }, PREVIEW_LOADER_REVEAL_DELAY_MS);
+  }
+
   function isPreviewAvailable() {
     return (
       previewActive ||
@@ -790,48 +822,25 @@ function createProjectCard(project, index) {
       "is-preview-poster-visible",
       showingPreview && !previewVisible,
     );
-    if (previewLoader) {
-      const loaderVisible = showingPreview && (previewActive || isFullscreen());
-      if (previewLoader.element.hidden === loaderVisible) {
-        previewLoader.element.hidden = !loaderVisible;
-      }
+    const loaderVisible = showingPreview && !previewReady;
+    if (previewLoader.hidden === loaderVisible) {
+      previewLoader.hidden = !loaderVisible;
     }
   }
 
-  function startPreviewProgress() {
-    if (!previewLoader || previewProgressTimer) return;
-    previewLoader.element.classList.add("is-loading");
-    previewProgressTimer = window.setInterval(() => {
-      previewProgress = Math.min(
-        92,
-        previewProgress + Math.max(0.8, (92 - previewProgress) * 0.075),
-      );
-      previewLoader.setProgress(previewProgress);
-    }, 180);
-  }
-
   function completePreviewProgress() {
-    if (!previewLoader || previewReady) return;
+    if (previewReady) return;
     previewReady = true;
+    clearPreviewLoaderRevealTimer();
     if (previewReadyPollTimer) window.clearInterval(previewReadyPollTimer);
     if (previewReadyFallbackTimer) {
       window.clearTimeout(previewReadyFallbackTimer);
     }
     previewReadyPollTimer = 0;
     previewReadyFallbackTimer = 0;
-    if (previewProgressTimer) window.clearInterval(previewProgressTimer);
-    previewProgressTimer = 0;
-    previewProgress = 100;
-    previewLoader.setProgress(100);
-    previewLoader.element.setAttribute(
-      "aria-label",
-      `${project.previewBrand} preview ready`,
-    );
+    previewLoader.classList.remove("is-visible");
+    previewLoader.setAttribute("aria-label", `${project.title} preview ready`);
     syncPreviewVisibility();
-    previewLoaderDoneTimer = window.setTimeout(() => {
-      previewLoaderDoneTimer = 0;
-      previewLoader.element.classList.add("is-complete");
-    }, 220);
   }
 
   function checkPreviewReadiness() {
@@ -853,7 +862,7 @@ function createProjectCard(project, index) {
   }
 
   function watchPreviewReadiness() {
-    if (!previewLoader || previewReady || previewReadyPollTimer) return;
+    if (previewReady || previewReadyPollTimer) return;
     previewReadyPollTimer = window.setInterval(checkPreviewReadiness, 100);
     previewReadyFallbackTimer = window.setTimeout(
       completePreviewProgress,
@@ -861,9 +870,20 @@ function createProjectCard(project, index) {
     );
   }
 
+  function hasLoadedPreviewDocument() {
+    if (!project.previewUrl) return true;
+    try {
+      const loadedUrl = preview.contentWindow?.location.href;
+      return Boolean(loadedUrl && loadedUrl !== "about:blank");
+    } catch {
+      // Cross-origin access fails only after the iframe has left about:blank.
+      return true;
+    }
+  }
+
   function handlePreviewLoad() {
-    if (!previewLoadStarted) return;
-    if (project.previewReadyOnLoad) {
+    if (!previewLoadStarted || !hasLoadedPreviewDocument()) return;
+    if (project.previewReadyOnLoad || project.previewUrl) {
       completePreviewProgress();
       return;
     }
@@ -875,19 +895,17 @@ function createProjectCard(project, index) {
   function startPreview() {
     if (previewLoadStarted) return;
     previewLoadStarted = true;
+    schedulePreviewLoaderReveal();
     if (previewImage) {
-      previewReady = true;
-      syncPreviewVisibility();
+      if (previewImage.complete) completePreviewProgress();
       return;
     }
-    preview.hidden = false;
     if (project.previewUrl) {
-      startPreviewProgress();
       preview.src = project.previewUrl;
-      watchPreviewReadiness();
     } else {
       preview.srcdoc = createProjectPreviewDocument(project);
     }
+    previewPanel.append(preview);
   }
 
   function schedulePreview() {
@@ -898,10 +916,8 @@ function createProjectCard(project, index) {
     clearPreviewLoadTimer();
     previewLoadTimer = window.setTimeout(() => {
       previewLoadTimer = 0;
-      // StockThink measures its canvas during startup. It must have a real
-      // viewport before its URL is assigned so its own loader can complete.
       startPreview();
-    }, project.previewLoadDelay ?? 550);
+    }, project.previewLoadDelay ?? 0);
   }
 
   function updatePreviewActivity(active) {
@@ -913,6 +929,8 @@ function createProjectCard(project, index) {
   }
 
   preview.addEventListener("load", handlePreviewLoad);
+  previewImage?.addEventListener("load", completePreviewProgress);
+  previewImage?.addEventListener("error", completePreviewProgress);
   previewButton.addEventListener("click", handleModeClick);
   codeButton.addEventListener("click", handleModeClick);
   fullscreenButton.addEventListener("click", handleFullscreenClick);
@@ -938,10 +956,7 @@ function createProjectCard(project, index) {
       if (fallbackFullscreen) setFallbackFullscreen(false);
       fileTree.dispose();
       clearPreviewLoadTimer();
-      if (previewLoaderDoneTimer) {
-        window.clearTimeout(previewLoaderDoneTimer);
-      }
-      if (previewProgressTimer) window.clearInterval(previewProgressTimer);
+      clearPreviewLoaderRevealTimer();
       if (previewReadyPollTimer) window.clearInterval(previewReadyPollTimer);
       if (previewReadyFallbackTimer) {
         window.clearTimeout(previewReadyFallbackTimer);
@@ -949,6 +964,8 @@ function createProjectCard(project, index) {
       disposePreviewPrefetch();
       previewResizeObserver?.disconnect();
       preview.removeEventListener("load", handlePreviewLoad);
+      previewImage?.removeEventListener("load", completePreviewProgress);
+      previewImage?.removeEventListener("error", completePreviewProgress);
       preview.hidden = true;
       preview.removeAttribute("src");
       preview.srcdoc = "";

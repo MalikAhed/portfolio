@@ -1,32 +1,147 @@
+const DEVICON_ROOT =
+  "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons";
+
+const technology = (label, mark, logo, background, options = {}) =>
+  Object.freeze({ label, mark, logo, background, ...options });
+
+const HTML = technology(
+  "HTML",
+  "5",
+  `${DEVICON_ROOT}/html5/html5-original.svg`,
+  "#fff1ec",
+);
+const CSS = technology(
+  "CSS",
+  "#",
+  `${DEVICON_ROOT}/css3/css3-original.svg`,
+  "#edf5ff",
+);
+const JAVASCRIPT = technology(
+  "JavaScript",
+  "JS",
+  `${DEVICON_ROOT}/javascript/javascript-original.svg`,
+  "#f7df1e",
+  { hideLabel: true, fillLogo: true },
+);
+const VITE = technology(
+  "Vite",
+  "V",
+  `${DEVICON_ROOT}/vitejs/vitejs-original.svg`,
+  "#f3efff",
+  { logoScale: 1.18 },
+);
+const PLAYWRIGHT = technology(
+  "Playwright",
+  "PW",
+  `${DEVICON_ROOT}/playwright/playwright-original.svg`,
+  "#f5fff2",
+);
+
 const LEARN_TECHNOLOGIES = Object.freeze([
-  Object.freeze({ label: "JavaScript", mark: "JS" }),
-  Object.freeze({ label: "Node.js", mark: "N" }),
-  Object.freeze({ label: "Markdown", mark: "MD" }),
-  Object.freeze({ label: "Codex", mark: "AI" }),
-  Object.freeze({ label: "Playwright", mark: "PW" }),
+  HTML,
+  CSS,
+  JAVASCRIPT,
+  technology(
+    "React",
+    "R",
+    `${DEVICON_ROOT}/react/react-original.svg`,
+    "#17232b",
+    { foreground: "#e8fbff" },
+  ),
+  technology(
+    "Node.js",
+    "N",
+    `${DEVICON_ROOT}/nodejs/nodejs-original.svg`,
+    "#eff8ed",
+  ),
+  technology(
+    "Express",
+    "EX",
+    `${DEVICON_ROOT}/express/express-original.svg`,
+    "#f4f4f4",
+  ),
+  technology(
+    "Tailwind CSS",
+    "TW",
+    `${DEVICON_ROOT}/tailwindcss/tailwindcss-original.svg`,
+    "#ecfeff",
+  ),
+  technology(
+    "Markdown",
+    "MD",
+    `${DEVICON_ROOT}/markdown/markdown-original.svg`,
+    "#f5f5f5",
+  ),
+  PLAYWRIGHT,
 ]);
 
 const STOCKTHINK_TECHNOLOGIES = Object.freeze([
-  Object.freeze({ label: "TypeScript", mark: "TS" }),
-  Object.freeze({ label: "Vite", mark: "V" }),
-  Object.freeze({ label: "Stockfish", mark: "SF" }),
-  Object.freeze({ label: "WebAssembly", mark: "W" }),
-  Object.freeze({ label: "Chessops", mark: "C" }),
+  technology(
+    "TypeScript",
+    "TS",
+    `${DEVICON_ROOT}/typescript/typescript-original.svg`,
+    "#eaf4ff",
+    { hideLabel: true, fillLogo: true },
+  ),
+  VITE,
+  technology(
+    "Stockfish",
+    "SF",
+    "https://stockfishchess.org/images/logo/icon_512x512@2x.webp",
+    "#e8f2df",
+    { hideLabel: true, fillLogo: true, logoScale: 1.3 },
+  ),
+  technology(
+    "WebAssembly",
+    "W",
+    "https://cdn.simpleicons.org/webassembly/654ff0",
+    "#f0edff",
+    { hideLabel: true, fillLogo: true },
+  ),
+  technology("Chessops", "♞", undefined, "#eee6da", { markSize: "46px" }),
+  technology(
+    "Three.js",
+    "3",
+    `${DEVICON_ROOT}/threejs/threejs-original.svg`,
+    "#f4f4f4",
+  ),
+  technology(
+    "GSAP",
+    "G",
+    "https://cdn.simpleicons.org/gsap/0ae448",
+    "#102417",
+    { foreground: "#dfffe8", hideLabel: true, fillLogo: true },
+  ),
+  technology(
+    "Vitest",
+    "VT",
+    `${DEVICON_ROOT}/vitest/vitest-original.svg`,
+    "#f4f8e9",
+  ),
 ]);
 
 const CUBE_BURGER_TECHNOLOGIES = Object.freeze([
-  Object.freeze({ label: "JavaScript", mark: "JS" }),
-  Object.freeze({ label: "Vite", mark: "V" }),
-  Object.freeze({ label: "CSS", mark: "#" }),
-  Object.freeze({ label: "Playwright", mark: "PW" }),
+  JAVASCRIPT,
+  VITE,
+  CSS,
+  technology(
+    "Framer",
+    "F",
+    "https://cdn.simpleicons.org/framer/ffffff",
+    "#000000",
+    { foreground: "#ffffff" },
+  ),
+  PLAYWRIGHT,
 ]);
 
 const MURAJAA_TECHNOLOGIES = Object.freeze([
-  Object.freeze({ label: "HTML", mark: "5" }),
-  Object.freeze({ label: "CSS", mark: "#" }),
-  Object.freeze({ label: "JavaScript", mark: "JS" }),
-  Object.freeze({ label: "PWA", mark: "PWA" }),
-  Object.freeze({ label: "SM-2", mark: "S2" }),
+  HTML,
+  CSS,
+  JAVASCRIPT,
+  technology("PWA", "PWA", "https://cdn.simpleicons.org/pwa/5a0fc8", "#f2edff"),
+  technology("SM-2", "S2", undefined, "#16161d", {
+    foreground: "#ffffff",
+  }),
 ]);
 
 const STOCKTHINK = Object.freeze({
@@ -62,7 +177,6 @@ const CUBE_BURGER = Object.freeze({
   githubUrl: "https://github.com/MalikAhed/cube-burger-site",
   liveUrl: "https://malikahed.github.io/cube-burger-site/",
   previewUrl: "https://malikahed.github.io/cube-burger-site/",
-  previewBrand: "CUBE BURGER",
   previewLoaderTheme: "cube-burger",
   previewLoadDelay: 0,
   previewReadyOnLoad: true,

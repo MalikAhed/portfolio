@@ -365,6 +365,62 @@
             </div>
           </div>
         </details>
+        <details
+          class="project-frame-editor black-hole-camera-editor interface-layer"
+          data-black-hole-camera-editor
+          hidden
+        >
+          <summary>
+            <span>Black Hole Camera</span>
+            <span class="project-frame-editor__mark" aria-hidden="true">+</span>
+          </summary>
+          <div class="project-frame-editor__body">
+            <p class="black-hole-camera-editor__current">
+              <span>Current camera Z</span>
+              <output data-black-hole-camera-current></output>
+            </p>
+            <p class="black-hole-camera-editor__hint">
+              Inclination and view rotation stay fixed. Choose where scrolling
+              ends and where the black hole begins shrinking and moving down.
+            </p>
+            <label
+              class="project-frame-editor__field black-hole-camera-editor__limit"
+            >
+              <span class="project-frame-editor__slider-heading">
+                <span>Scroll stops at Z</span>
+                <output data-black-hole-camera-scroll-end-value></output>
+              </span>
+              <input
+                type="range"
+                min="58"
+                max="90"
+                step="0.1"
+                data-black-hole-camera-scroll-end
+              />
+            </label>
+            <label class="project-frame-editor__field">
+              <span class="project-frame-editor__slider-heading">
+                <span>Black hole starts moving down at Z</span>
+                <output data-black-hole-shift-start-value></output>
+              </span>
+              <input
+                type="range"
+                min="54"
+                max="75.9"
+                step="0.1"
+                data-black-hole-shift-start
+              />
+            </label>
+            <div class="project-frame-editor__actions">
+              <button type="button" data-black-hole-camera-use-current>
+                Start moving down here
+              </button>
+              <button type="button" data-black-hole-camera-copy>
+                Copy settings
+              </button>
+            </div>
+          </div>
+        </details>
         <section class="hero" aria-labelledby="hero-title">
           <header class="site-header interface-layer">
             <a class="brand" href="#top" aria-label="Malik Abuallata, home">
@@ -483,7 +539,49 @@
             loading="lazy"
             src="/black-hole-simulation/examples/webgl_postprocessing_unreal_bloom.html?embed=1"
           ></iframe>
+          <canvas class="warp-speed__lines" data-warp-lines></canvas>
         </div>
+        <section
+          class="ending-composition interface-layer"
+          data-ending-composition
+          aria-labelledby="ending-title"
+          aria-hidden="true"
+          inert
+        >
+          <div class="ending-composition__statement">
+            <p class="ending-composition__eyebrow">The work continues</p>
+            <h2 id="ending-title">Malik Abuallata</h2>
+            <p class="ending-composition__tagline">Driven by creativity.</p>
+          </div>
+          <ul
+            class="ending-composition__details"
+            aria-label="About Malik Abuallata"
+          >
+            <li>
+              <span>Based in</span>
+              <strong>Gaza, Palestine</strong>
+            </li>
+            <li>
+              <span>Age</span>
+              <strong>18 years old</strong>
+            </li>
+            <li>
+              <span>Focus</span>
+              <strong>Full-stack development</strong>
+            </li>
+          </ul>
+          <div class="ending-composition__contact">
+            <div class="ending-composition__actions">
+              <a
+                href="https://github.com/MalikAhed"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </div>
+        </section>
         <div
           id="work"
           class="journey-track"

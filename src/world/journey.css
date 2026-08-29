@@ -3,7 +3,7 @@
    the persistent depth-world canvas. */
 .journey-track {
   position: relative;
-  min-block-size: 490vh;
-  min-block-size: 490svh;
+  min-block-size: 744vh;
+  min-block-size: 744svh;
   background: transparent;
 }

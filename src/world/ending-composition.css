@@ -1,0 +1,268 @@
+.ending-composition {
+  --ending-visibility: 0;
+  position: fixed;
+  z-index: calc(var(--depth-interface) - 1);
+  inset: 0;
+  color: var(--color-paper);
+  opacity: var(--ending-visibility);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ending-composition__statement {
+  position: absolute;
+  inset-block-start: clamp(5.5rem, 9vh, 7.5rem);
+  inset-inline-start: 50%;
+  inline-size: min(56rem, calc(100vw - 2rem));
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.ending-composition__eyebrow,
+.ending-composition__statement h2,
+.ending-composition__tagline {
+  margin: 0;
+}
+
+.ending-composition__eyebrow {
+  margin-block-end: 0.5rem;
+  color: rgb(249 245 239 / 58%);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.ending-composition__statement h2 {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 5.5vw, 6rem);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+}
+
+.ending-composition__tagline {
+  margin-block-start: clamp(0.75rem, 1.5vh, 1.15rem);
+  color: var(--color-paper);
+  font-size: clamp(1.15rem, 2vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+
+.ending-composition__details {
+  position: absolute;
+  inset-block-start: 48%;
+  inset-inline-start: clamp(1.25rem, 3.5vw, 4rem);
+  display: grid;
+  gap: 0;
+  inline-size: min(20rem, 25vw);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translateY(-50%);
+}
+
+.ending-composition__details li {
+  display: grid;
+  grid-template-columns: minmax(3.8rem, 0.6fr) minmax(0, 1.4fr);
+  align-items: baseline;
+  gap: 1rem;
+  padding-block: 0.85rem;
+  border-block-end: 1px solid rgb(249 245 239 / 14%);
+}
+
+.ending-composition__details li:first-child {
+  border-block-start: 1px solid rgb(249 245 239 / 14%);
+}
+
+.ending-composition__details span {
+  color: rgb(249 245 239 / 50%);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ending-composition__details strong {
+  font-size: clamp(0.88rem, 1.15vw, 1.05rem);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.ending-composition__contact {
+  position: absolute;
+  inset-block-start: 48%;
+  inset-inline-end: clamp(1.25rem, 3.5vw, 4rem);
+  display: grid;
+  justify-items: end;
+  inline-size: min(15rem, 20vw);
+  text-align: end;
+  transform: translateY(-50%);
+}
+
+.ending-composition__actions {
+  display: grid;
+  inline-size: 100%;
+}
+
+.ending-composition__actions a {
+  color: inherit;
+  text-decoration: none;
+  pointer-events: none;
+}
+
+.ending-composition__actions a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-block-size: 2.85rem;
+  padding-inline: 1rem;
+  border: 1px solid rgb(249 245 239 / 28%);
+  border-radius: 999px;
+  color: var(--color-paper);
+  background: rgb(249 245 239 / 5%);
+  font-size: 0.76rem;
+  font-weight: 800;
+  transition:
+    color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+}
+
+.ending-composition__actions a:hover,
+.ending-composition__actions a:focus-visible {
+  border-color: var(--color-paper);
+  color: var(--color-ink-strong);
+  background: var(--color-paper);
+}
+
+.ending-composition.is-interactive a {
+  pointer-events: auto;
+}
+
+.portfolio-world.is-ending-visible .site-header {
+  visibility: visible;
+  color: var(--color-paper);
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0);
+  transition:
+    color var(--duration-fast) linear,
+    opacity var(--duration-fast) linear,
+    transform var(--duration-fast) linear,
+    visibility 0s linear;
+}
+
+.portfolio-world.is-ending-visible .brand__mark {
+  filter: invert(1) brightness(1.12);
+}
+
+.portfolio-world.is-ending-visible .brand__divider {
+  background: rgb(249 245 239 / 42%);
+}
+
+.portfolio-world.is-ending-visible .contact-link {
+  border-color: var(--color-paper);
+  color: var(--color-ink-strong);
+  background: var(--color-paper);
+}
+
+.portfolio-world.is-ending-visible .contact-link__material {
+  background: var(--color-ink-strong);
+}
+
+.portfolio-world.is-ending-visible .contact-link:hover,
+.portfolio-world.is-ending-visible .contact-link:focus-visible {
+  color: var(--color-paper);
+  box-shadow: 0 0.75rem 1.8rem rgb(0 0 0 / 24%);
+}
+
+.portfolio-world.is-ending-visible .menu-toggle {
+  border-color: rgb(249 245 239 / 58%);
+  color: var(--color-paper);
+}
+
+@media (max-width: 68rem) {
+  .ending-composition__statement {
+    inset-block-start: clamp(5rem, 8vh, 6.5rem);
+  }
+
+  .ending-composition__details {
+    inset-block-start: auto;
+    inset-block-end: 5rem;
+    inline-size: min(18rem, calc(50vw - 2.5rem));
+    transform: none;
+  }
+
+  .ending-composition__contact {
+    inset-block-start: auto;
+    inset-block-end: 4.7rem;
+    inline-size: min(15rem, calc(42vw - 2rem));
+    transform: none;
+  }
+}
+
+@media (max-width: 44rem) {
+  .ending-composition__statement {
+    inset-block-start: 5.25rem;
+  }
+
+  .ending-composition__eyebrow {
+    margin-block-end: 0.35rem;
+    font-size: 0.58rem;
+  }
+
+  .ending-composition__statement h2 {
+    font-size: clamp(2.6rem, 11.5vw, 4rem);
+  }
+
+  .ending-composition__tagline {
+    max-inline-size: 20rem;
+    margin-inline: auto;
+    margin-block-start: 0.65rem;
+    font-size: clamp(1rem, 5vw, 1.35rem);
+  }
+
+  .ending-composition__details {
+    inset: 31% 1rem auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    inline-size: auto;
+    text-align: center;
+  }
+
+  .ending-composition__details li,
+  .ending-composition__details li:first-child {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 0.3rem;
+    padding: 0 0.4rem;
+    border: 0;
+  }
+
+  .ending-composition__contact {
+    inset: 65% 1rem auto;
+    justify-items: stretch;
+    inline-size: auto;
+    text-align: center;
+  }
+
+  .ending-composition__actions {
+    inline-size: min(12rem, 100%);
+    margin-inline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ending-composition,
+  .ending-composition__actions a,
+  .portfolio-world.is-ending-visible .site-header,
+  .portfolio-world.is-ending-visible .brand__mark,
+  .portfolio-world.is-ending-visible .contact-link,
+  .portfolio-world.is-ending-visible .contact-link__material,
+  .portfolio-world.is-ending-visible .menu-toggle {
+    transition: none;
+  }
+}

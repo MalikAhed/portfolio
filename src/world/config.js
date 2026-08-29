@@ -12,7 +12,7 @@ import * as THREE from "three";
  */
 
 export const HERO_CAMERA_Z = 5;
-export const JOURNEY_CAMERA_END_Z = 52;
+export const JOURNEY_CAMERA_END_Z = 58.5;
 export const WORLD_CAMERA_FOV = 45;
 
 /**
@@ -28,11 +28,52 @@ export const MORE_WORK_WORLD_CONFIG = Object.freeze({
   position: Object.freeze([0, 0, 43]),
 });
 
-/** Scroll-linked speed-line passage between Full-Stack Quest and the finale. */
+/**
+ * Scroll-linked light-speed and black-hole passage through the work rail.
+ *
+ * The portfolio camera continues its one linear Z retreat. The embedded view
+ * radial streaks begin subtly as Murajaa enters from a far layer behind every
+ * project surface. They stay black against the warm world while the background
+ * darkens gradually, then invert to white as the black-hole view fades in. Once
+ * that view is established, the radial streaks fade away while the black hole
+ * remains fully visible. Its camera retreats at the same constant rate as
+ * native scroll through the final position. After the view is established,
+ * the finished ray-marched image slides down linearly without moving or
+ * rotating its physical camera. This keeps the disk's viewing angle unchanged.
+ *
+ * Owner: isolated, pointer-inert DOM/WebGL surface
+ * Depth role: final world passage above the warm base world
+ * Motion trigger: native-scroll camera Z crossing `effectStartCameraZ`
+ * Reduced motion: surface remains disabled
+ * Disposal: the parent pauses it outside this interval; iframe teardown follows
+ * the document lifecycle
+ */
 export const WARP_SPEED_WORLD_CONFIG = Object.freeze({
-  startCameraZ: 40.5,
-  peakCameraZ: 43.2,
-  endCameraZ: 46.2,
+  effectStartCameraZ: 29.2,
+  effectRevealEndCameraZ: 48,
+  simulationStartCameraZ: 54,
+  simulationRevealTravelCameraZ: 0.6,
+  simulationStartOpacity: 0.18,
+  simulationStartBlurPixels: 5.5,
+  blackHoleShiftStartCameraZ: 54,
+  // Keep the screen-space lift independent of the editable journey endpoint.
+  // Four Z units makes the shrink and downward move finish together at Z58 by
+  // default, and then hold its final framing through the remaining scroll.
+  blackHoleShiftTravelCameraZ: 4,
+  endBlackHoleScreenOffset: 0.22,
+  // Transparent DOM ending composition above the lower black-hole framing.
+  // It fades directly from native camera Z and owns no independent animation.
+  endingRevealStartCameraZ: 56.4,
+  endingRevealEndCameraZ: 58,
+  darknessFadeStartCameraZ: 49,
+  darknessFadeEndCameraZ: 54.3,
+  lineFadeStartCameraZ: 50,
+  lineFadeEndCameraZ: 54.5,
+  endCameraZ: JOURNEY_CAMERA_END_Z,
+  nearCameraDistance: 2.6,
+  farCameraDistance: 12,
+  startLineCount: 30,
+  endLineCount: 180,
 });
 
 /**
@@ -456,11 +497,12 @@ export function getJourneyPreset(width, height) {
   return "desktop";
 }
 
-export function getCameraZAtProgress(progress) {
+export function getCameraZAtProgress(
+  progress,
+  journeyEndCameraZ = JOURNEY_CAMERA_END_Z,
+) {
   const clampedProgress = Math.min(1, Math.max(0, progress));
-  return (
-    HERO_CAMERA_Z + (JOURNEY_CAMERA_END_Z - HERO_CAMERA_Z) * clampedProgress
-  );
+  return HERO_CAMERA_Z + (journeyEndCameraZ - HERO_CAMERA_Z) * clampedProgress;
 }
 
 export function getCardPreset(preset) {

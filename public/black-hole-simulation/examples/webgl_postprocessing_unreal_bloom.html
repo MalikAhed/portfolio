@@ -54,11 +54,11 @@
 				// may lower quality further, but cannot exceed native device resolution.
 				resolutionScale: [ 0.25, 1 ]
 			} );
-			const saved = JSON.parse( localStorage.getItem( STORAGE_KEY ) || '{}' );
+			const saved = portfolioEmbed ? {} : JSON.parse( localStorage.getItem( STORAGE_KEY ) || '{}' );
 			const params = { ...defaults, ...saved };
 			if ( params.styleVersion !== defaults.styleVersion ) {
 				Object.assign( params, defaults );
-				localStorage.setItem( STORAGE_KEY, JSON.stringify( params ) );
+				if ( ! portfolioEmbed ) localStorage.setItem( STORAGE_KEY, JSON.stringify( params ) );
 			}
 			for ( const [ key, [ min, max ] ] of Object.entries( inputLimits ) ) {
 				const value = Number( params[ key ] );
@@ -116,7 +116,6 @@
 					float uvfov = tan( uFieldOfView * 0.5 * PI / 180.0 );
 					vec2 uv = 2.0 * ( gl_FragCoord.xy / uResolution ) - 1.0;
 					uv *= vec2( uResolution.x / uResolution.y, 1.0 );
-
 					vec3 forward = normalize( uCameraDirection );
 					vec3 up = normalize( uCameraUp );
 					vec3 nright = normalize( cross( forward, up ) );
@@ -193,6 +192,7 @@
 				uniform float uBrightness;
 				uniform float uLineCount;
 				uniform float uLineThickness;
+				uniform float uVerticalOffset;
 				uniform sampler2D uRayMap;
 
 				float random( float value ) {
@@ -200,7 +200,14 @@
 				}
 
 				void main() {
-					vec4 rayMap = texture2D( uRayMap, vUv );
+					// Translate the completed image instead of the physical observer.
+					// Inclination and view rotation therefore stay unchanged.
+					vec2 rayMapUv = vUv + vec2( 0.0, uVerticalOffset );
+					if ( rayMapUv.y > 1.0 ) {
+						gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );
+						return;
+					}
+					vec4 rayMap = texture2D( uRayMap, rayMapUv );
 					if ( rayMap.a < 0.5 ) {
 						gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );
 						return;
@@ -254,6 +261,7 @@
 				if ( orbitCamera ) {
 					syncingOrbitCamera = true;
 					orbitCamera.position.copy( position );
+					orbitControls?.target.set( 0, 0, 0 );
 					orbitCamera.lookAt( 0, 0, 0 );
 					orbitControls?.update();
 					syncingOrbitCamera = false;
@@ -464,6 +472,7 @@
 						uBrightness: { value: params.lineBrightness },
 						uLineCount: { value: Math.round( params.lineCount ) },
 						uLineThickness: { value: params.lineThickness },
+						uVerticalOffset: { value: 0 },
 						uRayMap: { value: null },
 					}
 				} );
@@ -489,7 +498,7 @@
 				orbitControls.enablePan = false;
 				orbitControls.rotateSpeed = 0.55;
 				orbitControls.zoomSpeed = 0.75;
-				orbitControls.minDistance = 4;
+				orbitControls.minDistance = portfolioEmbed ? 2.05 : 4;
 				orbitControls.maxDistance = 24;
 				orbitControls.minPolarAngle = THREE.MathUtils.degToRad( 0.5 );
 				orbitControls.maxPolarAngle = THREE.MathUtils.degToRad( 179.5 );
@@ -510,8 +519,10 @@
 				composer.addPass( bloomPass );
 				composer.addPass( new OutputPass() );
 
-				stats = new Stats();
-				container.appendChild( stats.dom );
+				if ( ! portfolioEmbed ) {
+					stats = new Stats();
+					container.appendChild( stats.dom );
+				}
 
 				const gui = new GUI();
 				const pathFolder = gui.addFolder( 'simulation path' );
@@ -613,16 +624,33 @@
 				previousTime = now;
 				orbitControls?.update( delta );
 				displayMaterial.uniforms.uTime.value = ( displayMaterial.uniforms.uTime.value + delta * params.orbitSpeed ) % TAU;
-				stats.update();
+				stats?.update();
 				composer.render( delta );
 			}
 
 			addEventListener( 'message', ( event ) => {
 				if ( event.origin !== location.origin || event.data?.type !== 'portfolio-warp' || ! renderer ) return;
-				const intensity = THREE.MathUtils.clamp( Number( event.data.intensity ) || 0, 0, 1 );
-				params.orbitSpeed = defaults.orbitSpeed * ( 1 + intensity * 8 );
-				params.lineCount = Math.round( defaults.lineCount + intensity * 100 );
+				const travel = THREE.MathUtils.clamp( Number( event.data.travel ) || 0, 0, 1 );
+				const cameraDistance = Number( event.data.cameraDistance );
+				const blackHoleScreenOffset = Number( event.data.blackHoleScreenOffset );
+				const lineCount = Number( event.data.lineCount );
+				params.orbitSpeed = defaults.orbitSpeed * ( 1 + travel * 5 );
+				const nextCameraDistance = Number.isFinite( cameraDistance ) ?
+					THREE.MathUtils.clamp( cameraDistance, inputLimits.cameraDistance[ 0 ], inputLimits.cameraDistance[ 1 ] ) :
+					defaults.cameraDistance;
+				const nextBlackHoleScreenOffset = Number.isFinite( blackHoleScreenOffset ) ?
+					THREE.MathUtils.clamp( blackHoleScreenOffset, 0, 0.45 ) : 0;
+				const cameraChanged = Math.abs( params.cameraDistance - nextCameraDistance ) > 0.0001;
+				params.cameraDistance = nextCameraDistance;
+				displayMaterial.uniforms.uVerticalOffset.value = nextBlackHoleScreenOffset;
+				params.lineCount = Number.isFinite( lineCount ) ?
+					Math.round( THREE.MathUtils.clamp( lineCount, inputLimits.lineCount[ 0 ], inputLimits.lineCount[ 1 ] ) ) :
+					defaults.lineCount;
 				updateLineStyle();
+				if ( cameraChanged ) {
+					updateCameraUniforms();
+					requestInteractiveRayMap();
+				}
 				if ( event.data.active ) {
 					previousTime = performance.now();
 					renderer.setAnimationLoop( animate );
