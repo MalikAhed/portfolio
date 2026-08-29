@@ -119,7 +119,6 @@ export function initBlackHoleCameraEditor(getCameraZ, onChange) {
   copyButton.addEventListener("click", handleCopy);
   refresh();
   setCurrentCameraZ(getCameraZ());
-  editor.hidden = false;
 
   return {
     settings,

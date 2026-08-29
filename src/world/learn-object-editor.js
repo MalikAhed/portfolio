@@ -96,7 +96,6 @@ export function initLearnObjectEditor(objectWorld, onChange) {
   resetAllButton.addEventListener("click", handleResetAll);
   copyButton.addEventListener("click", handleCopy);
   refresh();
-  editor.hidden = false;
 
   return {
     dispose() {
