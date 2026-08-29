@@ -28,6 +28,7 @@ const projectedBottomLeft = new THREE.Vector3();
 const projectedBottomRight = new THREE.Vector3();
 const PROJECT_SIDE_NAMES = Object.freeze(["preview", "text"]);
 const PREVIEW_LOADER_REVEAL_DELAY_MS = 140;
+const PREVIEW_READY_FALLBACK_MS = 4000;
 
 function cloneSideTransform(projectId, side) {
   const defaults = CARD_WORLD_CONFIG.sideTransforms[side];
@@ -308,7 +309,9 @@ function createProjectCard(project, index) {
   preview.title = `${project.title} interactive preview`;
   preview.allow = "fullscreen";
   if (!project.previewUrl) preview.setAttribute("sandbox", "allow-scripts");
-  preview.setAttribute("loading", "lazy");
+  // The application assigns src only after the project reaches focus and
+  // scrolling settles. Native lazy loading can indefinitely defer a hidden
+  // iframe, preventing its load event from ever revealing the preview.
   preview.hidden = true;
   const previewImage = project.previewImage
     ? document.createElement("img")
@@ -507,6 +510,7 @@ function createProjectCard(project, index) {
 
   let previewLoadTimer = 0;
   let previewLoaderRevealTimer = 0;
+  let previewReadyFallbackTimer = 0;
   let previewLoadStarted = false;
   let previewReady = false;
   let previewActive = false;
@@ -598,6 +602,10 @@ function createProjectCard(project, index) {
     if (previewReady) return;
     previewReady = true;
     clearPreviewLoaderRevealTimer();
+    if (previewReadyFallbackTimer) {
+      window.clearTimeout(previewReadyFallbackTimer);
+      previewReadyFallbackTimer = 0;
+    }
     previewLoader.classList.remove("is-visible");
     previewLoader.setAttribute("aria-label", `${project.title} preview ready`);
     syncPreviewVisibility();
@@ -633,6 +641,13 @@ function createProjectCard(project, index) {
     if (project.previewUrl) {
       preview.src = project.previewUrl;
       previewPanel.append(preview);
+      // A cross-origin document can be usable while its load event is still
+      // waiting on a slow third-party resource. Never leave the live surface
+      // permanently hidden behind the portfolio loader in that case.
+      previewReadyFallbackTimer = window.setTimeout(
+        completePreviewProgress,
+        PREVIEW_READY_FALLBACK_MS,
+      );
     }
   }
 
@@ -684,6 +699,9 @@ function createProjectCard(project, index) {
       fileTree?.dispose();
       clearPreviewLoadTimer();
       clearPreviewLoaderRevealTimer();
+      if (previewReadyFallbackTimer) {
+        window.clearTimeout(previewReadyFallbackTimer);
+      }
       previewResizeObserver?.disconnect();
       preview.removeEventListener("load", handlePreviewLoad);
       previewImage?.removeEventListener("load", completePreviewProgress);

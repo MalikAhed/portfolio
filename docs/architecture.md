@@ -109,7 +109,9 @@ src/
   viewport-filling fallback when an embedded browser denies that API.
   Preview loaders wait briefly before appearing, so cached or immediately ready
   content never flashes a spinner. Readiness hides the loader and reveals the
-  preview in the same update with no blank frame between them.
+  preview in the same update with no blank frame between them. Cross-origin
+  previews also have a bounded reveal fallback so a slow third-party resource
+  cannot leave an otherwise usable embedded document permanently covered.
   Once loaded, every preview remains mounted and visually present through active
   scrolling, preserving its last application state. A never-opened remote
   preview waits until scrolling settles at its focus band before beginning its
