@@ -10,7 +10,15 @@ import {
   getWorldExitVisibilityAtDepth,
   getWorldBlurAtDepth,
 } from "./config.js";
-import { PROJECTS, createProjectPreviewDocument } from "./projects.js";
+import { PROJECTS } from "./projects.js";
+import {
+  createActionIcon,
+  createButton,
+  createFullscreenIcon,
+  createModeIcon,
+  createPreviewLoader,
+  createTechMarquee,
+} from "./project-card-elements.js";
 
 const worldPosition = new THREE.Vector3();
 const cameraPosition = new THREE.Vector3();
@@ -30,264 +38,6 @@ function cloneSideTransform(projectId, side) {
     width: override?.width ?? defaults.width,
     height: override?.height ?? defaults.height,
     scale: override?.scale ?? defaults.scale,
-  };
-}
-
-function createButton(label, className) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = className;
-  button.textContent = label;
-  return button;
-}
-
-function createModeIcon(type) {
-  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  icon.classList.add("project-card__mode-icon");
-  icon.setAttribute("viewBox", "0 0 24 24");
-  icon.setAttribute("aria-hidden", "true");
-
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "currentColor");
-  path.setAttribute("stroke-linecap", "round");
-  path.setAttribute("stroke-linejoin", "round");
-  path.setAttribute("stroke-width", "1.8");
-  path.setAttribute(
-    "d",
-    type === "preview"
-      ? "M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z M9.5 12a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0Z"
-      : "m8.5 7-5 5 5 5 M15.5 7l5 5-5 5 M13.5 4l-3 16",
-  );
-  icon.append(path);
-  return icon;
-}
-
-function createFullscreenIcon() {
-  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  icon.classList.add("project-card__fullscreen-icon");
-  icon.setAttribute("viewBox", "0 0 24 24");
-  icon.setAttribute("aria-hidden", "true");
-
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "currentColor");
-  path.setAttribute("stroke-linecap", "round");
-  path.setAttribute("stroke-linejoin", "round");
-  path.setAttribute("stroke-width", "1.8");
-  icon.append(path);
-  return { element: icon, path };
-}
-
-function createActionIcon(type) {
-  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  icon.classList.add("project-card__action-icon");
-  icon.setAttribute("viewBox", "0 0 24 24");
-  icon.setAttribute("aria-hidden", "true");
-
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "currentColor");
-  path.setAttribute("stroke-linecap", "round");
-  path.setAttribute("stroke-linejoin", "round");
-  path.setAttribute("stroke-width", "1.8");
-  path.setAttribute(
-    "d",
-    type === "github"
-      ? "M9 19c-4.5 1.4-4.5-2.5-6.3-3 M15.3 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.7-1.4 5.7-6.2A4.8 4.8 0 0 0 19.2 6a4.4 4.4 0 0 0-.1-3.3S18 2.4 15.5 4a12.1 12.1 0 0 0-6.5 0C6.5 2.4 5.4 2.7 5.4 2.7A4.4 4.4 0 0 0 5.3 6 4.8 4.8 0 0 0 4 9.3c0 4.8 2.9 5.9 5.7 6.2-.5.5-.6 1.2-.5 2V21"
-      : "M14 4h6v6 M20 4 11 13 M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6",
-  );
-  icon.append(path);
-  return icon;
-}
-
-function createTechMark(technology) {
-  const item = document.createElement("span");
-  item.className = "project-card__tech";
-  item.setAttribute("aria-label", technology.label);
-  if (technology.hideLabel) item.classList.add("is-logo-only");
-  if (technology.fillLogo) item.classList.add("is-logo-fill");
-  item.style.setProperty("--tech-background", technology.background ?? "#fff");
-  item.style.setProperty(
-    "--tech-foreground",
-    technology.foreground ?? "#1c1b19",
-  );
-  item.style.setProperty("--tech-logo-scale", technology.logoScale ?? 1);
-  if (technology.markSize) {
-    item.style.setProperty("--tech-mark-size", technology.markSize);
-  }
-
-  const mark = document.createElement("span");
-  mark.className = "project-card__tech-mark";
-  mark.textContent = technology.mark;
-
-  if (technology.logo) {
-    const logo = document.createElement("img");
-    logo.className = "project-card__tech-logo";
-    if (technology.invertLogo) logo.classList.add("is-inverted");
-    logo.src = technology.logo;
-    logo.alt = "";
-    logo.loading = "lazy";
-    logo.decoding = "async";
-    mark.textContent = "";
-    logo.addEventListener(
-      "error",
-      () => {
-        logo.remove();
-        mark.textContent = technology.mark;
-      },
-      { once: true },
-    );
-    mark.append(logo);
-  }
-
-  const label = document.createElement("span");
-  label.className = "project-card__tech-label";
-  label.textContent = technology.label;
-  if (technology.hideLabel) label.setAttribute("aria-hidden", "true");
-  item.append(mark, label);
-  return item;
-}
-
-function createTechMarquee(project) {
-  const marquee = document.createElement("div");
-  marquee.className = "project-card__tech-marquee";
-  marquee.setAttribute(
-    "aria-label",
-    `Technologies used: ${project.technologies.map(({ label }) => label).join(", ")}`,
-  );
-
-  const track = document.createElement("div");
-  track.className = "project-card__tech-track";
-  [false, true].forEach((duplicate) => {
-    const group = document.createElement("div");
-    group.className = "project-card__tech-group";
-    if (duplicate) group.setAttribute("aria-hidden", "true");
-    project.technologies.forEach((technology) =>
-      group.append(createTechMark(technology)),
-    );
-    track.append(group);
-  });
-  marquee.append(track);
-  return marquee;
-}
-
-function createPreviewLoader(projectTitle, theme) {
-  const element = document.createElement("div");
-  element.className = "project-card__preview-loader";
-  if (theme) {
-    element.classList.add(`project-card__preview-loader--${theme}`);
-  }
-  element.setAttribute("role", "status");
-  element.setAttribute("aria-live", "polite");
-  element.setAttribute("aria-label", `Preparing ${projectTitle} preview`);
-
-  const spinner = document.createElement("span");
-  spinner.className = "project-card__preview-loader-spinner";
-  spinner.setAttribute("aria-hidden", "true");
-
-  const message = document.createElement("span");
-  message.className = "project-card__preview-loader-message";
-  message.textContent = "Preparing preview…";
-
-  element.append(spinner, message);
-  return element;
-}
-
-function schedulePreviewPrefetch(url) {
-  if (!url) return () => {};
-  const connection = navigator.connection;
-  const deviceMemory = Number(navigator.deviceMemory) || Infinity;
-  const processorCount = navigator.hardwareConcurrency || Infinity;
-  if (
-    connection?.saveData ||
-    /(^|-)2g$/.test(connection?.effectiveType ?? "") ||
-    deviceMemory <= 4 ||
-    processorCount <= 4
-  ) {
-    return () => {};
-  }
-
-  let idleCallbackId = 0;
-  let timeoutId = 0;
-  let prefetchController = null;
-  const prefetchLinks = [];
-
-  async function prefetch() {
-    if (
-      document
-        .querySelector("[data-world-stage]")
-        ?.classList.contains("is-journey-scrolling")
-    ) {
-      timeoutId = window.setTimeout(prefetch, 1000);
-      return;
-    }
-
-    prefetchController = new AbortController();
-    try {
-      const response = await fetch(url, {
-        cache: "force-cache",
-        credentials: "omit",
-        priority: "low",
-        signal: prefetchController.signal,
-      });
-      if (!response.ok) return;
-
-      const previewOrigin = new URL(url).origin;
-      const previewDocument = new DOMParser().parseFromString(
-        await response.text(),
-        "text/html",
-      );
-      const resources = [
-        ...previewDocument.querySelectorAll(
-          'script[src], link[rel="modulepreload"][href], link[rel="stylesheet"][href]',
-        ),
-      ];
-      const uniqueResources = new Map();
-      resources.forEach((resource) => {
-        const source =
-          resource.getAttribute("src") ?? resource.getAttribute("href");
-        const resourceUrl = new URL(source, url);
-        if (resourceUrl.origin !== previewOrigin) return;
-        uniqueResources.set(
-          resourceUrl.href,
-          resource.matches('link[rel="stylesheet"]') ? "style" : "script",
-        );
-      });
-
-      uniqueResources.forEach((resourceType, resourceUrl) => {
-        const link = document.createElement("link");
-        link.rel = "prefetch";
-        link.as = resourceType;
-        link.href = resourceUrl;
-        link.fetchPriority = "low";
-        document.head.append(link);
-        prefetchLinks.push(link);
-      });
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        console.warn("Could not prefetch the project preview.", error);
-      }
-    }
-  }
-
-  function schedule() {
-    if ("requestIdleCallback" in window) {
-      idleCallbackId = window.requestIdleCallback(prefetch, { timeout: 4000 });
-    } else {
-      timeoutId = window.setTimeout(prefetch, 1800);
-    }
-  }
-
-  if (document.readyState === "complete") schedule();
-  else window.addEventListener("load", schedule, { once: true });
-
-  return () => {
-    window.removeEventListener("load", schedule);
-    if (idleCallbackId) window.cancelIdleCallback(idleCallbackId);
-    if (timeoutId) window.clearTimeout(timeoutId);
-    prefetchController?.abort();
-    prefetchLinks.forEach((link) => link.remove());
   };
 }
 
@@ -565,9 +315,9 @@ function createProjectCard(project, index) {
     : null;
   if (previewImage) {
     previewImage.className = "project-card__preview-image";
-    previewImage.src = `${import.meta.env.BASE_URL}${project.previewImage}`;
     previewImage.alt = `${project.title} project screenshot`;
     previewImage.decoding = "async";
+    previewImage.fetchPriority = "low";
     previewImage.hidden = true;
   }
   previewPanel.append(previewLoader);
@@ -595,11 +345,13 @@ function createProjectCard(project, index) {
   workTransform.append(surface);
   card.append(workTransform, explainer);
 
-  const fileEntries = Object.entries(project.files);
-  let fileTree;
+  let sourceFiles = project.files ?? null;
+  let sourceLoadPromise = null;
+  let fileTree = null;
+  let disposed = false;
 
   function setFile(filename) {
-    code.textContent = project.files[filename] ?? "";
+    code.textContent = sourceFiles?.[filename] ?? "";
     const breadcrumb = document.createElement("span");
     breadcrumb.className = "project-card__source-breadcrumb";
     filename.split("/").forEach((segment, segmentIndex) => {
@@ -628,8 +380,32 @@ function createProjectCard(project, index) {
     });
   }
 
-  fileTree = createFileTree(project, setFile);
-  treePanel.append(fileTree.element);
+  function prepareCodeBrowser() {
+    if (fileTree || sourceLoadPromise) return sourceLoadPromise;
+    codePanel.setAttribute("aria-busy", "true");
+    sourceLoadPromise = Promise.resolve(sourceFiles ?? project.loadFiles?.())
+      .then((files) => {
+        if (disposed) return;
+        sourceFiles = files ?? {};
+        fileTree = createFileTree({ ...project, files: sourceFiles }, setFile);
+        treePanel.append(fileTree.element);
+        const firstFile = Object.keys(sourceFiles)[0];
+        if (firstFile) setFile(firstFile);
+      })
+      .catch((error) => {
+        if (!disposed) {
+          code.textContent = "Source preview unavailable.";
+          console.warn(
+            `Could not load ${project.title} source preview.`,
+            error,
+          );
+        }
+      })
+      .finally(() => {
+        if (!disposed) codePanel.removeAttribute("aria-busy");
+      });
+    return sourceLoadPromise;
+  }
 
   let currentMode = "preview";
   let fallbackFullscreen = false;
@@ -648,7 +424,10 @@ function createProjectCard(project, index) {
     previewButton.setAttribute("aria-pressed", String(showPreview));
     codeButton.setAttribute("aria-pressed", String(!showPreview));
     if (showPreview && isPreviewAvailable()) schedulePreview();
-    else if (!showPreview && !previewLoadStarted) clearPreviewLoadTimer();
+    else if (!showPreview) {
+      if (!previewLoadStarted) clearPreviewLoadTimer();
+      void prepareCodeBrowser();
+    }
     syncPreviewVisibility();
   }
 
@@ -728,12 +507,9 @@ function createProjectCard(project, index) {
 
   let previewLoadTimer = 0;
   let previewLoaderRevealTimer = 0;
-  let previewReadyFallbackTimer = 0;
-  let previewReadyPollTimer = 0;
   let previewLoadStarted = false;
   let previewReady = false;
   let previewActive = false;
-  const disposePreviewPrefetch = schedulePreviewPrefetch(project.previewUrl);
   const previewResizeObserver = project.previewViewportWidth
     ? new ResizeObserver(([entry]) => {
         const panelWidth = entry.contentRect.width;
@@ -798,22 +574,12 @@ function createProjectCard(project, index) {
   }
 
   function isPreviewAvailable() {
-    return (
-      previewActive ||
-      isFullscreen() ||
-      (project.keepPreviewMounted && previewLoadStarted)
-    );
+    return previewActive || isFullscreen() || previewLoadStarted;
   }
 
   function syncPreviewVisibility() {
     const showingPreview = currentMode === "preview";
-    const previewVisible =
-      showingPreview &&
-      previewLoadStarted &&
-      (!previewLoader || previewReady) &&
-      (previewActive ||
-        isFullscreen() ||
-        (previewImage && project.keepPreviewMounted && previewLoadStarted));
+    const previewVisible = showingPreview && previewLoadStarted && previewReady;
     const previewVisual = previewImage ?? preview;
     if (previewVisual.hidden === previewVisible) {
       previewVisual.hidden = !previewVisible;
@@ -832,42 +598,9 @@ function createProjectCard(project, index) {
     if (previewReady) return;
     previewReady = true;
     clearPreviewLoaderRevealTimer();
-    if (previewReadyPollTimer) window.clearInterval(previewReadyPollTimer);
-    if (previewReadyFallbackTimer) {
-      window.clearTimeout(previewReadyFallbackTimer);
-    }
-    previewReadyPollTimer = 0;
-    previewReadyFallbackTimer = 0;
     previewLoader.classList.remove("is-visible");
     previewLoader.setAttribute("aria-label", `${project.title} preview ready`);
     syncPreviewVisibility();
-  }
-
-  function checkPreviewReadiness() {
-    try {
-      const previewDocument = preview.contentDocument;
-      const nativeLoader = previewDocument?.getElementById("load");
-      if (
-        (project.previewReadySelector &&
-          previewDocument?.querySelector(project.previewReadySelector)) ||
-        nativeLoader?.classList.contains("done") ||
-        (!nativeLoader && previewDocument?.readyState === "complete")
-      ) {
-        completePreviewProgress();
-      }
-    } catch {
-      // Local development is cross-origin. Production shares github.io and
-      // can observe StockThink's native loader directly.
-    }
-  }
-
-  function watchPreviewReadiness() {
-    if (previewReady || previewReadyPollTimer) return;
-    previewReadyPollTimer = window.setInterval(checkPreviewReadiness, 100);
-    previewReadyFallbackTimer = window.setTimeout(
-      completePreviewProgress,
-      30000,
-    );
   }
 
   function hasLoadedPreviewDocument() {
@@ -883,13 +616,7 @@ function createProjectCard(project, index) {
 
   function handlePreviewLoad() {
     if (!previewLoadStarted || !hasLoadedPreviewDocument()) return;
-    if (project.previewReadyOnLoad || project.previewUrl) {
-      completePreviewProgress();
-      return;
-    }
-    checkPreviewReadiness();
-    watchPreviewReadiness();
-    syncPreviewVisibility();
+    completePreviewProgress();
   }
 
   function startPreview() {
@@ -897,15 +624,16 @@ function createProjectCard(project, index) {
     previewLoadStarted = true;
     schedulePreviewLoaderReveal();
     if (previewImage) {
-      if (previewImage.complete) completePreviewProgress();
+      previewImage.src = `${import.meta.env.BASE_URL}${project.previewImage}`;
+      if (previewImage.complete && previewImage.naturalWidth) {
+        completePreviewProgress();
+      }
       return;
     }
     if (project.previewUrl) {
       preview.src = project.previewUrl;
-    } else {
-      preview.srcdoc = createProjectPreviewDocument(project);
+      previewPanel.append(preview);
     }
-    previewPanel.append(preview);
   }
 
   function schedulePreview() {
@@ -917,7 +645,7 @@ function createProjectCard(project, index) {
     previewLoadTimer = window.setTimeout(() => {
       previewLoadTimer = 0;
       startPreview();
-    }, project.previewLoadDelay ?? 0);
+    }, 0);
   }
 
   function updatePreviewActivity(active) {
@@ -937,9 +665,7 @@ function createProjectCard(project, index) {
   document.addEventListener("fullscreenchange", syncFullscreenButton);
   document.addEventListener("keydown", handleFullscreenKeydown);
   setMode("preview");
-  setFile(fileEntries[0][0]);
   syncFullscreenButton();
-  if (previewImage) startPreview();
 
   return {
     element: card,
@@ -948,27 +674,23 @@ function createProjectCard(project, index) {
     setSideTransform,
     updatePreviewActivity,
     dispose() {
+      disposed = true;
       previewButton.removeEventListener("click", handleModeClick);
       codeButton.removeEventListener("click", handleModeClick);
       fullscreenButton.removeEventListener("click", handleFullscreenClick);
       document.removeEventListener("fullscreenchange", syncFullscreenButton);
       document.removeEventListener("keydown", handleFullscreenKeydown);
       if (fallbackFullscreen) setFallbackFullscreen(false);
-      fileTree.dispose();
+      fileTree?.dispose();
       clearPreviewLoadTimer();
       clearPreviewLoaderRevealTimer();
-      if (previewReadyPollTimer) window.clearInterval(previewReadyPollTimer);
-      if (previewReadyFallbackTimer) {
-        window.clearTimeout(previewReadyFallbackTimer);
-      }
-      disposePreviewPrefetch();
       previewResizeObserver?.disconnect();
       preview.removeEventListener("load", handlePreviewLoad);
       previewImage?.removeEventListener("load", completePreviewProgress);
       previewImage?.removeEventListener("error", completePreviewProgress);
       preview.hidden = true;
       preview.removeAttribute("src");
-      preview.srcdoc = "";
+      previewImage?.removeAttribute("src");
     },
   };
 }

@@ -157,10 +157,12 @@ const STOCKTHINK = Object.freeze({
   technologies: STOCKTHINK_TECHNOLOGIES,
   githubUrl: "https://github.com/MalikAhed/stockthink",
   liveUrl: "https://malikahed.github.io/stockthink/",
-  previewImage: "assets/stockthink-original.png",
-  keepPreviewMounted: true,
+  previewImage: "assets/stockthink-original.webp",
   sourceRevision: "0e0b4bf",
-  files: STOCKTHINK_SOURCE_FILES,
+  loadFiles: () =>
+    import("./stockthink-source.js").then(
+      ({ STOCKTHINK_SOURCE_FILES }) => STOCKTHINK_SOURCE_FILES,
+    ),
 });
 
 const CUBE_BURGER = Object.freeze({
@@ -178,10 +180,7 @@ const CUBE_BURGER = Object.freeze({
   liveUrl: "https://malikahed.github.io/cube-burger-site/",
   previewUrl: "https://malikahed.github.io/cube-burger-site/",
   previewLoaderTheme: "cube-burger",
-  previewLoadDelay: 0,
-  previewReadyOnLoad: true,
   previewViewportWidth: 1440,
-  keepPreviewMounted: true,
   sourceRevision: "691d464",
   files: Object.freeze({
     "src/main.js": `const INGREDIENTS = [
@@ -241,7 +240,6 @@ const MURAJAA = Object.freeze({
   liveUrl: "https://malikahed.github.io/Murajaa/",
   previewUrl: "https://malikahed.github.io/Murajaa/",
   previewViewportWidth: 1440,
-  keepPreviewMounted: true,
   sourceRevision: "a0d3e24",
   files: Object.freeze({
     "index.html": `<!DOCTYPE html>
@@ -322,9 +320,7 @@ const LEARN = Object.freeze({
   githubUrl: "https://github.com/MalikAhed/full-stack-quest",
   liveUrl: "https://malikahed.github.io/full-stack-quest/",
   previewUrl: "https://malikahed.github.io/full-stack-quest/",
-  previewReadyOnLoad: true,
   previewViewportWidth: 1440,
-  keepPreviewMounted: true,
   sourceRevision: "7f3f100",
   files: Object.freeze({
     "index.html": `<main class="quest">
@@ -377,27 +373,3 @@ export const PROJECTS = Object.freeze([
   MURAJAA,
   LEARN,
 ]);
-
-export function createProjectPreviewDocument(project) {
-  const html = project.files["index.html"] ?? "";
-  const css = project.files["styles.css"] ?? "";
-  const script = (project.files["script.js"] ?? "").replace(
-    /<\/script/gi,
-    "<\\/script",
-  );
-
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src * data: blob:">
-    <style>${css}</style>
-  </head>
-  <body>
-    ${html}
-    <script>${script}</script>
-  </body>
-</html>`;
-}
-import { STOCKTHINK_SOURCE_FILES } from "./stockthink-source.js";

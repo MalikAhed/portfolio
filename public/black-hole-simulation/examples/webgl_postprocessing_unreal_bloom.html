@@ -22,13 +22,22 @@
 			const portfolioEmbed = new URLSearchParams( location.search ).has( 'embed' );
 			document.body.classList.toggle( 'is-portfolio-embed', portfolioEmbed );
 			import * as THREE from 'three';
-			import Stats from 'three/addons/libs/stats.module.js';
-			import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 			import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 			import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 			import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 			import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+			let Stats, GUI, OrbitControls;
+			if ( ! portfolioEmbed ) {
+				const [ statsModule, guiModule, controlsModule ] = await Promise.all( [
+					import( 'three/addons/libs/stats.module.js' ),
+					import( 'three/addons/libs/lil-gui.module.min.js' ),
+					import( 'three/addons/controls/OrbitControls.js' )
+				] );
+				Stats = statsModule.default;
+				GUI = guiModule.GUI;
+				OrbitControls = controlsModule.OrbitControls;
+			}
 
 			const STORAGE_KEY = 'schwarzschild-line-study-v1';
 			const defaults = Object.freeze( {
@@ -56,6 +65,9 @@
 			} );
 			const saved = portfolioEmbed ? {} : JSON.parse( localStorage.getItem( STORAGE_KEY ) || '{}' );
 			const params = { ...defaults, ...saved };
+			const constrainedDevice = navigator.connection?.saveData ||
+				( Number( navigator.deviceMemory ) || Infinity ) <= 4 ||
+				( navigator.hardwareConcurrency || Infinity ) <= 4;
 			if ( params.styleVersion !== defaults.styleVersion ) {
 				Object.assign( params, defaults );
 				if ( ! portfolioEmbed ) localStorage.setItem( STORAGE_KEY, JSON.stringify( params ) );
@@ -70,6 +82,7 @@
 			let mappingMaterial, displayMaterial;
 			let mappingTarget, fullMappingTarget, previewMappingTarget, rayMapFrame, fullQualityFrame;
 			let cameraSaveTimer, cameraSettleTimer, fullQualityVersion = 0;
+			let softwareRenderer = false;
 			let syncingOrbitCamera = false;
 			let viewControllers = [];
 			let previousTime = performance.now();
@@ -479,8 +492,14 @@
 				scene.add( new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), displayMaterial ) );
 				updateCameraUniforms();
 
-				renderer = new THREE.WebGLRenderer( { antialias: true, powerPreference: 'high-performance' } );
-				renderer.setPixelRatio( Math.min( devicePixelRatio, 2 ) * params.resolutionScale );
+					renderer = new THREE.WebGLRenderer( { antialias: true, powerPreference: 'high-performance' } );
+					const gl = renderer.getContext();
+					const debugRendererInfo = gl.getExtension( 'WEBGL_debug_renderer_info' );
+					const rendererName = debugRendererInfo ?
+						gl.getParameter( debugRendererInfo.UNMASKED_RENDERER_WEBGL ) :
+						gl.getParameter( gl.RENDERER );
+					softwareRenderer = /swiftshader|llvmpipe|software/i.test( rendererName || '' );
+					renderer.setPixelRatio( getRenderPixelRatio() );
 				renderer.setSize( innerWidth, innerHeight );
 				renderer.toneMapping = THREE.ACESFilmicToneMapping;
 				renderer.toneMappingExposure = Math.pow( params.exposure, 4.0 );
@@ -488,24 +507,26 @@
 				renderer.domElement.style.cursor = 'grab';
 				container.appendChild( renderer.domElement );
 
-				orbitCamera = new THREE.PerspectiveCamera( params.fieldOfView, innerWidth / innerHeight, 0.1, 100 );
-				orbitCamera.position.copy( mappingMaterial.uniforms.uCameraPosition.value );
-				orbitCamera.lookAt( 0, 0, 0 );
-				orbitControls = new OrbitControls( orbitCamera, renderer.domElement );
-				orbitControls.target.set( 0, 0, 0 );
-				orbitControls.enableDamping = true;
-				orbitControls.dampingFactor = 0.18;
-				orbitControls.enablePan = false;
-				orbitControls.rotateSpeed = 0.55;
-				orbitControls.zoomSpeed = 0.75;
-				orbitControls.minDistance = portfolioEmbed ? 2.05 : 4;
-				orbitControls.maxDistance = 24;
-				orbitControls.minPolarAngle = THREE.MathUtils.degToRad( 0.5 );
-				orbitControls.maxPolarAngle = THREE.MathUtils.degToRad( 179.5 );
-				orbitControls.update();
-				orbitControls.addEventListener( 'start', beginCameraInteraction );
-				orbitControls.addEventListener( 'change', onOrbitChange );
-				orbitControls.addEventListener( 'end', endCameraInteraction );
+					if ( ! portfolioEmbed ) {
+						orbitCamera = new THREE.PerspectiveCamera( params.fieldOfView, innerWidth / innerHeight, 0.1, 100 );
+						orbitCamera.position.copy( mappingMaterial.uniforms.uCameraPosition.value );
+						orbitCamera.lookAt( 0, 0, 0 );
+						orbitControls = new OrbitControls( orbitCamera, renderer.domElement );
+						orbitControls.target.set( 0, 0, 0 );
+						orbitControls.enableDamping = true;
+						orbitControls.dampingFactor = 0.18;
+						orbitControls.enablePan = false;
+						orbitControls.rotateSpeed = 0.55;
+						orbitControls.zoomSpeed = 0.75;
+						orbitControls.minDistance = 4;
+						orbitControls.maxDistance = 24;
+						orbitControls.minPolarAngle = THREE.MathUtils.degToRad( 0.5 );
+						orbitControls.maxPolarAngle = THREE.MathUtils.degToRad( 179.5 );
+						orbitControls.update();
+						orbitControls.addEventListener( 'start', beginCameraInteraction );
+						orbitControls.addEventListener( 'change', onOrbitChange );
+						orbitControls.addEventListener( 'end', endCameraInteraction );
+					}
 
 				const renderPass = new RenderPass( scene, camera );
 				bloomPass = new UnrealBloomPass(
@@ -519,12 +540,11 @@
 				composer.addPass( bloomPass );
 				composer.addPass( new OutputPass() );
 
-				if ( ! portfolioEmbed ) {
-					stats = new Stats();
-					container.appendChild( stats.dom );
-				}
+					if ( ! portfolioEmbed ) {
+						stats = new Stats();
+						container.appendChild( stats.dom );
 
-				const gui = new GUI();
+					const gui = new GUI();
 				const pathFolder = gui.addFolder( 'simulation path' );
 				addControl( pathFolder, 'lineCount', 'line count', 1, 30, 1, updateLineStyle );
 				addControl( pathFolder, 'lineThickness', 'line thickness', 0.01, 0.5, 0.01, updateLineStyle );
@@ -567,7 +587,8 @@
 					onWindowResize();
 					}
 				};
-				gui.add( actions, 'reset' ).name( 'reset saved values' );
+					gui.add( actions, 'reset' ).name( 'reset saved values' );
+					}
 
 				addEventListener( 'resize', onWindowResize );
 				document.addEventListener( 'visibilitychange', onVisibilityChange );
@@ -586,25 +607,36 @@
 				} );
 			}
 
-			function onWindowResize() {
+				function getRenderPixelRatio() {
+					const requestedRatio = Math.min( devicePixelRatio, portfolioEmbed ? 1.5 : 2 ) * params.resolutionScale;
+					if ( ! portfolioEmbed ) return requestedRatio;
+					const maximumPixels = softwareRenderer ? 640 * 360 : constrainedDevice ? 1280 * 720 : 1920 * 1080;
+					const requestedPixels = innerWidth * requestedRatio * innerHeight * requestedRatio;
+					return requestedRatio * Math.min( 1, Math.sqrt( maximumPixels / requestedPixels ) );
+				}
+
+				function onWindowResize() {
 				cancelFullQualityRefinement();
 				if ( rayMapFrame ) cancelAnimationFrame( rayMapFrame );
 				rayMapFrame = 0;
-				const pixelRatio = Math.min( devicePixelRatio, 2 ) * params.resolutionScale;
+					const pixelRatio = getRenderPixelRatio();
 				renderer.setPixelRatio( pixelRatio );
 				renderer.setSize( innerWidth, innerHeight );
 				composer.setPixelRatio( pixelRatio );
 				composer.setSize( innerWidth, innerHeight );
-				orbitCamera.aspect = innerWidth / innerHeight;
-				orbitCamera.updateProjectionMatrix();
+					if ( orbitCamera ) {
+						orbitCamera.aspect = innerWidth / innerHeight;
+						orbitCamera.updateProjectionMatrix();
+					}
 				const size = renderer.getDrawingBufferSize( new THREE.Vector2() );
 				fullMappingTarget?.dispose();
 				previewMappingTarget?.dispose();
 				fullMappingTarget = createMappingTarget( size.x, size.y );
-				previewMappingTarget = createMappingTarget(
-					Math.max( 1, Math.round( size.x * 0.35 ) ),
-					Math.max( 1, Math.round( size.y * 0.35 ) )
-				);
+					const interactiveScale = softwareRenderer ? 0.18 : constrainedDevice ? 0.22 : 0.28;
+					previewMappingTarget = createMappingTarget(
+						Math.max( 1, Math.round( size.x * interactiveScale ) ),
+						Math.max( 1, Math.round( size.y * interactiveScale ) )
+					);
 				mappingTarget = previewMappingTarget;
 				rebuildRayMap();
 				restoreFullQualitySoon();

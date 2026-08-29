@@ -378,28 +378,28 @@ export const MURAJAA_SCREEN_WORLD_CONFIG = Object.freeze({
   screens: Object.freeze([
     Object.freeze({
       name: "welcome",
-      asset: "assets/murajaa-welcome.png",
+      asset: "assets/murajaa-welcome.webp",
       position: Object.freeze([-1.05, 1.12, 26]),
       height: 1.42,
       rotation: -9,
     }),
     Object.freeze({
       name: "study-card",
-      asset: "assets/murajaa-study-card.png",
+      asset: "assets/murajaa-study-card.webp",
       position: Object.freeze([4.7, 1.08, 27.4]),
       height: 1.38,
       rotation: 8,
     }),
     Object.freeze({
       name: "progress",
-      asset: "assets/murajaa-progress.png",
+      asset: "assets/murajaa-progress.webp",
       position: Object.freeze([-3.05, -1.08, 28.7]),
       height: 1.34,
       rotation: 7,
     }),
     Object.freeze({
       name: "answer-card",
-      asset: "assets/murajaa-answer-card.png",
+      asset: "assets/murajaa-answer-card.webp",
       position: Object.freeze([2.85, -0.15, 30.8]),
       height: 1.42,
       rotation: -8,
@@ -415,7 +415,7 @@ export const LEARN_OBJECT_WORLD_CONFIG = Object.freeze({
   objects: Object.freeze([
     Object.freeze({
       name: "code-book",
-      asset: "assets/learn-code-book.png",
+      asset: "assets/learn-code-book.webp",
       aspect: 807 / 846,
       position: Object.freeze([-1.1, -2.05, 37.55]),
       height: 1.6,
@@ -423,7 +423,7 @@ export const LEARN_OBJECT_WORLD_CONFIG = Object.freeze({
     }),
     Object.freeze({
       name: "bronze-rank",
-      asset: "assets/learn-rank-bronze.png",
+      asset: "assets/learn-rank-bronze.webp",
       aspect: 1,
       position: Object.freeze([-3.1, -0.55, 32.6]),
       height: 1.5,
@@ -431,7 +431,7 @@ export const LEARN_OBJECT_WORLD_CONFIG = Object.freeze({
     }),
     Object.freeze({
       name: "streak",
-      asset: "assets/learn-streak-flame.png",
+      asset: "assets/learn-streak-flame.webp",
       aspect: 700 / 886,
       position: Object.freeze([-4.25, 1.6, 36.3]),
       height: 1.6,
@@ -439,7 +439,7 @@ export const LEARN_OBJECT_WORLD_CONFIG = Object.freeze({
     }),
     Object.freeze({
       name: "rank-nine",
-      asset: "assets/learn-rank-9.png",
+      asset: "assets/learn-rank-9.webp",
       aspect: 1,
       position: Object.freeze([4.25, 1.6, 35.5]),
       height: 1.45,
@@ -447,7 +447,7 @@ export const LEARN_OBJECT_WORLD_CONFIG = Object.freeze({
     }),
     Object.freeze({
       name: "rank-sixteen",
-      asset: "assets/learn-rank-16.png",
+      asset: "assets/learn-rank-16.webp",
       aspect: 1,
       position: Object.freeze([3.45, -0.3, 38.3]),
       height: 1.35,

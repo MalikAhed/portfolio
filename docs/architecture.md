@@ -25,19 +25,25 @@ src/
 ├── sections/hero/            # Hero presentation styles
 ├── styles/                   # Global tokens and stylesheet entry
 ├── world/
-│   ├── cards.js              # World anchors + projected DOM project views
-│   ├── chess-world.js        # Depth-projected StockThink chess-piece sprites
-│   ├── ingredient-world.js   # Depth-projected Cube Burger ingredient crops
-│   ├── murajaa-world.js      # Depth-projected Murajaa generated screens
+│   ├── cards.js              # Project anchors, projection, and presentation state
+│   ├── project-card-elements.js # Reusable project-card DOM controls and marks
+│   ├── projected-object-world.js # Shared decorative-object projection lifecycle
+│   ├── chess-world.js        # StockThink projected-object configuration
+│   ├── ingredient-world.js   # Cube Burger projected-object configuration
+│   ├── murajaa-world.js      # Murajaa projected-object configuration
+│   ├── learn-world.js        # Full-Stack Quest projected-object configuration
+│   ├── journey-scroll.js     # Native-scroll measurement and camera state
 │   ├── project-frame-editor.js  # Final-frame position, rotation, and size controls
 │   ├── project-frame-editor.css # Compact fixed Project Frames panel
 │   ├── learn-object-editor.js   # Full-Stack Quest object XYZ/visibility controls
 │   ├── black-hole-camera-editor.js # Live final-camera timing controls
+│   ├── warp-lines.js         # Lightweight radial canvas renderer
+│   ├── warp-speed.js         # Lazy final-passage and iframe controller
 │   ├── ending-composition.css # Responsive final identity and contact overlay
 │   ├── config.js             # Camera, focus, and responsive world positions
 │   ├── journey.css           # Transparent native-scroll distance
 │   ├── project-cards.css     # Interactive project-card presentation
-│   ├── projects.js           # Temporary files and sandbox preview documents
+│   ├── projects.js           # Project metadata and compact source previews
 │   └── world.js              # Renderer, Hero, scroll rail, and lifecycle
 └── main.js                   # Small application shell and feature startup
 ```
@@ -104,6 +110,12 @@ src/
   Preview loaders wait briefly before appearing, so cached or immediately ready
   content never flashes a spinner. Readiness hides the loader and reveals the
   preview in the same update with no blank frame between them.
+  Once loaded, every preview remains mounted and visually present through active
+  scrolling, preserving its last application state. A never-opened remote
+  preview waits until scrolling settles at its focus band before beginning its
+  first navigation, so network and parse work do not enter a fast-scroll frame.
+  The large StockThink source listing is imported only when its Code view is
+  first opened.
 - Project cards occupy one foreground DOM layer above the canvas. Camera depth
   supplies the shared z-order for cards and projected world pieces, so an
   approaching card crosses in front of every earlier card and piece at the
@@ -118,6 +130,8 @@ src/
   then blurs and fades after receding. Piece sprites use a stronger blur range
   than cards so the effect remains legible on their large silhouettes. They
   remain pointer-inert and introduce no independent motion under reduced motion.
+  Decorative assets for each project begin loading one project interval before
+  their world entry rather than all downloading at startup.
 - Cube Burger replaces the second placeholder with its live full-width site
   preview. Seven lettuce, tomato, and onion crops reuse the original project's
   ingredient sprite sheet around that card. Their projected anchors occupy
@@ -127,9 +141,7 @@ src/
   freeze-frame artwork covers the real project surface. A shared cream-and-red
   “Preparing preview…” spinner covers a meaningfully slow first load and clears
   on the iframe's load event; later focused visits reveal the already-mounted preview
-  immediately. The site can finish its imagery progressively. Local
-  `srcdoc` project simulations are also created only on first focus instead of
-  at world startup.
+  immediately. The site can finish its imagery progressively.
 - The StockThink preview is one local screenshot captured from the original
   landing hero after its reveal. It remains the sole preview surface throughout
   scrolling, with a shared spinner covering only a meaningfully slow image
@@ -184,7 +196,14 @@ src/
   remains fully visible and alive at the end of the rail instead of fading back
   to the warm base. The embedded renderer runs only while the passage is
   visible, never takes over native scrolling, and is disabled under reduced
-  motion.
+  motion. Its document is not requested at startup: it initializes during an
+  idle pause after the featured project rail recedes, with a bounded near-scene
+  fallback for a visitor who scrolls continuously. The embedded path omits the standalone
+  stats, GUI, and orbit-control modules and uses the same capability-based pixel
+  budget as the parent world. Moving views use a smaller temporary ray map and
+  restore the unchanged full-quality map after settling. Software WebGL
+  renderers receive an additional framebuffer cap so the fallback cannot
+  saturate the CPU with the ray map.
 - A fixed semantic ending composition fades in linearly as the black hole
   settles into its lower framing. Malik's compact identity statement occupies
   the clear space above, while Gaza, age, and full-stack details sit opposite a
@@ -206,9 +225,10 @@ src/
   scroll events are coalesced into at most one camera, DOM projection, and
   renderer update per animation frame. During active scrolling, large changing
   card shadows are suspended while opacity, projection, entry motion, and
-  Gaussian depth blur remain exactly scroll-linked. Preview iframes are hidden during that active
-  interval, and only the visible active card runs its technology-chain
-  animation. The WebGL renderer clears once and sleeps completely after the
+  Gaussian depth blur remain exactly scroll-linked. Loaded preview iframes keep
+  their last visible state during that interval, while new iframe navigations
+  wait for scroll settlement and only the visible active card runs its
+  technology-chain animation. The WebGL renderer clears once and sleeps completely after the
   Hero portrait leaves view because the remaining Three.js objects are transform
   anchors only. Resize work is frame-coalesced as well. WebGL pixel count,
   device pixel ratio, and texture anisotropy use a smaller capability-based
@@ -231,9 +251,12 @@ src/
 
 ## Assets and dependencies
 
-Only files referenced by the live page belong in `public/assets`. The runtime
-dependencies are Three.js and the locally bundled font packages. Vite is the
-build tool; no framework or parallel editor runtime is present.
+Only files referenced by the live page belong in `public/assets`. Large
+project-world screenshots and transparent progression artwork use optimized
+WebP; Murajaa screens are also sized to the maximum useful projected density.
+The runtime dependencies are Three.js and the locally bundled font packages.
+Only the used Latin WOFF2 font files are emitted. Vite is the build tool; no
+framework or parallel editor runtime is present.
 The Hero portrait and foreground chess cutouts use full-resolution, high-quality
 WebP with preserved alpha. Chess images retain their original PNGs as runtime
 fallbacks for preview environments that fail to resolve the optimized files.
