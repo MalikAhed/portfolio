@@ -536,29 +536,6 @@ function createProjectCard(project, index) {
   const previewLoader = project.previewBrand
     ? createPreviewLoader(project.previewBrand, project.previewLoaderTheme)
     : null;
-  const freezeFrame = project.freezeFrame
-    ? document.createElement("div")
-    : null;
-  if (freezeFrame) {
-    freezeFrame.className = "project-card__freeze-frame";
-    freezeFrame.hidden = true;
-    freezeFrame.setAttribute("aria-hidden", "true");
-
-    const background = document.createElement("img");
-    background.className = "project-card__freeze-background";
-    background.src = `${import.meta.env.BASE_URL}${project.freezeFrame.background}`;
-    background.alt = "";
-
-    const title = document.createElement("strong");
-    title.innerHTML = "<span>CUBE</span><span>BURGER</span>";
-
-    const subject = document.createElement("img");
-    subject.className = "project-card__freeze-subject";
-    subject.src = `${import.meta.env.BASE_URL}${project.freezeFrame.subject}`;
-    subject.alt = "";
-    freezeFrame.append(background, title, subject);
-  }
-
   const preview = document.createElement("iframe");
   preview.className = "project-card__frame";
   if (project.previewViewportWidth) {
@@ -580,7 +557,6 @@ function createProjectCard(project, index) {
     previewImage.hidden = true;
   }
   if (previewLoader) previewPanel.append(previewLoader.element);
-  if (freezeFrame) previewPanel.append(freezeFrame);
   previewPanel.append(previewImage ?? preview);
 
   const codePanel = document.createElement("div");
@@ -814,10 +790,6 @@ function createProjectCard(project, index) {
       "is-preview-poster-visible",
       showingPreview && !previewVisible,
     );
-    if (freezeFrame) {
-      freezeFrame.hidden =
-        !showingPreview || !previewLoadStarted || previewVisible;
-    }
     if (previewLoader) {
       const loaderVisible = showingPreview && (previewActive || isFullscreen());
       if (previewLoader.element.hidden === loaderVisible) {

@@ -3,7 +3,12 @@ import globals from "globals";
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", ".venv/**"],
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      ".venv/**",
+      "public/black-hole-simulation/**",
+    ],
   },
   {
     ...js.configs.recommended,

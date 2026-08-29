@@ -38,6 +38,16 @@
   will-change: transform, opacity;
 }
 
+.learn-world-object {
+  position: absolute;
+  inset: 0 auto auto 0;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity, filter;
+}
+
 .cube-burger-ingredient > span {
   position: absolute;
   inset: 0;
@@ -236,12 +246,22 @@
   white-space: nowrap;
 }
 
+[data-project-card="cube-burger"] .project-card__explainer h3 {
+  font-family: "Big Shoulders Variable", "Arial Narrow", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 [data-project-card="stockthink"] .project-card__explainer h3 {
   font-size: 76px;
-  font-weight: 800;
+  font-weight: 900;
   line-height: 0.92;
   letter-spacing: -0.054em;
   text-transform: uppercase;
+}
+
+[data-project-card="learn"] .project-card__explainer h3 {
+  font-size: 60px;
 }
 
 .project-card__summary {
@@ -536,60 +556,6 @@ body.has-project-fallback-fullscreen .project-cards-layer {
 
 .project-card__preview-image[hidden] {
   display: none;
-}
-
-.project-card__freeze-frame {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  overflow: hidden;
-  background: #c90009;
-}
-
-.project-card__freeze-frame[hidden] {
-  display: none;
-}
-
-.project-card__freeze-background,
-.project-card__freeze-subject {
-  position: absolute;
-  display: block;
-  user-select: none;
-}
-
-.project-card__freeze-background {
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  object-fit: cover;
-}
-
-.project-card__freeze-frame strong {
-  position: absolute;
-  z-index: 1;
-  inset-block-start: 12%;
-  inset-inline-start: 50%;
-  color: #fff8ef;
-  font-family: var(--font-display);
-  font-size: clamp(70px, 11vw, 170px);
-  font-weight: 800;
-  line-height: 0.72;
-  letter-spacing: -0.08em;
-  text-align: center;
-  transform: translateX(-50%);
-}
-
-.project-card__freeze-frame strong span {
-  display: block;
-}
-
-.project-card__freeze-subject {
-  z-index: 2;
-  inset-block-end: -10%;
-  inset-inline-start: 50%;
-  inline-size: min(48%, 620px);
-  filter: drop-shadow(0 24px 22px rgb(92 0 4 / 22%));
-  transform: translateX(-50%);
 }
 
 .project-card__frame--fitted-website {

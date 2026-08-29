@@ -1,9 +1,10 @@
 import * as THREE from "three";
 import { getRequiredElement } from "../lib/dom.js";
-import { initProjectFrameEditor } from "./project-frame-editor.js";
 import {
   FOCUS_WORLD_CONFIG,
   HERO_CAMERA_Z,
+  MORE_WORK_WORLD_CONFIG,
+  WARP_SPEED_WORLD_CONFIG,
   WORK_TITLE_WORLD_CONFIG,
   WORLD_CAMERA_FOV,
   getCameraZAtProgress,
@@ -14,7 +15,9 @@ import {
 import { createPortfolioCards } from "./cards.js";
 import { createStockthinkChessWorld } from "./chess-world.js";
 import { createCubeBurgerIngredientWorld } from "./ingredient-world.js";
+import { initLearnObjectEditor } from "./learn-object-editor.js";
 import { createMurajaaScreenWorld } from "./murajaa-world.js";
+import { createLearnObjectWorld } from "./learn-world.js";
 
 const BACKGROUND_COLOR = 0xf5f0e8;
 // The portrait texture is 1024px wide, so rendering a larger full-screen
@@ -136,6 +139,97 @@ function updateWorkTitle(element, cameraZ) {
     opacity > FOCUS_WORLD_CONFIG.visibilityThreshold ? "visible" : "hidden";
 }
 
+function updateMoreWork(element, cameraZ, scrolling) {
+  const depth = cameraZ - MORE_WORK_WORLD_CONFIG.position[2];
+  const inFront = depth > 0.1;
+  const visibility = inFront ? getWorldVisibilityAtDepth(depth) : 0;
+  const entryProgress = inFront ? getProjectFrameEntryAtDepth(depth) : 0;
+  const opacity = visibility * entryProgress;
+  const scale = inFront
+    ? clamp(FOCUS_WORLD_CONFIG.distance / depth, 0.7, 1.35)
+    : 1;
+  const interactive =
+    !scrolling &&
+    opacity > 0.65 &&
+    Math.abs(depth - FOCUS_WORLD_CONFIG.distance) <
+      FOCUS_WORLD_CONFIG.interactionBand;
+
+  element.style.setProperty("--more-work-scale", scale.toFixed(5));
+  element.style.setProperty(
+    "--more-work-defocus",
+    `${getWorldBlurAtDepth(depth).toFixed(2)}px`,
+  );
+  element.style.opacity = opacity.toFixed(4);
+  element.style.visibility =
+    opacity > FOCUS_WORLD_CONFIG.visibilityThreshold ? "visible" : "hidden";
+  element.classList.toggle("is-interactive", interactive);
+  element.inert = !interactive;
+}
+
+function updateWarpSpeed(element, cameraZ, reducedMotion) {
+  const simulation = element.querySelector("[data-warp-simulation]");
+  if (reducedMotion) {
+    element.style.opacity = "0";
+    element.style.visibility = "hidden";
+    simulation?.contentWindow?.postMessage(
+      { type: "portfolio-warp", active: false, intensity: 0 },
+      window.location.origin,
+    );
+    return;
+  }
+
+  const { startCameraZ, peakCameraZ, endCameraZ } = WARP_SPEED_WORLD_CONFIG;
+  const entering = THREE.MathUtils.smoothstep(
+    cameraZ,
+    startCameraZ,
+    peakCameraZ,
+  );
+  const leaving =
+    1 - THREE.MathUtils.smoothstep(cameraZ, peakCameraZ, endCameraZ);
+  const intensity = Math.min(entering, leaving);
+  const travel = THREE.MathUtils.clamp(
+    (cameraZ - startCameraZ) / (endCameraZ - startCameraZ),
+    0,
+    1,
+  );
+
+  element.style.setProperty("--warp-intensity", intensity.toFixed(4));
+  element.style.setProperty("--warp-travel", travel.toFixed(4));
+  element.style.setProperty("--warp-scale", (0.72 + travel * 1.45).toFixed(4));
+  element.style.setProperty(
+    "--warp-scale-near",
+    (0.9 + travel * 1.9).toFixed(4),
+  );
+  element.style.setProperty("--warp-rotation", `${(travel * 4).toFixed(2)}deg`);
+  element.style.setProperty(
+    "--warp-rotation-near",
+    `${(travel * -3).toFixed(2)}deg`,
+  );
+  element.style.setProperty(
+    "--warp-blur",
+    `${((1 - intensity) * 1.5).toFixed(2)}px`,
+  );
+  element.style.setProperty(
+    "--warp-duration",
+    `${(900 - intensity * 760).toFixed(0)}ms`,
+  );
+  element.style.setProperty(
+    "--hole-opacity",
+    (0.35 + intensity * 0.65).toFixed(4),
+  );
+  element.style.setProperty("--hole-scale", (3.4 - travel * 2.55).toFixed(4));
+  element.style.opacity = intensity.toFixed(4);
+  element.style.visibility = intensity > 0.01 ? "visible" : "hidden";
+  simulation?.contentWindow?.postMessage(
+    {
+      type: "portfolio-warp",
+      active: intensity > 0.01,
+      intensity,
+    },
+    window.location.origin,
+  );
+}
+
 function initJourneyScroll(worldStage, reducedMotion, onChange) {
   const journeyTrack = getRequiredElement("[data-journey-track]");
   let startY = 0;
@@ -253,6 +347,8 @@ export function initWorld() {
   const worldStage = stage.closest("[data-world-stage]");
   const hero = worldStage?.querySelector(".hero");
   const workTitle = getRequiredElement("[data-work-title]");
+  const moreWork = getRequiredElement("[data-more-work]");
+  const warpSpeed = getRequiredElement("[data-warp-speed]");
   const app = getRequiredElement("#app");
   const splashProgressFill = getRequiredElement(".splash__progress-fill");
   const splashPercentage = getRequiredElement(".splash__percentage");
@@ -274,6 +370,11 @@ export function initWorld() {
     assetUrl,
   );
   const murajaaScreenWorld = createMurajaaScreenWorld(cardsStage, assetUrl);
+  const learnObjectWorld = createLearnObjectWorld(cardsStage, assetUrl);
+  const learnObjectEditor = initLearnObjectEditor(
+    learnObjectWorld,
+    refreshLearnObjects,
+  );
 
   let renderer;
   try {
@@ -351,7 +452,6 @@ export function initWorld() {
   let portraitMesh;
   let portraitShadow;
   let journeyState = createJourneyState(0, reducedMotion.matches);
-  let projectFrameEditor = null;
   let disposeJourney = () => {};
 
   scene.add(
@@ -359,6 +459,7 @@ export function initWorld() {
     stockthinkChessWorld.group,
     cubeBurgerIngredientWorld.group,
     murajaaScreenWorld.group,
+    learnObjectWorld.group,
     portraitGroup,
   );
   const textureLoader = new THREE.TextureLoader();
@@ -718,6 +819,8 @@ export function initWorld() {
     portraitGroup.visible =
       journeyState.originVisibility > FOCUS_WORLD_CONFIG.visibilityThreshold;
     updateWorkTitle(workTitle, camera.position.z);
+    updateMoreWork(moreWork, camera.position.z, journeyScrolling);
+    updateWarpSpeed(warpSpeed, camera.position.z, reducedMotion.matches);
     scene.updateMatrixWorld(true);
     if (forceCards || camera.position.z !== renderedCardsCameraZ) {
       renderedCardsCameraZ = camera.position.z;
@@ -745,8 +848,13 @@ export function initWorld() {
         stage.clientHeight,
         journeyScrolling,
       );
+      learnObjectWorld.update(camera, stage.clientWidth, stage.clientHeight);
     }
     renderWorld();
+  }
+
+  function refreshLearnObjects() {
+    renderScene(performance.now(), true);
   }
 
   function applyCamera() {
@@ -763,7 +871,9 @@ export function initWorld() {
   function handlePointerMove(event) {
     if (
       event.target instanceof Element &&
-      event.target.closest("[data-project-frame-editor], [data-project-card]")
+      event.target.closest(
+        "[data-project-frame-editor], [data-learn-object-editor], [data-project-card]",
+      )
     ) {
       if (pointerTarget.lengthSq() > 0) resetPointer();
       return;
@@ -848,6 +958,13 @@ export function initWorld() {
   function handleJourneyState(nextState, scrolling) {
     journeyState = nextState;
     journeyScrolling = scrolling;
+
+    // Native scroll owns the camera as soon as the journey starts. Otherwise
+    // the still-running intro camera update overwrites the scroll position on
+    // every frame, so an interrupted portrait reveal can fade without
+    // continuing to recede in scale.
+    if (scrolling && introCameraStartTime !== null) finishIntro();
+
     worldStage.classList.toggle("is-journey-scrolling", scrolling);
     previousFrameTime = 0;
     renderScene(performance.now(), true);
@@ -891,8 +1008,7 @@ export function initWorld() {
       camera.setViewOffset(cssWidth, heroHeight, 0, 0, cssWidth, cssHeight);
     }
     camera.updateProjectionMatrix();
-    const presetChanged = portfolioCards.resize(cssWidth, window.innerHeight);
-    if (presetChanged) projectFrameEditor?.refresh();
+    portfolioCards.resize(cssWidth, window.innerHeight);
     applyCamera();
     layoutPortrait();
     scene.updateMatrixWorld(true);
@@ -905,6 +1021,9 @@ export function initWorld() {
       journeyScrolling,
     );
     murajaaScreenWorld.update(camera, cssWidth, cssHeight, journeyScrolling);
+    learnObjectWorld.update(camera, cssWidth, cssHeight);
+    updateMoreWork(moreWork, camera.position.z, journeyScrolling);
+    updateWarpSpeed(warpSpeed, camera.position.z, reducedMotion.matches);
     if (!journeyScrolling) renderWorld();
   }
 
@@ -924,11 +1043,6 @@ export function initWorld() {
     reducedMotion,
     handleJourneyState,
   );
-  projectFrameEditor = initProjectFrameEditor(portfolioCards, () => {
-    previousFrameTime = 0;
-    renderScene(performance.now(), true);
-    previousFrameTime = 0;
-  });
   syncAnimationLoop();
   prepareIntro();
 
@@ -956,11 +1070,12 @@ export function initWorld() {
       handleContextRestored,
     );
     disposeJourney();
-    projectFrameEditor?.dispose();
     portfolioCards.dispose();
     stockthinkChessWorld.dispose();
     cubeBurgerIngredientWorld.dispose();
+    learnObjectEditor.dispose();
     murajaaScreenWorld.dispose();
+    learnObjectWorld.dispose();
 
     const disposedGeometries = new Set();
     const disposedMaterials = new Set();

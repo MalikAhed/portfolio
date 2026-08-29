@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js - Schwarzschild line-path study</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			body.is-portfolio-embed #info,
+			body.is-portfolio-embed .stats,
+			body.is-portfolio-embed .lil-gui { display: none !important; }
+			body.is-portfolio-embed canvas { cursor: default !important; }
+		</style>
+	</head>
+	<body>
+		<div id="container"></div>
+		<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - Schwarzschild-lensed line paths<br>drag to orbit · wheel or pinch to zoom</div>
+		<script type="importmap">
+			{ "imports": { "three": "../build/three.module.js", "three/addons/": "./jsm/" } }
+		</script>
+		<script type="module">
+			const portfolioEmbed = new URLSearchParams( location.search ).has( 'embed' );
+			document.body.classList.toggle( 'is-portfolio-embed', portfolioEmbed );
+			import * as THREE from 'three';
+			import Stats from 'three/addons/libs/stats.module.js';
+			import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+			import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+			import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+			import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+			const STORAGE_KEY = 'schwarzschild-line-study-v1';
+			const defaults = Object.freeze( {
+				styleVersion: 8,
+				threshold: 0, strength: 1.43, radius: 0, exposure: 0.94,
+				lineCount: 30, lineThickness: 0.01, lineBrightness: 2.6,
+				diskInner: 2.11, diskWidth: 3.76, cameraDistance: 10.69,
+				inclination: 16.1413, movementAngle: 75.3603, fieldOfView: 68,
+				orbitSpeed: 0.68, resolutionScale: 1, invertColors: false
+			} );
+			// Sliders keep a compact, device-friendly editing range. The input fields
+			// accept this broader range so precise values can also be entered below or
+			// above a slider, while hard limits reject invalid or hazardous values.
+			const inputLimits = Object.freeze( {
+				lineCount: [ 1, 200 ], lineThickness: [ 0.001, 2 ],
+				diskInner: [ 1.01, 20 ], diskWidth: [ 0.05, 20 ],
+				orbitSpeed: [ -10, 10 ], cameraDistance: [ 2, 60 ],
+				inclination: [ 0.01, 179.99 ], movementAngle: [ -3600, 3600 ],
+				fieldOfView: [ 5, 150 ], lineBrightness: [ 0, 20 ],
+				threshold: [ 0, 10 ], strength: [ 0, 10 ], radius: [ 0, 2 ],
+				exposure: [ 0.01, 4 ],
+				// Supersampling above 1 can allocate very large GPU buffers. Typed input
+				// may lower quality further, but cannot exceed native device resolution.
+				resolutionScale: [ 0.25, 1 ]
+			} );
+			const saved = JSON.parse( localStorage.getItem( STORAGE_KEY ) || '{}' );
+			const params = { ...defaults, ...saved };
+			if ( params.styleVersion !== defaults.styleVersion ) {
+				Object.assign( params, defaults );
+				localStorage.setItem( STORAGE_KEY, JSON.stringify( params ) );
+			}
+			for ( const [ key, [ min, max ] ] of Object.entries( inputLimits ) ) {
+				const value = Number( params[ key ] );
+				params[ key ] = Number.isFinite( value ) ? THREE.MathUtils.clamp( value, min, max ) : defaults[ key ];
+			}
+			const TAU = Math.PI * 2;
+
+			let renderer, composer, bloomPass, scene, mappingScene, camera, orbitCamera, orbitControls, stats;
+			let mappingMaterial, displayMaterial;
+			let mappingTarget, fullMappingTarget, previewMappingTarget, rayMapFrame, fullQualityFrame;
+			let cameraSaveTimer, cameraSettleTimer, fullQualityVersion = 0;
+			let syncingOrbitCamera = false;
+			let viewControllers = [];
+			let previousTime = performance.now();
+			const orbitUp = new THREE.Vector3();
+
+			const vertexShader = /* glsl */`
+				varying vec2 vUv;
+				void main() {
+					vUv = uv;
+					gl_Position = vec4( position, 1.0 );
+				}
+			`;
+
+			// This is the same low-quality Schwarzschild integrator used by the
+			// reference simulation. The bright upper arcs are not modeled curves:
+			// each screen ray is bent until it intersects the flat XZ disk at y = 0.
+			const mappingFragmentShader = /* glsl */`
+				#define PI 3.141592653589793238462643383279
+				// Fast sampling of the same geodesic equation. The reference simulation's
+				// low preset also advances photons in 0.1-unit steps.
+				#define STEP 0.1
+				#define NSTEPS 180
+
+				uniform vec2 uResolution;
+				uniform vec3 uCameraPosition;
+				uniform vec3 uCameraDirection;
+				uniform vec3 uCameraUp;
+				uniform vec3 uCameraVelocity;
+				uniform float uFieldOfView;
+				uniform float uDiskInner;
+				uniform float uDiskWidth;
+
+				vec3 lorentzTransformVelocity( vec3 u, vec3 v ) {
+					float speedSquared = dot( v, v );
+					if ( speedSquared > 0.0 ) {
+						float gamma = 1.0 / sqrt( 1.0 - speedSquared );
+						float denominator = 1.0 - dot( v, u );
+						return ( u / gamma - v + ( gamma / ( gamma + 1.0 ) ) * dot( u, v ) * v ) / denominator;
+					}
+					return u;
+				}
+
+				void main() {
+					float uvfov = tan( uFieldOfView * 0.5 * PI / 180.0 );
+					vec2 uv = 2.0 * ( gl_FragCoord.xy / uResolution ) - 1.0;
+					uv *= vec2( uResolution.x / uResolution.y, 1.0 );
+
+					vec3 forward = normalize( uCameraDirection );
+					vec3 up = normalize( uCameraUp );
+					vec3 nright = normalize( cross( forward, up ) );
+					up = cross( nright, forward );
+					vec3 pixelPos = uCameraPosition + forward + nright * uv.x * uvfov + up * uv.y * uvfov;
+					vec3 rayDir = normalize( pixelPos - uCameraPosition );
+					rayDir = lorentzTransformVelocity( rayDir, uCameraVelocity );
+
+					vec3 point = uCameraPosition;
+					vec3 velocity = rayDir;
+					vec3 angularMomentum = cross( point, velocity );
+					float h2 = dot( angularMomentum, angularMomentum );
+					// Rays this far outside the disk cannot create a visible lensed line.
+					// Rejecting them before the loop keeps empty background pixels cheap.
+					float angularLimit = uDiskInner + uDiskWidth + 2.5;
+					if ( h2 > angularLimit * angularLimit ) {
+						gl_FragColor = vec4( 0.0 );
+						return;
+					}
+					float rayGamma = 1.0 / sqrt( 1.0 - dot( uCameraVelocity, uCameraVelocity ) );
+					float rayDoppler = rayGamma * ( 1.0 + dot( rayDir, -uCameraVelocity ) );
+					float rayIntensity = 1.0 / ( rayDoppler * rayDoppler * rayDoppler );
+					float escapeRadius = max( length( uCameraPosition ) + 1.0, uDiskInner + uDiskWidth + 1.0 );
+					float escapeRadiusSquared = escapeRadius * escapeRadius;
+					float oldRadiusSquared = dot( point, point );
+					vec3 oldpoint;
+
+					for ( int i = 0; i < NSTEPS; i ++ ) {
+						oldpoint = point;
+						point += velocity * STEP;
+						float radiusSquared = dot( point, point );
+						float inverseRadius = inversesqrt( radiusSquared );
+						float inverseRadiusSquared = 1.0 / radiusSquared;
+						vec3 accel = -1.5 * h2 * point * inverseRadiusSquared * inverseRadiusSquared * inverseRadius;
+						velocity += accel * STEP;
+
+						if ( radiusSquared < 1.0 && oldRadiusSquared > 1.0 ) break;
+
+						if ( oldpoint.y * point.y < 0.0 ) {
+							float lambda = -oldpoint.y / velocity.y;
+							vec3 intersection = oldpoint + lambda * velocity;
+							float r = length( intersection );
+							if ( uDiskInner <= r && r <= uDiskInner + uDiskWidth ) {
+								float phi = atan( intersection.x, intersection.z );
+								vec3 diskVelocity = vec3( -intersection.x, 0.0, intersection.z ) /
+									sqrt( 2.0 * ( r - 1.0 ) ) / ( r * r );
+								phi = mod( phi + PI * 2.0, PI * 2.0 );
+								float diskGamma = 1.0 / sqrt( 1.0 - dot( diskVelocity, diskVelocity ) );
+								float distanceFromHole = sqrt( radiusSquared );
+								float diskDoppler = diskGamma * ( 1.0 + dot( rayDir / distanceFromHole, diskVelocity ) );
+								vec2 diskUv = vec2( phi / ( 2.0 * PI ), 1.0 - ( r - uDiskInner ) / uDiskWidth );
+								float gain = rayIntensity / ( rayDoppler * diskDoppler );
+								gl_FragColor = vec4( diskUv, gain, 1.0 );
+								return;
+							}
+						}
+
+						// Once an unbound ray has passed both the camera and the disk while
+						// travelling outward, it cannot produce a later disk intersection.
+						if ( radiusSquared > escapeRadiusSquared && dot( point, velocity ) > 0.0 ) break;
+						oldRadiusSquared = radiusSquared;
+					}
+
+					gl_FragColor = vec4( 0.0 );
+				}
+			`;
+
+			// The expensive geodesic result above is static. Normal animation frames
+			// only move the disk texture through this cached UV map.
+			const displayFragmentShader = /* glsl */`
+				#define PI 3.141592653589793238462643383279
+				varying vec2 vUv;
+				uniform float uTime;
+				uniform float uBrightness;
+				uniform float uLineCount;
+				uniform float uLineThickness;
+				uniform sampler2D uRayMap;
+
+				float random( float value ) {
+					return fract( sin( value * 12.9898 ) * 43758.5453 );
+				}
+
+				void main() {
+					vec4 rayMap = texture2D( uRayMap, vUv );
+					if ( rayMap.a < 0.5 ) {
+						gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );
+						return;
+					}
+					float laneCoordinate = rayMap.y * ( uLineCount + 1.0 );
+					float laneIndex = floor( laneCoordinate + 0.5 );
+					float validLane = step( 0.5, laneIndex ) * step( laneIndex, uLineCount + 0.5 );
+					float radialDistance = abs( laneCoordinate - laneIndex ) / ( uLineCount + 1.0 );
+					float halfWidth = 0.00065 + uLineThickness * 0.009;
+					float antialiasWidth = max( fwidth( rayMap.y ) * 1.25, 0.00035 );
+					float coreMask = 1.0 - smoothstep( halfWidth - antialiasWidth, halfWidth + antialiasWidth, radialDistance );
+
+					// Every lane has stable random segment lengths, gaps, speed and direction.
+					// Moving disk azimuth through this pattern makes the motion unmistakable.
+					float laneSeed = laneIndex * 19.731;
+					float direction = random( laneSeed + 2.0 ) > 0.42 ? 1.0 : -1.0;
+					float speed = mix( 0.55, 1.35, random( laneSeed + 4.0 ) );
+					float timePhase = mod( uTime, PI * 2.0 ) / ( PI * 2.0 );
+					float movingPhi = fract( rayMap.x - direction * timePhase * speed + random( laneSeed + 6.0 ) );
+					float segmentCount = floor( mix( 5.0, 12.0, random( laneSeed + 8.0 ) ) );
+					float segmentCoordinate = movingPhi * segmentCount;
+					float cell = floor( segmentCoordinate );
+					float localPosition = fract( segmentCoordinate );
+					float cellSeed = laneSeed + cell * 31.417;
+					float segmentStart = mix( 0.025, 0.16, random( cellSeed + 10.0 ) );
+					float segmentLength = mix( 0.24, 0.82, random( cellSeed + 12.0 ) );
+					float segmentEnd = min( 0.97, segmentStart + segmentLength );
+					float endFeather = max( fwidth( segmentCoordinate ) * 1.25, 0.012 );
+					float segmentMask = smoothstep( segmentStart - endFeather, segmentStart + endFeather, localPosition ) *
+						( 1.0 - smoothstep( segmentEnd - endFeather, segmentEnd + endFeather, localPosition ) );
+					// Keep the source in linear HDR. Values above 1.0 create the hot,
+					// sharply resolved core that UnrealBloomPass spreads across its mips.
+					// The disk has many overlapping emitters, unlike the sparse reference
+					// model. Normalize their energy before bloom so the five mip levels do
+					// not merge into a flat white veil.
+					float emitterEnergy = uBrightness * 0.18;
+					float intensity = max( 0.0, coreMask * segmentMask * validLane * emitterEnergy * rayMap.z );
+					gl_FragColor = vec4( vec3( intensity ), 1.0 );
+				}
+			`;
+
+			function updateCameraUniforms() {
+				const distance = params.cameraDistance;
+				const incline = THREE.MathUtils.degToRad( params.inclination );
+				const pathAngle = THREE.MathUtils.degToRad( params.movementAngle );
+				const orbitY = Math.sin( incline ) * distance;
+				const orbitZ = Math.cos( incline ) * distance;
+				const position = mappingMaterial.uniforms.uCameraPosition.value;
+				position.set( -orbitY * Math.sin( pathAngle ), orbitY * Math.cos( pathAngle ), orbitZ );
+
+				if ( orbitCamera ) {
+					syncingOrbitCamera = true;
+					orbitCamera.position.copy( position );
+					orbitCamera.lookAt( 0, 0, 0 );
+					orbitControls?.update();
+					syncingOrbitCamera = false;
+					applyOrbitCameraToUniforms();
+					return;
+				}
+
+				mappingMaterial.uniforms.uCameraDirection.value.copy( position ).multiplyScalar( -1 ).normalize();
+				const worldUp = Math.abs( mappingMaterial.uniforms.uCameraDirection.value.y ) > 0.98 ?
+					new THREE.Vector3( 0, 0, 1 ) : new THREE.Vector3( 0, 1, 0 );
+				const right = new THREE.Vector3().crossVectors( mappingMaterial.uniforms.uCameraDirection.value, worldUp ).normalize();
+				mappingMaterial.uniforms.uCameraUp.value.crossVectors( right, mappingMaterial.uniforms.uCameraDirection.value ).normalize();
+				mappingMaterial.uniforms.uCameraVelocity.value.set( Math.cos( pathAngle ), Math.sin( pathAngle ), 0 ).multiplyScalar( 0.42 * 0.022 );
+				mappingMaterial.uniforms.uFieldOfView.value = params.fieldOfView;
+				mappingMaterial.uniforms.uDiskInner.value = params.diskInner;
+				mappingMaterial.uniforms.uDiskWidth.value = params.diskWidth;
+			}
+
+			function applyOrbitCameraToUniforms() {
+				const position = orbitCamera.position;
+				const pathAngle = THREE.MathUtils.degToRad( params.movementAngle );
+				mappingMaterial.uniforms.uCameraPosition.value.copy( position );
+				mappingMaterial.uniforms.uCameraDirection.value.copy( orbitControls.target ).sub( position ).normalize();
+				orbitUp.set( 0, 1, 0 ).applyQuaternion( orbitCamera.quaternion ).normalize();
+				mappingMaterial.uniforms.uCameraUp.value.copy( orbitUp );
+				mappingMaterial.uniforms.uCameraVelocity.value.set( Math.cos( pathAngle ), Math.sin( pathAngle ), 0 ).multiplyScalar( 0.42 * 0.022 );
+				mappingMaterial.uniforms.uFieldOfView.value = params.fieldOfView;
+				mappingMaterial.uniforms.uDiskInner.value = params.diskInner;
+				mappingMaterial.uniforms.uDiskWidth.value = params.diskWidth;
+			}
+
+			function saveCameraViewSoon() {
+				clearTimeout( cameraSaveTimer );
+				cameraSaveTimer = setTimeout( () => {
+					localStorage.setItem( STORAGE_KEY, JSON.stringify( params ) );
+				}, 180 );
+			}
+
+			function restoreFullQualitySoon() {
+				clearTimeout( cameraSettleTimer );
+				cameraSettleTimer = setTimeout( () => {
+					startFullQualityRefinement();
+				}, 140 );
+			}
+
+			function cancelFullQualityRefinement() {
+				fullQualityVersion ++;
+				if ( fullQualityFrame ) cancelAnimationFrame( fullQualityFrame );
+				fullQualityFrame = 0;
+			}
+
+			function requestInteractiveRayMap() {
+				cancelFullQualityRefinement();
+				if ( previewMappingTarget ) mappingTarget = previewMappingTarget;
+				scheduleRayMap();
+				restoreFullQualitySoon();
+			}
+
+			function onOrbitChange() {
+				if ( syncingOrbitCamera ) return;
+				const position = orbitCamera.position;
+				const distance = Math.max( 0.0001, position.length() );
+				params.cameraDistance = THREE.MathUtils.clamp( distance, orbitControls.minDistance, orbitControls.maxDistance );
+				params.inclination = THREE.MathUtils.radToDeg( Math.acos( THREE.MathUtils.clamp( position.z / distance, -1, 1 ) ) );
+				params.movementAngle = THREE.MathUtils.radToDeg( Math.atan2( -position.x, position.y ) );
+				applyOrbitCameraToUniforms();
+				viewControllers.forEach( ( controller ) => controller.updateDisplay() );
+				requestInteractiveRayMap();
+				saveCameraViewSoon();
+			}
+
+			function beginCameraInteraction() {
+				renderer.domElement.style.cursor = 'grabbing';
+			}
+
+			function endCameraInteraction() {
+				renderer.domElement.style.cursor = 'grab';
+				restoreFullQualitySoon();
+				saveCameraViewSoon();
+			}
+
+			function rebuildRayMap() {
+				if ( ! renderer || ! mappingTarget ) return;
+				mappingMaterial.uniforms.uResolution.value.set( mappingTarget.width, mappingTarget.height );
+				const previousTarget = renderer.getRenderTarget();
+				renderer.setRenderTarget( mappingTarget );
+				renderer.clear();
+				renderer.render( mappingScene, camera );
+				renderer.setRenderTarget( previousTarget );
+				displayMaterial.uniforms.uRayMap.value = mappingTarget.texture;
+			}
+
+			function startFullQualityRefinement() {
+				if ( ! renderer || ! fullMappingTarget ) return;
+				cancelFullQualityRefinement();
+				if ( rayMapFrame ) cancelAnimationFrame( rayMapFrame );
+				rayMapFrame = 0;
+				const version = fullQualityVersion;
+				const target = fullMappingTarget;
+				const pixelCount = target.width * target.height;
+				const tileCount = THREE.MathUtils.clamp( Math.ceil( pixelCount / 450000 ), 2, 12 );
+				let tileIndex = 0;
+
+				mappingMaterial.uniforms.uResolution.value.set( target.width, target.height );
+				const previousTarget = renderer.getRenderTarget();
+				renderer.setRenderTarget( target );
+				renderer.setScissorTest( false );
+				renderer.clear();
+				renderer.setRenderTarget( previousTarget );
+
+				const renderNextTile = () => {
+					if ( version !== fullQualityVersion ) return;
+					const y = Math.floor( tileIndex * target.height / tileCount );
+					const nextY = Math.floor( ( tileIndex + 1 ) * target.height / tileCount );
+					const oldTarget = renderer.getRenderTarget();
+					const oldScissorTest = renderer.getScissorTest();
+
+					mappingMaterial.uniforms.uResolution.value.set( target.width, target.height );
+					renderer.setRenderTarget( target );
+					renderer.setScissor( 0, y, target.width, nextY - y );
+					renderer.setScissorTest( true );
+					renderer.render( mappingScene, camera );
+					renderer.setScissorTest( oldScissorTest );
+					renderer.setRenderTarget( oldTarget );
+
+					tileIndex ++;
+					if ( tileIndex < tileCount ) {
+						fullQualityFrame = requestAnimationFrame( renderNextTile );
+					} else {
+						fullQualityFrame = 0;
+						mappingTarget = target;
+						displayMaterial.uniforms.uRayMap.value = target.texture;
+					}
+				};
+
+				fullQualityFrame = requestAnimationFrame( renderNextTile );
+			}
+
+			function scheduleRayMap() {
+				if ( rayMapFrame ) return;
+				rayMapFrame = requestAnimationFrame( () => {
+					rayMapFrame = 0;
+					rebuildRayMap();
+				} );
+			}
+
+			function updateSimulation() {
+				updateCameraUniforms();
+				requestInteractiveRayMap();
+			}
+
+			function updateLineStyle() {
+				displayMaterial.uniforms.uLineCount.value = Math.round( params.lineCount );
+				displayMaterial.uniforms.uLineThickness.value = params.lineThickness;
+			}
+
+			function saveAndApply( action = updateSimulation ) {
+				localStorage.setItem( STORAGE_KEY, JSON.stringify( params ) );
+				action();
+			}
+
+			function updateColorMode() {
+				renderer.domElement.style.filter = params.invertColors ? 'invert(1)' : 'none';
+			}
+
+			function addControl( folder, key, label, min, max, step, action = updateSimulation ) {
+				const controller = folder.add( params, key, min, max, step ).name( label );
+				const [ inputMin, inputMax ] = inputLimits[ key ] || [ min, max ];
+				// Slider pointer positions still map to min/max; typed and keyboard values
+				// can reach the broader validated limits.
+				controller._clamp = ( value ) => THREE.MathUtils.clamp( value, inputMin, inputMax );
+				controller.$input.min = inputMin;
+				controller.$input.max = inputMax;
+				return controller.onChange( () => saveAndApply( action ) );
+			}
+
+			function init() {
+				const container = document.getElementById( 'container' );
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x000000 );
+				mappingScene = new THREE.Scene();
+				camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
+
+				mappingMaterial = new THREE.ShaderMaterial( {
+					vertexShader,
+					fragmentShader: mappingFragmentShader,
+					depthTest: false,
+					depthWrite: false,
+					uniforms: {
+						uResolution: { value: new THREE.Vector2() },
+						uCameraPosition: { value: new THREE.Vector3() },
+						uCameraDirection: { value: new THREE.Vector3() },
+						uCameraUp: { value: new THREE.Vector3() },
+						uCameraVelocity: { value: new THREE.Vector3() },
+						uFieldOfView: { value: params.fieldOfView },
+						uDiskInner: { value: params.diskInner },
+						uDiskWidth: { value: params.diskWidth }
+					}
+				} );
+				mappingScene.add( new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), mappingMaterial ) );
+				displayMaterial = new THREE.ShaderMaterial( {
+					vertexShader,
+					fragmentShader: displayFragmentShader,
+					depthTest: false,
+					depthWrite: false,
+					uniforms: {
+						uTime: { value: 0 },
+						uBrightness: { value: params.lineBrightness },
+						uLineCount: { value: Math.round( params.lineCount ) },
+						uLineThickness: { value: params.lineThickness },
+						uRayMap: { value: null },
+					}
+				} );
+				scene.add( new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), displayMaterial ) );
+				updateCameraUniforms();
+
+				renderer = new THREE.WebGLRenderer( { antialias: true, powerPreference: 'high-performance' } );
+				renderer.setPixelRatio( Math.min( devicePixelRatio, 2 ) * params.resolutionScale );
+				renderer.setSize( innerWidth, innerHeight );
+				renderer.toneMapping = THREE.ACESFilmicToneMapping;
+				renderer.toneMappingExposure = Math.pow( params.exposure, 4.0 );
+				updateColorMode();
+				renderer.domElement.style.cursor = 'grab';
+				container.appendChild( renderer.domElement );
+
+				orbitCamera = new THREE.PerspectiveCamera( params.fieldOfView, innerWidth / innerHeight, 0.1, 100 );
+				orbitCamera.position.copy( mappingMaterial.uniforms.uCameraPosition.value );
+				orbitCamera.lookAt( 0, 0, 0 );
+				orbitControls = new OrbitControls( orbitCamera, renderer.domElement );
+				orbitControls.target.set( 0, 0, 0 );
+				orbitControls.enableDamping = true;
+				orbitControls.dampingFactor = 0.18;
+				orbitControls.enablePan = false;
+				orbitControls.rotateSpeed = 0.55;
+				orbitControls.zoomSpeed = 0.75;
+				orbitControls.minDistance = 4;
+				orbitControls.maxDistance = 24;
+				orbitControls.minPolarAngle = THREE.MathUtils.degToRad( 0.5 );
+				orbitControls.maxPolarAngle = THREE.MathUtils.degToRad( 179.5 );
+				orbitControls.update();
+				orbitControls.addEventListener( 'start', beginCameraInteraction );
+				orbitControls.addEventListener( 'change', onOrbitChange );
+				orbitControls.addEventListener( 'end', endCameraInteraction );
+
+				const renderPass = new RenderPass( scene, camera );
+				bloomPass = new UnrealBloomPass(
+					new THREE.Vector2( innerWidth, innerHeight ),
+					params.strength,
+					params.radius,
+					params.threshold
+				);
+				composer = new EffectComposer( renderer );
+				composer.addPass( renderPass );
+				composer.addPass( bloomPass );
+				composer.addPass( new OutputPass() );
+
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+				const gui = new GUI();
+				const pathFolder = gui.addFolder( 'simulation path' );
+				addControl( pathFolder, 'lineCount', 'line count', 1, 30, 1, updateLineStyle );
+				addControl( pathFolder, 'lineThickness', 'line thickness', 0.01, 0.5, 0.01, updateLineStyle );
+				addControl( pathFolder, 'diskInner', 'inner radius', 1.05, 5, 0.01 );
+				addControl( pathFolder, 'diskWidth', 'disk width', 0.25, 8, 0.01 );
+				addControl( pathFolder, 'orbitSpeed', 'path speed', -3, 3, 0.01, () => {} );
+
+				const viewFolder = gui.addFolder( 'lensing view' );
+				viewControllers = [
+					addControl( viewFolder, 'cameraDistance', 'camera distance', 4, 24, 0.01 ),
+					addControl( viewFolder, 'inclination', 'inclination', 0.1, 179.9, 0.01 ),
+					addControl( viewFolder, 'movementAngle', 'view rotation', -180, 180, 0.01 )
+				];
+				addControl( viewFolder, 'fieldOfView', 'field of view', 25, 110, 0.1 );
+				addControl( viewFolder, 'lineBrightness', 'brightness', 0.1, 6, 0.01, () => displayMaterial.uniforms.uBrightness.value = params.lineBrightness );
+				viewFolder.add( params, 'invertColors' ).name( 'invert colors' ).onChange( () => saveAndApply( updateColorMode ) );
+
+				const bloomFolder = gui.addFolder( 'bloom' );
+				addControl( bloomFolder, 'threshold', 'threshold', 0, 1, 0.01, () => bloomPass.threshold = params.threshold );
+				addControl( bloomFolder, 'strength', 'strength', 0, 3, 0.01, () => bloomPass.strength = params.strength );
+				addControl( bloomFolder, 'radius', 'radius', 0, 1, 0.01, () => bloomPass.radius = params.radius );
+				addControl( bloomFolder, 'exposure', 'exposure', 0.1, 2, 0.01, () => renderer.toneMappingExposure = Math.pow( params.exposure, 4.0 ) );
+
+				const performanceFolder = gui.addFolder( 'performance' );
+				addControl( performanceFolder, 'resolutionScale', 'render scale', 0.5, 1, 0.05, onWindowResize );
+
+				const actions = {
+					reset() {
+						Object.assign( params, defaults );
+						localStorage.removeItem( STORAGE_KEY );
+						gui.controllersRecursive().forEach( ( controller ) => controller.updateDisplay() );
+						updateLineStyle();
+						updateCameraUniforms();
+						displayMaterial.uniforms.uBrightness.value = params.lineBrightness;
+						bloomPass.threshold = params.threshold;
+						bloomPass.strength = params.strength;
+					bloomPass.radius = params.radius;
+					renderer.toneMappingExposure = Math.pow( params.exposure, 4.0 );
+					updateColorMode();
+					onWindowResize();
+					}
+				};
+				gui.add( actions, 'reset' ).name( 'reset saved values' );
+
+				addEventListener( 'resize', onWindowResize );
+				document.addEventListener( 'visibilitychange', onVisibilityChange );
+				onWindowResize();
+				renderer.setAnimationLoop( animate );
+			}
+
+			function createMappingTarget( width, height ) {
+				return new THREE.WebGLRenderTarget( width, height, {
+					type: THREE.HalfFloatType,
+					format: THREE.RGBAFormat,
+					minFilter: THREE.LinearFilter,
+					magFilter: THREE.LinearFilter,
+					depthBuffer: false,
+					stencilBuffer: false
+				} );
+			}
+
+			function onWindowResize() {
+				cancelFullQualityRefinement();
+				if ( rayMapFrame ) cancelAnimationFrame( rayMapFrame );
+				rayMapFrame = 0;
+				const pixelRatio = Math.min( devicePixelRatio, 2 ) * params.resolutionScale;
+				renderer.setPixelRatio( pixelRatio );
+				renderer.setSize( innerWidth, innerHeight );
+				composer.setPixelRatio( pixelRatio );
+				composer.setSize( innerWidth, innerHeight );
+				orbitCamera.aspect = innerWidth / innerHeight;
+				orbitCamera.updateProjectionMatrix();
+				const size = renderer.getDrawingBufferSize( new THREE.Vector2() );
+				fullMappingTarget?.dispose();
+				previewMappingTarget?.dispose();
+				fullMappingTarget = createMappingTarget( size.x, size.y );
+				previewMappingTarget = createMappingTarget(
+					Math.max( 1, Math.round( size.x * 0.35 ) ),
+					Math.max( 1, Math.round( size.y * 0.35 ) )
+				);
+				mappingTarget = previewMappingTarget;
+				rebuildRayMap();
+				restoreFullQualitySoon();
+			}
+
+			function onVisibilityChange() {
+				if ( document.hidden ) {
+					renderer.setAnimationLoop( null );
+				} else {
+					previousTime = performance.now();
+					renderer.setAnimationLoop( animate );
+				}
+			}
+
+			function animate( now ) {
+				const delta = Math.min( 0.05, Math.max( 0, ( now - previousTime ) / 1000 ) );
+				previousTime = now;
+				orbitControls?.update( delta );
+				displayMaterial.uniforms.uTime.value = ( displayMaterial.uniforms.uTime.value + delta * params.orbitSpeed ) % TAU;
+				stats.update();
+				composer.render( delta );
+			}
+
+			addEventListener( 'message', ( event ) => {
+				if ( event.origin !== location.origin || event.data?.type !== 'portfolio-warp' || ! renderer ) return;
+				const intensity = THREE.MathUtils.clamp( Number( event.data.intensity ) || 0, 0, 1 );
+				params.orbitSpeed = defaults.orbitSpeed * ( 1 + intensity * 8 );
+				params.lineCount = Math.round( defaults.lineCount + intensity * 100 );
+				updateLineStyle();
+				if ( event.data.active ) {
+					previousTime = performance.now();
+					renderer.setAnimationLoop( animate );
+				} else {
+					renderer.setAnimationLoop( null );
+				}
+			} );
+
+			init();
+			if ( portfolioEmbed ) renderer.setAnimationLoop( null );
+		</script>
+	</body>
+</html>

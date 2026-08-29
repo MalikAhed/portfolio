@@ -1,8 +1,9 @@
-const PLACEHOLDER_TECHNOLOGIES = Object.freeze([
-  Object.freeze({ label: "HTML", mark: "5" }),
-  Object.freeze({ label: "CSS", mark: "#" }),
+const LEARN_TECHNOLOGIES = Object.freeze([
   Object.freeze({ label: "JavaScript", mark: "JS" }),
-  Object.freeze({ label: "Three.js", mark: "3" }),
+  Object.freeze({ label: "Node.js", mark: "N" }),
+  Object.freeze({ label: "Markdown", mark: "MD" }),
+  Object.freeze({ label: "Codex", mark: "AI" }),
+  Object.freeze({ label: "Playwright", mark: "PW" }),
 ]);
 
 const STOCKTHINK_TECHNOLOGIES = Object.freeze([
@@ -67,10 +68,6 @@ const CUBE_BURGER = Object.freeze({
   previewReadyOnLoad: true,
   previewViewportWidth: 1440,
   keepPreviewMounted: true,
-  freezeFrame: Object.freeze({
-    background: "assets/cube-burger-hero-background.webp",
-    subject: "assets/cube-burger-hero-burger.webp",
-  }),
   sourceRevision: "691d464",
   files: Object.freeze({
     "src/main.js": `const INGREDIENTS = [
@@ -197,134 +194,74 @@ self.addEventListener("install", (event) => {
   }),
 });
 
-function createCounterProject({
-  accent,
-  description,
-  highlights,
-  id,
-  initialValue,
-  liveUrl,
-  summary,
-  title,
-  githubUrl,
-}) {
-  const files = {
-    "index.html": `<main class="counter-app">
-  <p class="eyebrow">Interactive project preview</p>
-  <h1>${title}</h1>
-  <p>${description}</p>
-  <div class="counter" aria-label="Counter controls">
-    <button type="button" data-action="decrease" aria-label="Decrease">−</button>
-    <output aria-live="polite">${initialValue}</output>
-    <button type="button" data-action="increase" aria-label="Increase">+</button>
-  </div>
-  <button class="reset" type="button" data-action="reset">Reset</button>
+const LEARN = Object.freeze({
+  id: "learn",
+  title: "Full-Stack Quest",
+  description: "A game-driven path from beginner to full-stack developer.",
+  summary:
+    "A structured learning platform that turns a sixteen-week full-stack curriculum into daily quests, interactive coding labs, progress ranks, streaks, and AI-reviewed explanations.",
+  highlights: Object.freeze([
+    "112 lessons across a sixteen-rank progression system",
+    "Interactive code labs and structured AI feedback",
+  ]),
+  technologies: LEARN_TECHNOLOGIES,
+  githubUrl: "https://github.com/MalikAhed/full-stack-quest",
+  liveUrl: "https://malikahed.github.io/full-stack-quest/",
+  previewUrl: "https://malikahed.github.io/full-stack-quest/",
+  previewReadyOnLoad: true,
+  previewViewportWidth: 1440,
+  keepPreviewMounted: true,
+  sourceRevision: "7f3f100",
+  files: Object.freeze({
+    "index.html": `<main class="quest">
+  <header class="quest__topbar">
+    <div class="quest__brand"><img src="assets/learn-code-book.png" alt=""><strong>LEARN</strong></div>
+    <div class="quest__stats">
+      <span><img src="assets/learn-rank-bronze.png" alt="">1</span>
+      <span><img src="assets/learn-streak-flame.png" alt="">7</span>
+      <span><img src="assets/learn-red-gem.png" alt="">640</span>
+    </div>
+  </header>
+  <section class="quest__path" aria-label="Full-Stack Quest learning path">
+    <p class="quest__eyebrow">WEEK 1 · WEB FOUNDATIONS</p>
+    <h1>BUILD THE WEB,<br>ONE QUEST AT A TIME.</h1>
+    <div class="quest__nodes">
+      <button class="quest__node is-complete">1</button><span></span>
+      <button class="quest__node is-complete">2</button><span></span>
+      <button class="quest__node is-current">3</button><span></span>
+      <button class="quest__node">4</button><span></span>
+      <button class="quest__node">5</button>
+    </div>
+    <article class="quest__lesson">
+      <img src="assets/learn-code-book.png" alt="">
+      <div><small>DAY 3</small><h2>Semantic HTML contracts</h2><p>Learn how meaningful structure connects content, browsers, and assistive technology.</p></div>
+      <button>START +20 XP</button>
+    </article>
+  </section>
+  <aside class="quest__league">
+    <p class="quest__eyebrow">CODE LEAGUE · RANK 1 OF 16</p>
+    <img class="quest__rank" src="assets/learn-rank-bronze.png" alt="Bronze rank badge">
+    <h2>Bronze Rank</h2>
+    <div class="quest__progress"><span></span><b>320 / 800 XP</b></div>
+    <h3>CHALLENGES</h3>
+    <div class="quest__challenge"><img src="assets/learn-code-book.png" alt=""><span><b>Course progress</b><small>3 / 112 lessons</small></span></div>
+    <div class="quest__challenge"><img src="assets/learn-streak-flame.png" alt=""><span><b>Daily streak</b><small>7 days · best 12</small></span></div>
+  </aside>
 </main>`,
-    "styles.css": `:root {
-  color: #1d1d1f;
-  background: #ffffff;
-  font-family: system-ui, sans-serif;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  min-height: 100vh;
-  margin: 0;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background: #ffffff;
-}
-
-.counter-app {
-  width: min(34rem, calc(100% - 2rem));
-  text-align: center;
-}
-
-.eyebrow {
-  color: ${accent};
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-h1 { margin: 0.2rem 0; font-size: clamp(1.5rem, 6vw, 2.6rem); }
-p { color: #6f706d; }
-.counter-app > p { margin: 0.35rem 0; }
-
-.counter {
-  display: grid;
-  grid-template-columns: 4rem minmax(7rem, 1fr) 4rem;
-  gap: 0.75rem;
-  align-items: center;
-  margin: 0.5rem auto 0.35rem;
-}
-
-button, output {
-  border: 1px solid #d7d7d2;
-  border-radius: 1rem;
-  color: inherit;
-  background: #f7f7f4;
-}
-
-button { min-height: 2.5rem; font: inherit; font-size: 1.2rem; cursor: pointer; }
-button:hover, button:focus-visible { background: ${accent}; color: #111; }
-output { padding: 0.45rem; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
-.reset { min-height: 2rem; padding: 0.3rem 0.9rem; font-size: 0.75rem; }
-`,
-    "script.js": `const output = document.querySelector("output");
-const initialValue = ${initialValue};
-let value = initialValue;
-
-document.addEventListener("click", (event) => {
-  const action = event.target.closest("[data-action]")?.dataset.action;
-  if (!action) return;
-
-  if (action === "increase") value += 1;
-  if (action === "decrease") value -= 1;
-  if (action === "reset") value = initialValue;
-  output.value = value;
-  output.textContent = value;
+    "styles.css": `:root{font-family:Nunito,Arial,sans-serif;color:#626b76;background:#fafafa}*{box-sizing:border-box}body{margin:0;background:#fafafa}.quest{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) 360px;padding-top:72px}.quest__topbar{position:fixed;inset:0 0 auto;display:flex;align-items:center;justify-content:space-between;height:72px;padding:0 36px;border-bottom:1px solid #e3e3e3;background:#fff;z-index:2}.quest__brand,.quest__stats,.quest__stats span{display:flex;align-items:center}.quest__brand{gap:10px;color:#595f67;font-size:18px}.quest__brand img{width:38px;height:38px;object-fit:contain}.quest__stats{gap:28px}.quest__stats span{gap:7px;font-weight:900}.quest__stats img{width:34px;height:34px;object-fit:contain}.quest__path{padding:44px 54px}.quest__eyebrow{margin:0;color:#929292;font-size:13px;font-weight:900;letter-spacing:.11em}.quest__path h1{margin:12px 0 34px;color:#4d5660;font-size:clamp(42px,5vw,74px);line-height:.9;letter-spacing:-.045em}.quest__nodes{display:flex;align-items:center;margin:0 0 34px}.quest__nodes span{height:8px;flex:1;background:#dedede}.quest__node{width:58px;height:58px;border:0;border-radius:50%;background:#dedede;color:#8b9198;font-size:18px;font-weight:900;box-shadow:0 6px 0 #c9c9c9}.quest__node.is-complete{background:#58cc02;color:#fff;box-shadow:0 6px 0 #46a302}.quest__node.is-current{background:#1cb0f6;color:#fff;box-shadow:0 6px 0 #168bc4;transform:scale(1.14)}.quest__lesson{display:grid;grid-template-columns:92px 1fr auto;align-items:center;gap:22px;padding:24px;border:1px solid #e2e2e2;border-radius:22px;background:#fff;box-shadow:0 8px 24px #2020200d}.quest__lesson img{width:88px;height:88px;object-fit:contain}.quest__lesson small{color:#1cb0f6;font-weight:900}.quest__lesson h2{margin:4px 0;color:#515b65;font-size:25px}.quest__lesson p{max-width:460px;margin:0;line-height:1.4}.quest__lesson button{padding:15px 18px;border:0;border-radius:14px;background:#1cb0f6;color:#fff;font-weight:900;box-shadow:0 5px 0 #168bc4}.quest__league{padding:30px 24px;border-left:1px solid #e0e0e0;background:#f7f7f7;text-align:center}.quest__rank{width:145px;height:145px;margin:20px auto 0;object-fit:contain;transform:scale(1.3)}.quest__league h2{margin:0 0 15px;color:#965522}.quest__progress{position:relative;height:24px;overflow:hidden;border-radius:999px;background:#fff4dc}.quest__progress span{position:absolute;inset:0 60% 0 0;background:#f5a623}.quest__progress b{position:relative;font-size:12px;line-height:24px}.quest__league h3{margin:34px 0 12px;text-align:left;font-size:15px}.quest__challenge{display:flex;align-items:center;gap:14px;margin:10px 0;padding:12px;border:1px solid #e5e5e5;border-radius:16px;background:#fff;text-align:left}.quest__challenge img{width:48px;height:48px;object-fit:contain}.quest__challenge span{display:grid;gap:4px}.quest__challenge small{color:#8c949d}@media(max-width:760px){.quest{grid-template-columns:1fr}.quest__league{display:none}.quest__path{padding:28px 20px}.quest__topbar{padding:0 18px}.quest__stats span:last-child{display:none}.quest__lesson{grid-template-columns:70px 1fr}.quest__lesson button{grid-column:1/-1}.quest__lesson img{width:66px;height:66px}}`,
+    "src/progression.js": `export function recordLessonCompletion(progress, lessonId, xp) {
+  const completed = new Set(progress.completedLessons);
+  completed.add(lessonId);
+  return { ...progress, completedLessons: [...completed], totalXp: progress.totalXp + xp };
+}`,
+  }),
 });
-`,
-  };
 
-  return Object.freeze({
-    description,
-    files: Object.freeze(files),
-    highlights: Object.freeze(highlights),
-    id,
-    githubUrl,
-    liveUrl,
-    summary,
-    technologies: PLACEHOLDER_TECHNOLOGIES,
-    title,
-  });
-}
-
-/**
- * Temporary project simulations. A future real project can keep the same card
- * UI and provide either these three browser-native files or a `previewUrl` for
- * a separately built application.
- */
 export const PROJECTS = Object.freeze([
   STOCKTHINK,
   CUBE_BURGER,
   MURAJAA,
-  createCounterProject({
-    id: "release-meter",
-    title: "Release Meter",
-    description: "A simple release-readiness interaction.",
-    summary:
-      "A release-readiness experiment that keeps the decision signal prominent and the supporting interaction deliberately simple.",
-    highlights: ["Prominent readiness signal", "Focused decision flow"],
-    accent: "#f7a8d8",
-    initialValue: 84,
-    githubUrl: "https://github.com/MalikAhed/portfolio",
-    liveUrl: "https://malikahed.github.io/portfolio/",
-  }),
+  LEARN,
 ]);
 
 export function createProjectPreviewDocument(project) {
@@ -340,7 +277,7 @@ export function createProjectPreviewDocument(project) {
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob:">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src * data: blob:">
     <style>${css}</style>
   </head>
   <body>

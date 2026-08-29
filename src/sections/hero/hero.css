@@ -301,10 +301,11 @@ html:not(.has-js) .hero__identity {
 
 .hero__identity p {
   margin-block-start: 0.25rem;
-  font-size: clamp(1.55rem, 3.3vw, 3.45rem);
+  font-size: clamp(1.9rem, 4vw, 4.25rem);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.055em;
+  -webkit-text-stroke: 0.25px currentColor;
 }
 
 .hero__backdrop {
@@ -356,7 +357,7 @@ html:not(.has-js) .hero__identity {
 
   .hero__identity p {
     margin-block-start: 0.35rem;
-    font-size: 1.15rem;
+    font-size: 1.35rem;
   }
 
   .hero__backdrop {

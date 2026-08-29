@@ -12,7 +12,7 @@ import * as THREE from "three";
  */
 
 export const HERO_CAMERA_Z = 5;
-export const JOURNEY_CAMERA_END_Z = 32.3;
+export const JOURNEY_CAMERA_END_Z = 52;
 export const WORLD_CAMERA_FOV = 45;
 
 /**
@@ -21,6 +21,18 @@ export const WORLD_CAMERA_FOV = 45;
  */
 export const WORK_TITLE_WORLD_CONFIG = Object.freeze({
   position: Object.freeze([0, 0, 6]),
+});
+
+/** Final depth-world invitation after the fourth featured project. */
+export const MORE_WORK_WORLD_CONFIG = Object.freeze({
+  position: Object.freeze([0, 0, 43]),
+});
+
+/** Scroll-linked speed-line passage between Full-Stack Quest and the finale. */
+export const WARP_SPEED_WORLD_CONFIG = Object.freeze({
+  startCameraZ: 40.5,
+  peakCameraZ: 43.2,
+  endCameraZ: 46.2,
 });
 
 /**
@@ -168,7 +180,7 @@ export const CARD_WORLD_CONFIG = Object.freeze({
         position: Object.freeze({ x: -65 }),
       }),
     }),
-    "release-meter": Object.freeze({
+    learn: Object.freeze({
       text: Object.freeze({
         position: Object.freeze({ x: -65 }),
       }),
@@ -177,27 +189,27 @@ export const CARD_WORLD_CONFIG = Object.freeze({
   presets: Object.freeze({
     desktop: [
       { position: [0, 0.06, 11.2], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, 0.06, 16.6], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, 0.06, 22], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, 0.06, 27.4], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 19.2], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 27.2], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 35.2], rotation: [0, 0, 0], scale: 1.12 },
     ],
     mobile: [
       { position: [0, 0.12, 11.2], rotation: [0, 0, 0], scale: 0.3 },
-      { position: [0, 0.12, 16.6], rotation: [0, 0, 0], scale: 0.3 },
-      { position: [0, 0.12, 22], rotation: [0, 0, 0], scale: 0.3 },
-      { position: [0, 0.12, 27.4], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, 0.12, 19.2], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, 0.12, 27.2], rotation: [0, 0, 0], scale: 0.3 },
+      { position: [0, 0.12, 35.2], rotation: [0, 0, 0], scale: 0.3 },
     ],
     short: [
       { position: [0, 0.03, 11.2], rotation: [0, 0, 0], scale: 0.68 },
-      { position: [0, 0.03, 16.6], rotation: [0, 0, 0], scale: 0.68 },
-      { position: [0, 0.03, 22], rotation: [0, 0, 0], scale: 0.68 },
-      { position: [0, 0.03, 27.4], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, 0.03, 19.2], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, 0.03, 27.2], rotation: [0, 0, 0], scale: 0.68 },
+      { position: [0, 0.03, 35.2], rotation: [0, 0, 0], scale: 0.68 },
     ],
     ultrawide: [
       { position: [0, 0.06, 11.2], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, 0.06, 16.6], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, 0.06, 22], rotation: [0, 0, 0], scale: 1.12 },
-      { position: [0, 0.06, 27.4], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 19.2], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 27.2], rotation: [0, 0, 0], scale: 1.12 },
+      { position: [0, 0.06, 35.2], rotation: [0, 0, 0], scale: 1.12 },
     ],
   }),
 });
@@ -216,7 +228,7 @@ export const STOCKTHINK_CHESS_WORLD_CONFIG = Object.freeze({
       asset: "assets/rook.webp",
       fallbackAsset: "assets/rook.png",
       aspect: 1216 / 1294,
-      position: Object.freeze([-4.05, -1.5, 12.05]),
+      position: Object.freeze([-3.55, -1.5, 13.5]),
       height: 2.05,
       rotation: -17,
       flip: false,
@@ -226,7 +238,7 @@ export const STOCKTHINK_CHESS_WORLD_CONFIG = Object.freeze({
       asset: "assets/bishiop.webp",
       fallbackAsset: "assets/bishiop.png",
       aspect: 1022 / 1538,
-      position: Object.freeze([1.2, 1.48, 12.3]),
+      position: Object.freeze([0.85, 1.25, 12.4]),
       height: 1.58,
       rotation: 58,
       flip: true,
@@ -236,7 +248,7 @@ export const STOCKTHINK_CHESS_WORLD_CONFIG = Object.freeze({
       asset: "assets/kight.webp",
       fallbackAsset: "assets/kight.png",
       aspect: 1024 / 1536,
-      position: Object.freeze([3.82, -0.08, 12.55]),
+      position: Object.freeze([3.82, -0.08, 14.5]),
       height: 2.05,
       rotation: 7,
       flip: true,
@@ -252,7 +264,7 @@ export const STOCKTHINK_CHESS_WORLD_CONFIG = Object.freeze({
  */
 export const CUBE_BURGER_INGREDIENT_WORLD_CONFIG = Object.freeze({
   asset: "assets/cube-burger-ingredients.png",
-  projectPosition: Object.freeze([0, 0.06, 16.6]),
+  projectPosition: Object.freeze([0, 0.06, 19.2]),
   blurPixelsPerWorldUnit: 4.5,
   maxBlurPixels: 26,
   pieces: Object.freeze([
@@ -261,7 +273,7 @@ export const CUBE_BURGER_INGREDIENT_WORLD_CONFIG = Object.freeze({
       aspect: 380 / 330,
       backgroundSize: "404% 310%",
       backgroundPosition: "1.7% 2.9%",
-      position: Object.freeze([-3.9, 1.55, 17.3]),
+      position: Object.freeze([-4.55, 1.55, 20.4]),
       height: 1.55,
       rotation: -18,
     }),
@@ -270,7 +282,7 @@ export const CUBE_BURGER_INGREDIENT_WORLD_CONFIG = Object.freeze({
       aspect: 310 / 250,
       backgroundSize: "495% 410%",
       backgroundPosition: "0 45.2%",
-      position: Object.freeze([-5, -0.18, 17.65]),
+      position: Object.freeze([-1.3, -1.25, 19.95]),
       height: 1.25,
       rotation: 10,
     }),
@@ -279,7 +291,7 @@ export const CUBE_BURGER_INGREDIENT_WORLD_CONFIG = Object.freeze({
       aspect: 340 / 230,
       backgroundSize: "452% 445%",
       backgroundPosition: "1.7% 75.6%",
-      position: Object.freeze([-3.65, -1.65, 18.05]),
+      position: Object.freeze([-3.65, -1.65, 17.65]),
       height: 1.15,
       rotation: 8,
     }),
@@ -288,7 +300,7 @@ export const CUBE_BURGER_INGREDIENT_WORLD_CONFIG = Object.freeze({
       aspect: 330 / 310,
       backgroundSize: "465% 330%",
       backgroundPosition: "86.2% 12.6%",
-      position: Object.freeze([3.45, 1.6, 17.45]),
+      position: Object.freeze([4.3, 1.3, 19.6]),
       height: 1.35,
       rotation: 82,
     }),
@@ -297,25 +309,16 @@ export const CUBE_BURGER_INGREDIENT_WORLD_CONFIG = Object.freeze({
       aspect: 256 / 270,
       backgroundSize: "600% 379%",
       backgroundPosition: "100% 39.8%",
-      position: Object.freeze([5.05, 0.12, 17.85]),
+      position: Object.freeze([2.7, -0.35, 22.05]),
       height: 1.18,
       rotation: 12,
-    }),
-    Object.freeze({
-      name: "tomato-right",
-      aspect: 330 / 260,
-      backgroundSize: "465% 394%",
-      backgroundPosition: "95.3% 68.1%",
-      position: Object.freeze([4.8, -1.45, 18.15]),
-      height: 1.35,
-      rotation: -10,
     }),
     Object.freeze({
       name: "onion-bottom",
       aspect: 330 / 264,
       backgroundSize: "465% 388%",
       backgroundPosition: "70.5% 100%",
-      position: Object.freeze([2.65, -1.7, 17.62]),
+      position: Object.freeze([2.65, -1.7, 23]),
       height: 1.15,
       rotation: 16,
     }),
@@ -328,33 +331,86 @@ export const CUBE_BURGER_INGREDIENT_WORLD_CONFIG = Object.freeze({
  * focus blur, and crossing order while the live app remains in the frame.
  */
 export const MURAJAA_SCREEN_WORLD_CONFIG = Object.freeze({
-  projectPosition: Object.freeze([0, 0.06, 22]),
+  projectPosition: Object.freeze([0, 0.06, 27.2]),
   blurPixelsPerWorldUnit: 4.5,
   maxBlurPixels: 26,
   screens: Object.freeze([
     Object.freeze({
+      name: "welcome",
       asset: "assets/murajaa-welcome.png",
-      position: Object.freeze([-3.35, 1.12, 22.7]),
+      position: Object.freeze([-1.05, 1.12, 26]),
       height: 1.42,
       rotation: -9,
     }),
     Object.freeze({
+      name: "study-card",
       asset: "assets/murajaa-study-card.png",
-      position: Object.freeze([3.3, 1.08, 23.4]),
+      position: Object.freeze([4.7, 1.08, 27.4]),
       height: 1.38,
       rotation: 8,
     }),
     Object.freeze({
+      name: "progress",
       asset: "assets/murajaa-progress.png",
-      position: Object.freeze([-3.45, -1.08, 24.1]),
+      position: Object.freeze([-3.05, -1.08, 28.7]),
       height: 1.34,
       rotation: 7,
     }),
     Object.freeze({
+      name: "answer-card",
       asset: "assets/murajaa-answer-card.png",
-      position: Object.freeze([3.4, -1.12, 24.8]),
+      position: Object.freeze([2.85, -0.15, 30.8]),
       height: 1.42,
       rotation: -8,
+    }),
+  ]),
+});
+
+/** Original Full-Stack Quest progression art projected around its card. */
+export const LEARN_OBJECT_WORLD_CONFIG = Object.freeze({
+  projectPosition: Object.freeze([0, 0.06, 35.2]),
+  blurPixelsPerWorldUnit: 4.5,
+  maxBlurPixels: 26,
+  objects: Object.freeze([
+    Object.freeze({
+      name: "code-book",
+      asset: "assets/learn-code-book.png",
+      aspect: 807 / 846,
+      position: Object.freeze([-1.1, -2.05, 37.55]),
+      height: 1.6,
+      rotation: -12,
+    }),
+    Object.freeze({
+      name: "bronze-rank",
+      asset: "assets/learn-rank-bronze.png",
+      aspect: 1,
+      position: Object.freeze([-3.1, -0.55, 32.6]),
+      height: 1.5,
+      rotation: 8,
+    }),
+    Object.freeze({
+      name: "streak",
+      asset: "assets/learn-streak-flame.png",
+      aspect: 700 / 886,
+      position: Object.freeze([-4.25, 1.6, 36.3]),
+      height: 1.6,
+      rotation: 10,
+    }),
+    Object.freeze({
+      name: "rank-nine",
+      asset: "assets/learn-rank-9.png",
+      aspect: 1,
+      position: Object.freeze([4.25, 1.6, 35.5]),
+      height: 1.45,
+      rotation: -9,
+    }),
+    Object.freeze({
+      name: "rank-sixteen",
+      asset: "assets/learn-rank-16.png",
+      aspect: 1,
+      position: Object.freeze([3.45, -0.3, 38.3]),
+      height: 1.35,
+      rotation: 4,
     }),
   ]),
 });

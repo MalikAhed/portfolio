@@ -1,11 +1,10 @@
 import * as THREE from "three";
 import {
   FOCUS_WORLD_CONFIG,
-  MURAJAA_SCREEN_WORLD_CONFIG,
+  LEARN_OBJECT_WORLD_CONFIG,
   getWorldExitVisibilityAtDepth,
 } from "./config.js";
 
-const SCREEN_ASPECT = 3 / 2;
 const projectedCenter = new THREE.Vector3();
 const projectedTop = new THREE.Vector3();
 const projectedBottom = new THREE.Vector3();
@@ -19,30 +18,16 @@ function project(point, camera, width, height) {
   );
 }
 
-function getScreenBlurAtDepth(depth) {
-  const defocus = Math.max(
-    0,
-    Math.abs(depth - FOCUS_WORLD_CONFIG.distance) -
-      FOCUS_WORLD_CONFIG.sharpBand,
-  );
-  return Math.min(
-    MURAJAA_SCREEN_WORLD_CONFIG.maxBlurPixels,
-    defocus * MURAJAA_SCREEN_WORLD_CONFIG.blurPixelsPerWorldUnit,
-  );
-}
-
-export function createMurajaaScreenWorld(container, assetUrl) {
+export function createLearnObjectWorld(container, assetUrl) {
   const group = new THREE.Group();
-  group.name = "murajaa-screen-world";
-
-  const entries = MURAJAA_SCREEN_WORLD_CONFIG.screens.map((config, index) => {
+  group.name = "learn-object-world";
+  const entries = LEARN_OBJECT_WORLD_CONFIG.objects.map((config) => {
     const anchor = new THREE.Object3D();
-    anchor.name = `murajaa-screen-${index + 1}`;
+    anchor.name = `learn-${config.name}`;
     anchor.position.set(...config.position);
     group.add(anchor);
-
     const image = document.createElement("img");
-    image.className = "murajaa-world-screen";
+    image.className = "learn-world-object";
     image.src = assetUrl(config.asset);
     image.alt = "";
     image.setAttribute("aria-hidden", "true");
@@ -60,9 +45,8 @@ export function createMurajaaScreenWorld(container, assetUrl) {
 
   function update(camera, width, height) {
     const projectDepth =
-      camera.position.z - MURAJAA_SCREEN_WORLD_CONFIG.projectPosition[2];
+      camera.position.z - LEARN_OBJECT_WORLD_CONFIG.projectPosition[2];
     const sectionEntry = THREE.MathUtils.smoothstep(projectDepth, 0.35, 2.4);
-
     entries.forEach(({ anchor, config, image, visible: objectVisible }) => {
       if (!objectVisible) {
         image.style.visibility = "hidden";
@@ -70,15 +54,14 @@ export function createMurajaaScreenWorld(container, assetUrl) {
       }
       const depth = camera.position.z - anchor.position.z;
       const opacity = getWorldExitVisibilityAtDepth(depth);
-      const visible =
-        depth > camera.near &&
-        sectionEntry > 0 &&
-        opacity > FOCUS_WORLD_CONFIG.visibilityThreshold;
-      if (!visible) {
+      if (
+        depth <= camera.near ||
+        sectionEntry <= 0 ||
+        opacity <= FOCUS_WORLD_CONFIG.visibilityThreshold
+      ) {
         image.style.visibility = "hidden";
         return;
       }
-
       anchor.getWorldPosition(projectedCenter);
       projectedTop.copy(projectedCenter);
       projectedTop.y += config.height / 2;
@@ -87,10 +70,17 @@ export function createMurajaaScreenWorld(container, assetUrl) {
       project(projectedCenter, camera, width, height);
       project(projectedTop, camera, width, height);
       project(projectedBottom, camera, width, height);
-
       const renderedHeight = Math.abs(projectedBottom.y - projectedTop.y);
-      const renderedWidth = renderedHeight * SCREEN_ASPECT;
-      const blur = getScreenBlurAtDepth(depth);
+      const renderedWidth = renderedHeight * config.aspect;
+      const defocus = Math.max(
+        0,
+        Math.abs(depth - FOCUS_WORLD_CONFIG.distance) -
+          FOCUS_WORLD_CONFIG.sharpBand,
+      );
+      const blur = Math.min(
+        LEARN_OBJECT_WORLD_CONFIG.maxBlurPixels,
+        defocus * LEARN_OBJECT_WORLD_CONFIG.blurPixelsPerWorldUnit,
+      );
       image.style.visibility = "visible";
       image.style.inlineSize = `${renderedWidth.toFixed(2)}px`;
       image.style.blockSize = `${renderedHeight.toFixed(2)}px`;

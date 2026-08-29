@@ -284,6 +284,87 @@
             </div>
           </div>
         </details>
+        <details
+          class="project-frame-editor learn-object-editor interface-layer"
+          data-learn-object-editor
+          hidden
+        >
+          <summary>
+            <span>Full-Stack Quest Objects</span>
+            <span class="project-frame-editor__mark" aria-hidden="true">+</span>
+          </summary>
+          <div class="project-frame-editor__body">
+            <label class="project-frame-editor__select">
+              <span>Selected object</span>
+              <select data-learn-object-select></select>
+            </label>
+            <label class="learn-object-editor__visibility">
+              <input type="checkbox" data-learn-object-visible />
+              <span>Show selected object</span>
+            </label>
+            <fieldset class="project-frame-editor__group">
+              <legend>Position (world units)</legend>
+              <div class="learn-object-editor__sliders">
+                <label
+                  class="project-frame-editor__field learn-object-editor__axis"
+                >
+                  <span class="project-frame-editor__slider-heading">
+                    <span>X · left/right</span>
+                    <output data-learn-object-position-value="x"></output>
+                  </span>
+                  <input
+                    type="range"
+                    min="-7"
+                    max="7"
+                    step="0.05"
+                    data-learn-object-position="x"
+                  />
+                </label>
+                <label
+                  class="project-frame-editor__field learn-object-editor__axis"
+                >
+                  <span class="project-frame-editor__slider-heading">
+                    <span>Y · up/down</span>
+                    <output data-learn-object-position-value="y"></output>
+                  </span>
+                  <input
+                    type="range"
+                    min="-4"
+                    max="4"
+                    step="0.05"
+                    data-learn-object-position="y"
+                  />
+                </label>
+                <label
+                  class="project-frame-editor__field learn-object-editor__axis"
+                >
+                  <span class="project-frame-editor__slider-heading">
+                    <span>Z · depth</span>
+                    <output data-learn-object-position-value="z"></output>
+                  </span>
+                  <input
+                    type="range"
+                    min="30"
+                    max="43"
+                    step="0.05"
+                    data-learn-object-position="z"
+                  />
+                </label>
+              </div>
+            </fieldset>
+            <div class="project-frame-editor__actions">
+              <button type="button" data-learn-object-copy>
+                Copy all objects
+              </button>
+              <button type="button" data-learn-object-reset>
+                Reset object
+              </button>
+              <button type="button" data-learn-object-reset-all>
+                Reset all
+              </button>
+            </div>
+          </div>
+        </details>
         <section class="hero" aria-labelledby="hero-title">
           <header class="site-header interface-layer">
             <a class="brand" href="#top" aria-label="Malik Abuallata, home">
@@ -358,6 +439,50 @@
         </section>
         <div class="work-title" data-work-title>
           <h2>My Work</h2>
+        </div>
+        <section
+          class="more-work"
+          data-more-work
+          aria-labelledby="more-work-title"
+        >
+          <p class="more-work__eyebrow">Still building</p>
+          <h2 id="more-work-title">And much more</h2>
+          <div class="more-work__grid" aria-label="More areas of work">
+            <article>
+              <span>01</span>
+              <h3>Web applications</h3>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>Learning tools</h3>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>Creative interfaces</h3>
+            </article>
+            <article>
+              <span>04</span>
+              <h3>Open-source experiments</h3>
+            </article>
+          </div>
+          <a
+            class="more-work__action"
+            href="https://github.com/MalikAhed?tab=repositories"
+            target="_blank"
+            rel="noreferrer"
+          >
+            View more projects <span aria-hidden="true">↗</span>
+          </a>
+        </section>
+        <div class="warp-speed" data-warp-speed aria-hidden="true">
+          <iframe
+            class="warp-speed__simulation"
+            data-warp-simulation
+            title=""
+            tabindex="-1"
+            loading="lazy"
+            src="/black-hole-simulation/examples/webgl_postprocessing_unreal_bloom.html?embed=1"
+          ></iframe>
         </div>
         <div
           id="work"

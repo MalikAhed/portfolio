@@ -8,7 +8,8 @@ three layers:
    Four lightweight Three.js anchors hold wide project frames at fixed world coordinates. A
    large projected “My Work” marker separates the Hero from the project rail.
    Each projected DOM frame pairs an interactive work view with an alternating
-   explainer column.
+   explainer column. A projected “And much more” grid and GitHub action close
+   the journey after the final featured project.
 3. **Interface** — semantic DOM provides the header, contact action, skip link,
    identity copy, project controls, card-transform controls, and startup
    splash.
@@ -30,6 +31,7 @@ src/
 │   ├── murajaa-world.js      # Depth-projected Murajaa generated screens
 │   ├── project-frame-editor.js  # Final-frame position, rotation, and size controls
 │   ├── project-frame-editor.css # Compact fixed Project Frames panel
+│   ├── learn-object-editor.js   # Full-Stack Quest object XYZ/visibility controls
 │   ├── config.js             # Camera, focus, and responsive world positions
 │   ├── journey.css           # Transparent native-scroll distance
 │   ├── project-cards.css     # Interactive project-card presentation
@@ -56,8 +58,9 @@ src/
 - Camera X/Y and orientation remain fixed. Native scroll maps directly and
   reversibly from Hero Z to the configured end Z.
 - The Hero origin uses the same camera-space focus model as the cards. Its
-  portrait, tied shadow, identity copy, and backdrop fade and blur together as
-  the camera retreats; the header and contact interface remain crisp.
+  portrait, tied shadow, identity copy, and backdrop fade
+  and blur together as the camera retreats; the header and contact interface
+  remain crisp.
 - A bold “My Work” world marker appears after the Hero clears and recedes
   before the first project arrives. Its position lives in `config.js`, and its
   scale, visibility, and blur use the same camera-depth model as the cards.
@@ -113,10 +116,9 @@ src/
   ingredient sprite sheet around that card. Their projected anchors occupy
   distinct foreground Z positions, so every crop sharpens, blurs, and fades at
   its own camera distance; the following project naturally crosses in front.
-  Its lightweight iframe remains mounted after its first load. During active
-  scrolling, a static freeze frame composed from the original project's hero
-  background and burger assets replaces iframe painting to prevent stutter.
-  A cream-and-red splash appears for the first load only and clears on the
+  Its lightweight iframe remains mounted after its first load. No poster or
+  freeze-frame artwork covers the real project surface. A cream-and-red splash
+  appears for the first load only and clears on the
   iframe's load event; later focused visits reveal the already-mounted preview
   immediately. The site can finish its imagery progressively. Local
   `srcdoc` project simulations are also created only on first focus instead of
@@ -130,6 +132,22 @@ src/
   flashcard PWA. The lightweight plain-HTML preview stays mounted after its
   first focus, preserving its local study state while avoiding reloads. Four
   generated Murajaa screens surround the frame at distinct foreground depths.
+- Full-Stack Quest replaces the final placeholder with the deployed real
+  learning application, including its sixteen biome backgrounds, 112-lesson
+  path, navigation, league rank, streak, lesson views, XP, and challenge UI.
+  Original project artwork supplies the separate book, flame, and rank objects
+  distributed around the frame at distinct world depths. The camera rail
+  continues beyond this final frame so it can recede naturally before the
+  native scroll range ends.
+- A final projected “And much more” composition follows Full-Stack Quest. Its
+  compact grid summarizes additional work areas and links to the complete
+  public repository list without adding another featured-project frame.
+- The passage from Full-Stack Quest to the final composition reveals Malik's
+  Schwarzschild ray-marched line-path simulation inside an isolated, pointer-
+  inert surface. Camera Z pulls the view outward while raising the simulation's
+  line count and orbit speed and accelerating two looping streak layers. The
+  embedded renderer runs only while the passage is visible, never takes over
+  native scrolling, and is disabled under reduced motion.
 - One fixed focal model is defined in `config.js`. Projects enter fully opaque
   by sliding from alternating sides into their exact authored positions, then
   camera-space distance drives their exit opacity and Gaussian blur; the
@@ -178,7 +196,9 @@ WebP with preserved alpha. Chess images retain their original PNGs as runtime
 fallbacks for preview environments that fail to resolve the optimized files.
 Cube Burger keeps its compact indexed-PNG ingredient sprite because a WebP
 replacement is larger; its photographic site assets use high-quality WebP in
-the source project.
+the source project. The Full-Stack Quest Objects editor exposes independent XYZ
+placement and visibility for every projected progression object and can copy
+the complete authored configuration.
 
 ## Validation
 

@@ -1,0 +1,60 @@
+.learn-object-editor {
+  position: fixed;
+  z-index: var(--depth-system);
+  inset-block: auto clamp(0.75rem, 2vw, 1.5rem);
+  inset-inline: clamp(0.75rem, 2vw, 1.5rem) auto;
+  display: block;
+}
+
+.learn-object-editor > summary {
+  margin-inline: 0;
+}
+
+.learn-object-editor[open] {
+  max-block-size: min(34rem, calc(100svh - 3rem));
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-color: rgb(249 245 239 / 52%) rgb(255 255 255 / 9%);
+  scrollbar-width: thin;
+}
+
+.learn-object-editor[open]::-webkit-scrollbar {
+  inline-size: 0.55rem;
+}
+
+.learn-object-editor[open]::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(249 245 239 / 52%);
+}
+
+.learn-object-editor[open]::-webkit-scrollbar-track {
+  background: rgb(255 255 255 / 9%);
+}
+
+.learn-object-editor__sliders {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.learn-object-editor__axis {
+  padding: 0.7rem 0.75rem 0.35rem;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 0.75rem;
+  background: rgb(255 255 255 / 5%);
+}
+
+.learn-object-editor__visibility {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.learn-object-editor__visibility input {
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+}
+
+.learn-object-editor .project-frame-editor__actions button:first-child {
+  grid-column: 1 / -1;
+}
