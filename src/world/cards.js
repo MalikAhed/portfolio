@@ -29,6 +29,32 @@ const projectedBottomRight = new THREE.Vector3();
 const PROJECT_SIDE_NAMES = Object.freeze(["preview", "text"]);
 const PREVIEW_LOADER_REVEAL_DELAY_MS = 140;
 const PREVIEW_READY_FALLBACK_MS = 4000;
+const PREVIEW_SCROLL_HINT_DURATION_MS = 4200;
+
+function createPreviewScrollHint(projectTitle) {
+  const hint = document.createElement("div");
+  hint.className = "project-card__scroll-hint";
+  hint.hidden = true;
+  hint.setAttribute("role", "status");
+  hint.setAttribute("aria-live", "polite");
+  hint.setAttribute(
+    "aria-label",
+    `${projectTitle} preview is ready. Scroll inside the preview to explore.`,
+  );
+
+  const mouse = document.createElement("span");
+  mouse.className = "project-card__scroll-hint-mouse";
+  mouse.setAttribute("aria-hidden", "true");
+
+  const wheel = document.createElement("span");
+  wheel.className = "project-card__scroll-hint-wheel";
+  mouse.append(wheel);
+
+  const message = document.createElement("span");
+  message.textContent = "Scroll inside to explore";
+  hint.append(mouse, message);
+  return hint;
+}
 
 function cloneSideTransform(projectId, side) {
   const defaults = CARD_WORLD_CONFIG.sideTransforms[side];
@@ -316,6 +342,9 @@ function createProjectCard(project, index) {
   const previewImage = project.previewImage
     ? document.createElement("img")
     : null;
+  const previewScrollHint = project.previewUrl
+    ? createPreviewScrollHint(project.title)
+    : null;
   if (previewImage) {
     previewImage.className = "project-card__preview-image";
     previewImage.alt = `${project.title} project screenshot`;
@@ -325,6 +354,7 @@ function createProjectCard(project, index) {
   }
   previewPanel.append(previewLoader);
   if (previewImage) previewPanel.append(previewImage);
+  if (previewScrollHint) previewPanel.append(previewScrollHint);
 
   const codePanel = document.createElement("div");
   codePanel.className = "project-card__panel project-card__code";
@@ -511,9 +541,11 @@ function createProjectCard(project, index) {
   let previewLoadTimer = 0;
   let previewLoaderRevealTimer = 0;
   let previewReadyFallbackTimer = 0;
+  let previewScrollHintTimer = 0;
   let previewLoadStarted = false;
   let previewReady = false;
   let previewActive = false;
+  let previewScrollHintShown = false;
   const previewResizeObserver = project.previewViewportWidth
     ? new ResizeObserver(([entry]) => {
         const panelWidth = entry.contentRect.width;
@@ -609,6 +641,16 @@ function createProjectCard(project, index) {
     previewLoader.classList.remove("is-visible");
     previewLoader.setAttribute("aria-label", `${project.title} preview ready`);
     syncPreviewVisibility();
+    if (previewScrollHint && !previewScrollHintShown) {
+      previewScrollHintShown = true;
+      previewScrollHint.hidden = false;
+      previewScrollHint.classList.add("is-visible");
+      previewScrollHintTimer = window.setTimeout(() => {
+        previewScrollHintTimer = 0;
+        previewScrollHint.classList.remove("is-visible");
+        previewScrollHint.hidden = true;
+      }, PREVIEW_SCROLL_HINT_DURATION_MS);
+    }
   }
 
   function hasLoadedPreviewDocument() {
@@ -701,6 +743,9 @@ function createProjectCard(project, index) {
       clearPreviewLoaderRevealTimer();
       if (previewReadyFallbackTimer) {
         window.clearTimeout(previewReadyFallbackTimer);
+      }
+      if (previewScrollHintTimer) {
+        window.clearTimeout(previewScrollHintTimer);
       }
       previewResizeObserver?.disconnect();
       preview.removeEventListener("load", handlePreviewLoad);

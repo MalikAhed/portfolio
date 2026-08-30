@@ -620,6 +620,59 @@ body.has-project-fallback-fullscreen .project-cards-layer {
   overflow: hidden;
 }
 
+.project-card__scroll-hint {
+  position: absolute;
+  z-index: 4;
+  inset-block-end: 24px;
+  inset-inline-start: 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 12px;
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(20 20 20 / 84%);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 24%);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 12px) scale(0.96);
+  backdrop-filter: blur(10px);
+}
+
+.project-card__scroll-hint[hidden] {
+  display: none;
+}
+
+.project-card__scroll-hint.is-visible {
+  animation: project-preview-scroll-hint 4.2s ease both;
+}
+
+.project-card__scroll-hint-mouse {
+  position: relative;
+  display: block;
+  inline-size: 18px;
+  block-size: 27px;
+  border: 2px solid currentcolor;
+  border-radius: 10px;
+}
+
+.project-card__scroll-hint-wheel {
+  position: absolute;
+  inset-block-start: 5px;
+  inset-inline-start: 50%;
+  inline-size: 3px;
+  block-size: 6px;
+  border-radius: 999px;
+  background: currentcolor;
+  transform: translateX(-50%);
+  animation: project-preview-scroll-wheel 900ms ease-in-out infinite;
+}
+
 [data-project-card="stockthink"] .project-card__preview,
 [data-project-card="stockthink"] .project-card__frame {
   background: #111210;
@@ -918,6 +971,16 @@ body.has-project-fallback-fullscreen .project-cards-layer {
   .project-card__preview-loader-spinner {
     animation: none;
   }
+
+  .project-card__scroll-hint.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    animation: none;
+  }
+
+  .project-card__scroll-hint-wheel {
+    animation: none;
+  }
 }
 
 @media (min-aspect-ratio: 2 / 1) {
@@ -935,5 +998,39 @@ body.has-project-fallback-fullscreen .project-cards-layer {
 @keyframes project-preview-loader-spin {
   to {
     transform: rotate(1turn);
+  }
+}
+
+@keyframes project-preview-scroll-hint {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.96);
+  }
+
+  12%,
+  78% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px) scale(0.98);
+  }
+}
+
+@keyframes project-preview-scroll-wheel {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -2px);
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 7px);
   }
 }
