@@ -1,6 +1,20 @@
 import { MathUtils } from "three";
 import { WARP_SPEED_WORLD_CONFIG } from "./config.js";
 
+function getScreenSpaceLinearCameraDistance(
+  nearDistance,
+  farDistance,
+  progress,
+) {
+  const projectedScale = MathUtils.lerp(
+    1 / nearDistance,
+    1 / farDistance,
+    progress,
+  );
+
+  return 1 / projectedScale;
+}
+
 function createLazySimulation(iframe, worldStage) {
   const source = iframe.dataset.src;
   let idleCallbackId = 0;
@@ -185,7 +199,7 @@ export function createWarpSpeedController({
     );
     const colorInversion = MathUtils.smoothstep(darkness, 0.44, 0.56);
     const colorChannel = MathUtils.lerp(16, 249, colorInversion);
-    const cameraDistance = MathUtils.lerp(
+    const cameraDistance = getScreenSpaceLinearCameraDistance(
       nearCameraDistance,
       farCameraDistance,
       blackHoleMotionProgress,

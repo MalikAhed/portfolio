@@ -36,10 +36,12 @@ export const MORE_WORK_WORLD_CONFIG = Object.freeze({
  * project surface. They stay black against the warm world while the background
  * darkens gradually, then invert to white as the black-hole view fades in. Once
  * that view is established, the radial streaks fade away while the black hole
- * remains fully visible. Its camera retreats at the same constant rate as
- * native scroll through the final position. After the view is established,
- * the finished ray-marched image slides down linearly without moving or
- * rotating its physical camera. This keeps the disk's viewing angle unchanged.
+ * remains fully visible. Its projected size shrinks at a constant screen-space
+ * rate as native scroll moves through the final position, avoiding the fast
+ * initial contraction caused by linear perspective-camera distance. After the
+ * view is established, the finished ray-marched image also slides down linearly
+ * without rotating its physical camera. This keeps the disk's viewing angle
+ * unchanged.
  *
  * Owner: isolated, pointer-inert DOM/WebGL surface
  * Depth role: final world passage above the warm base world

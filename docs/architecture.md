@@ -186,8 +186,9 @@ src/
   Changing the final scroll Z updates the endpoint of the same native-scroll
   linear camera rail. Once the black-hole view is established, the
   radial light-speed streaks fade away independently. During the remaining
-  scroll, the black hole shrinks and its completed ray-marched image slides down
-  together at a constant rate over a short, fixed camera-Z interval, then holds
+  scroll, the black hole shrinks at a constant visible screen-space rate while
+  its completed ray-marched image slides down linearly over a short, fixed
+  camera-Z interval, then holds
   that framing through the end of the journey. The interval is independent of
   the editable scroll endpoint, so extending the journey cannot slow the move.
   The physical observer keeps the simulation's fixed inclination and view

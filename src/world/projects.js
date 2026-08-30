@@ -157,7 +157,7 @@ const STOCKTHINK = Object.freeze({
   technologies: STOCKTHINK_TECHNOLOGIES,
   githubUrl: "https://github.com/MalikAhed/stockthink",
   liveUrl: "https://malikahed.github.io/stockthink/",
-  previewImage: "assets/stockthink-original.webp",
+  previewImage: "assets/stockthink.png",
   sourceRevision: "0e0b4bf",
   loadFiles: () =>
     import("./stockthink-source.js").then(
