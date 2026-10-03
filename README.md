@@ -23,3 +23,10 @@ deploy the built site to GitHub Pages.
 
 Implementation details and scene rules live in
 [`docs/architecture.md`](docs/architecture.md).
+
+## License
+
+Original contributions by Malik Abuallatta are licensed under the
+[MIT License](LICENSE). Third-party code, adaptations, dependencies, and assets
+retain their existing licenses and notices. This license does not grant new
+rights to third-party material.
